@@ -1,0 +1,64 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+steps:
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        if [ '$_TEST_DATA' = "true" ] ; then
+          ./create_test_harness.sh '${_PJID_SRC}' '${_DS_RAW}' '${_LOCATION}'
+        fi
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: "bash"
+    dir: "/workspace"
+    args:
+      - "-c"
+      - |
+        if [ '$_DEPLOY_CDC' = "true" ] ; then
+          ./deploy_cdc.sh '$_PJID_SRC' '$_DS_RAW' '$_PJID_SRC' '$_DS_CDC' '$_TGT_BUCKET' '$_GCS_BUCKET' '$_TEST_DATA'
+        fi
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: "bash"
+    #args: ['cicd.sh', '$_PROJECT_ID_SRC', '$_PROJECT_ID_TGT', '$_DATASET_SRC', '${_VIEWS_DIR}', '${_MANDT}','${_LOCATION}']
+    args:
+      - "-c"
+      - |-
+        ./cicd.sh \
+          --source-project '${_PJID_SRC}' \
+          --target-project '${_PJID_TGT}' \
+          --cdc-processed-dataset '${_DS_CDC}' \
+          --raw-landing-dataset '${_DS_RAW}' \
+          --target-reporting-dataset '${_DS_REPORTING}' \
+          --target-models-dataset '${_DS_MODELS}' \
+          --location '${_LOCATION}' \
+          --mandt '${_MANDT}' \
+          --sql-flavour '${_SQL_FLAVOUR}' \
+            '${_VIEWS_DIR}'
+# - name: gcr.io/cloud-builders/gcloud
+#   entrypoint: 'bash'
+#   args: ['success.sh']
+logsBucket: "gs://$_GCS_BUCKET"
+timeout: 10200s
+substitutions:
+  _VIEWS_DIR: src/views
+  _MANDT: "800"
+  _TEST_DATA: "false"
+  _LOCATION: "US"
+  _DS_REPORTING: "SAP_REPORTING"
+  _DS_MODELS: "SAP_ML_MODELS"
+  _SQL_FLAVOUR: "ECC"
+options:
+  substitution_option: "ALLOW_LOOSE"
