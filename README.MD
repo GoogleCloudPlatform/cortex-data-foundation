@@ -8,10 +8,10 @@ Contents
 # About the Data Foundation for Google Cloud Cortex Framework
 The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that an be automatically deployed together with reference architectures. 
 
-The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-re;lationship diagram [here](images/erd.png).
+The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-relationship diagram [here](images/erd.png).
 
 
-# TL;DR for setup {#tldr}
+# TL;DR for setup
 If you are in a hurry and already know what you are doing, clone this repository and execute the following command.
 
 ```bash
@@ -22,14 +22,14 @@ _PJID_SRC=<<project for landing raw data>>,_PJID_TGT=<<project to deploy user-fa
 ```
 
 
-# **Deployment** {#deployment}
+# **Deployment**
 
 You can find a step-by-step video going through a deployment with sample data in YouTube: [`[English version]`](https://youtu.be/_A0UrgR1gwk) - [`[Version en Español]`](https://youtu.be/jBBgSGoD3DU )
 
-# Prerequisites {#prerequisites}
+# Prerequisites
 
 
-## Understand the Framework {#understand-the-framework}
+## Understand the Framework
 
 Before continuing with this guide, make sure you are familiar with:
 
@@ -37,16 +37,16 @@ Before continuing with this guide, make sure you are familiar with:
 -   How to navigate the Cloud Console, [Cloud Shell](https://cloud.google.com/shell/docs/using-cloud-shell) and [Cloud Shell Editor](https://cloud.google.com/shell/docs/editor-overview)
 -   Fundamentals of [BigQuery](https://cloud.google.com/bigquery/docs/introduction)
 -   Fundamentals of [Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) or [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html)
--   Fundamental concepts of[ Change Data Capture and dataset structures](#bookmark=id.v9262puailmj). 
+-   Fundamental concepts of[ Change Data Capture and dataset structures](#understanding-change-data-capture-understanding-change-data-capture). 
 -   General navigation of [Cloud Build](https://cloud.google.com/build/docs/overview)
 -   Fundamentals of [Identity and Access Management](https://cloud.google.com/iam/docs/)
 
 
-## Establish project and dataset structure {#establish-project-and-dataset-structure}
+## Establish project and dataset structure
 
 You will require at least one GCP project to host the BigQuery datasets and execute the deployment process. 
 
-This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure). 
+This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure-dataset-structure). 
 
 ![structure for parameters](images/10.png "image_tooltip")
 
@@ -66,7 +66,7 @@ You will need to identify:
 **Alternatively**, if you do not have a replication tool set up or do not wish to use the replicated data, the deployment process can generate test tables and data for you. You will still need to [create](https://cloud.google.com/bigquery/docs/datasets) and identify the datasets ahead of time.
 
 
-## Enable Required Components  {#enable-required-components}
+## Enable Required Components
 
 The following Google Cloud components are required: 
 
@@ -101,7 +101,7 @@ You should get a success message:
 ![success message in console](images/1.png "image_tooltip")
 
 
-## Data Requirements {#data-requirements}
+## Data Requirements
 
 
 ### SAP ECC or S/4 raw tables
@@ -114,19 +114,19 @@ Notes:
 *   If a table does not exist during deployment, only the views that require it will fail. 
 *   The SQL files refer to the tables in lowercase. See the [documentation in BigQuery](https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#case_sensitivity) for more information on case sensitivity.
 
-### CDC processing flags {#cdc-processing-flags}
+### CDC processing flags
 
-If not using test data, make sure the replication tool includes the fields required for CDC processing or merges changes when inserting them into BigQuery. You can find more details about this requirement [here](#bookmark=id.6n2orkkv9xrn). The BigQuery Connector for SAP can include these fields by default with the [Extra Field flag](https://cloud.google.com/solutions/sap/docs/bq-connector-for-sap-planning#default-field-names).
+If not using test data, make sure the replication tool includes the fields required for CDC processing or merges changes when inserting them into BigQuery. You can find more details about this requirement [here](#setting-up-cdc-processing). The BigQuery Connector for SAP can include these fields by default with the [Extra Field flag](https://cloud.google.com/solutions/sap/docs/bq-connector-for-sap-planning#default-field-names).
 
 
-### DD03L for metadata {#dd03l-for-metadata}
+### DD03L for metadata
 
 If you are **not planning on deploying test data**, and if you **are planning on generating CDC DAG scripts** during deployment, make sure table **DD03L** is replicated from SAP in the source project. 
 
 This table contains metadata about tables, like the list of keys, and is needed for the CDC generator and dependency resolver to work. This table will also allow you to add tables not currently covered by the model to generated CDC scripts, like custom or `Z` tables.
 
 
-## Grant permissions to the executing user {#grant-permissions}
+## Grant permissions to the executing user
 If an individual is executing the deployment with their own account, they will need, at minimum, the following permissions in the project where Cloud Build will be triggered:
 
 *   Service Usage Consumer
@@ -141,7 +141,7 @@ These permissions may vary depending on the setup of the project. Consider the f
 *   [Permissions for the Cloud Build service account](https://cloud.google.com/build/docs/securing-builds/configure-access-for-cloud-build-service-account)
 *   [Viewing logs from Builds](https://cloud.google.com/build/docs/securing-builds/store-manage-build-logs#viewing_build_logs)
 
-## [Optional] Create a Service Account for deployment with impersonation {#create-a-service-account-for-deployment}
+## [Optional] Create a Service Account for deployment with impersonation
 
 The deployment can run through a service account with impersonation rights, by adding the flag [\--impersonate-service-account](https://cloud.google.com/sdk/gcloud/reference/builds/submit). This service account will trigger a Cloud Build job, that will in turn run specific steps through the Cloud Build service account. This allows the consultant to trigger a deployment process without direct access to the resources.
 
@@ -190,7 +190,7 @@ gcloud iam service-accounts add-iam-policy-binding <<SERVICE ACCOUNT>>\
 
 
 
-## Configure the Cloud Build account {#configure-the-cloud-build-account}
+## Configure the Cloud Build account
 
 In the source project, navigate to the [Cloud Build](https://console.cloud.google.com/cloud-build/settings/service-account) and locate the account that will execute the deployment process.
 
@@ -209,7 +209,7 @@ Grant the following permissions to the Cloud Build service account in both the s
 *   BigQuery Job User
 
 
-## Create a Storage bucket {#create-a-storage-bucket}
+## Create a Storage bucket
 
 A storage bucket will be required to leave any processing scripts that are generated. These scripts will be manually moved into a Cloud Composer or Apache Airflow instance after deployment.
 
@@ -223,7 +223,7 @@ gsutil mb -l <REGION/MULTI-REGION> gs://<BUCKET NAME>
 
 Navigate to the _Permissions_ tab. Grant `Storage Object Creator` to the user executing the Build command or to the Service account you created for impersonation.
 
-## [Optional] Create a Storage bucket for logs {#create-a-storage-bucket}
+## [Optional] Create a Storage bucket for logs
 
 You can create a specific bucket for the Cloud Build process to store the logs. Create a [GCS bucket](https://console.cloud.google.com/storage) with uniform access control, in the same region where the deployment will run. 
 
@@ -235,9 +235,9 @@ gsutil mb -l <REGION/MULTI-REGION> gs://<BUCKET NAME>
 
 You will need to grant `Object Admin` permissions to the Cloud Build service account. 
 
-# Setup {#setup}
+# Setup
 
-## Check setup {#check-permissions}
+## Check setup
 
 You can now run a simple script, the Cortex Deployment Checker, to simulate the deployment steps and make sure the prerequisites are fulfilled.
 
@@ -294,7 +294,7 @@ The build will complete successfully if the setup is ready or fail if permission
 
 
 
-## Parameters for Checker {#parameters}
+## Parameters for Checker
 
 The table below contains the parameters that can be passed to the build for further customizing the test.
 
@@ -369,7 +369,7 @@ Default: "US"
 </table>
 
 
-## How it works {#how-it-works}
+## How it works
 
 The Cortex Deployment Checker is a very simple utility that will try to exercise the required permissions to ensure that they are correctly set up.
 
@@ -408,22 +408,22 @@ You can use the configuration in the file [`sets.yaml`](https://github.com/Googl
 
 You will need the following parameters ready for deployment, based on your target structure:
 
-*   Source Project (`_PJID_SRC`): Project where the source dataset is and the build will run.
-*   Target Project (`_PJID_TGT`): Target project for user-facing datasets (reporting and ML datasets)
-*   Raw landing dataset (`_DS_RAW`): Used by the CDC process, this is where the replication tool lands the data from SAP.  If using test data, create an empty dataset.
-*   CDC Processed Dataset (`_DS_CDC`): Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset.
-*   Reporting Dataset (`_DS_REPORTING`): Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed
-*   ML dataset (`_DS_ML`): Name of the dataset that stages results of Machine Learning algorithms or BQML models
-*   Logs Bucket (`_GCS_BUCKET`): Bucket for logs. Could be the default or [created previously]((#create-a-storage-bucket).
-*   DAGs bucket (`_TGT_BUCKET`): Bucket where DAGs will be generated as [created previously]((#create-a-storage-bucket). Avoid using the actual airflow bucket.
-*   Deploy test data (`_TEST_DATA`): Set to true if  the customer wants the _DATASET_REPL to be filled by tables with sample data, mimicking a replicated dataset. Default is --noreplace.
-*   Generate and deploy CDC (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set to true.
+*   **Source Project** (`_PJID_SRC`): Project where the source dataset is and the build will run.
+*   **Target Project** (`_PJID_TGT`): Target project for user-facing datasets (reporting and ML datasets)
+*   **Raw landing dataset** (`_DS_RAW`): Used by the CDC process, this is where the replication tool lands the data from SAP.  If using test data, create an empty dataset.
+*   **CDC Processed Dataset** (`_DS_CDC`): Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset.
+*   **Reporting Dataset** (`_DS_REPORTING`): Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed
+*   **ML dataset** (`_DS_ML`): Name of the dataset that stages results of Machine Learning algorithms or BQML models
+*   **Logs Bucket** (`_GCS_BUCKET`): Bucket for logs. Could be the default or [created previously]((#create-a-storage-bucket).
+*   **DAGs bucket** (`_TGT_BUCKET`): Bucket where DAGs will be generated as [created previously]((#create-a-storage-bucket). Avoid using the actual airflow bucket.
+*   **Deploy test data** (`_TEST_DATA`): Set to true if  the customer wants the _DATASET_REPL to be filled by tables with sample data, mimicking a replicated dataset. Default is --noreplace.
+*   **Generate and deploy CDC** (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set to true.
 
 Optional parameters:
 
-*   Location or Region (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Options: US, ASIA or EU)
-*   Mandant or Client (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value.
-*   SQL flavor for source system (`_sql-flavour`): S4 or ECC. See the documentation for options. For test data, keep the default value.
+*   **Location or Region** (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Options: US, ASIA or EU)
+*   **Mandant or Client** (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value.
+*   **SQL flavor for source system** (`_sql-flavour`): S4 or ECC. See the documentation for options. For test data, keep the default value.
 
 ## Execute the build
 
@@ -458,7 +458,7 @@ And identify any issues with individual builds:
 ![SQL error](images/14.png "image_tooltip")
 
 
-## Move the files form the DAG bucket
+## Move the files into the DAG bucket
 
 If you opted to generate the CDC files and have an instance of Airflow, you can move them into their final bucket with the following command:
 
@@ -481,13 +481,13 @@ Optionally, you can deploy the blocks from the [Looker Marketplace](https://mark
 
 To file issues and feature requests against these models or deployers, create an issue in this repo.
 
-# Appendix {#appendix}
+# Appendix
 
 
-## Understanding Change Data Capture {#understanding-change-data-capture}
+## Understanding Change Data Capture
 
 
-### Replicating raw data {#replicating-raw-data}
+### Replicating raw data
 
 The goal of the Data Foundation for SAP is to expose data and analytics models for reporting and applications. The models consume the data replicated from an SAP ECC or SAP S/4HANA system using a preferred replication tool, like the [BigQuery Connector for SAP](https://cloud.google.com/blog/products/data-analytics/bigquery-connector-for-sap).
 
@@ -499,7 +499,7 @@ For example, fields in table T001 are replicated using their equivalent data typ
 
 
 
-### Change Data Capture (CDC) Processing {#change-data-capture-cdc-processing}
+### Change Data Capture (CDC) Processing
 
 BigQuery is an append preferred database. This means that the data is not updated or merged during replication. For example, an update to an existing record can be replicated as the same record containing the change. To avoid duplicates, a merge operation needs to be applied afterwards. This is referred to as [Change Data Capture processing](https://cloud.google.com/architecture/database-replication-to-bigquery-using-change-data-capture).
 
@@ -510,7 +510,7 @@ For example, the following image shows the latest records for each partner recor
 ![alt_text](images/16.png "image_tooltip")
 
 
-### Dataset structure {#dataset-structure}
+### Dataset structure
 
 Data from SAP is replicated into a BigQuery dataset  -the source or replicated dataset- and the updated or merged results are inserted into another dataset- the CDC dataset. The reporting views select data from the CDC dataset, to ensure the reporting tools and applications always have the latest version of a table.
 
@@ -520,7 +520,7 @@ Data from SAP is replicated into a BigQuery dataset  -the source or replicated d
 Some replication tools can merge or upsert the records when inserting them into BigQuery, so the generation of these scripts is optional. In this case, the setup will only have a single dataset. The SAP\_REPORTING dataset will fetch updated records for reporting from that dataset.
 
 
-## Optional - Using different projects to segregate access {#optional-using-different-projects-to-segregate-access}
+## Optional - Using different projects to segregate access
 
 Some customers choose to have different projects for different functions to keep users from having excessive access to some data. The deployment allows for using two projects, one for processing replicated data, where only technical users have access to the raw data, and one for reporting, where business users can query the predefined models or views. 
 
@@ -531,7 +531,7 @@ Some customers choose to have different projects for different functions to keep
 Using two different projects is optional. A single project can be used to deploy all datasets.
 
 
-## Setting up CDC processing {#setting-up-cdc-processing}
+## Setting up CDC processing
 
 During deployment, you can choose to merge changes in real time using a view in BigQuery or scheduling a merge operation in Cloud Composer (or any other instance of Apache Airflow).
 
@@ -625,7 +625,7 @@ The following parameters will be required for the automated generation of change
 *   Optional: If the result of the CDC processing will remain in the same dataset as the target, you can specify the name of the target table.
 
 
-## Gathering Cloud Composer Settings {#gathering-cloud-composer-settings}
+## Gathering Cloud Composer Settings
 
 If Cloud Composer is available, create a connection to the Source Project[ in Cloud Composer](https://cloud.google.com/composer/docs/how-to/managing/connections#creating_new_airflow_connections) called sap\_cdc\_bq. 
 
@@ -638,7 +638,7 @@ The GCS bucket structure in the template DAG expects the folders to be in /data/
 If you do not have an environment of Cloud Composer available yet, you can deploy it afterwards and move the files as the Consultant will instruct.
 
 
-## Configuring the flattener for SAP hierarchies {#configuring-the-flattener-for-sap-hierarchies}
+## Configuring the flattener for SAP hierarchies
 
 The deployment process can optionally flatten hierarchies represented as sets (e.g. transaction GS03) in SAP. The process can also generate the DAGs for these hierarchies to be refreshed periodically and automatically. This process requires configuration prior to the deployment and should be known by a Financial or Controlling consultant or power user. 
 
