@@ -40,8 +40,8 @@ SAP_REPORTING/SalesStatus_Items.sql
 SAP_REPORTING/POFulfillment.sql
 SAP_REPORTING/SalesFulfillment_perOrder.sql
 SAP_REPORTING/SalesFulfillment.sql
-SAP_REPORTING/Stock_Unrestricted_vs_Sales.sql
 SAP_REPORTING/Stock_NonValuated.sql
+SAP_REPORTING/Stock_Unrestricted_vs_Sales.sql
 SAP_REPORTING/UoMMD.sql
 SAP_REPORTING/UoMUsage_SAMPLE.sql
 SAP_REPORTING/InvoiceDocuments_Flow.sql
