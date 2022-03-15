@@ -12,7 +12,7 @@ The current repository contains the analytical views and models that serve as a 
 
 
 # TL;DR for setup
-If you are in a hurry and already know what you are doing, clone this repository and execute the following command.
+If you are in a hurry and already know what you are doing, clone this repository recursively with submodules (`--recurse-submodules`) and execute the following command.
 
 ```bash
 gcloud builds submit --project <<execution project, likely the source>> \
@@ -127,6 +127,7 @@ This table contains metadata about tables, like the list of keys, and is needed 
 
 
 ## Grant permissions to the executing user
+
 If an individual is executing the deployment with their own account, they will need, at minimum, the following permissions in the project where Cloud Build will be triggered:
 
 *   Service Usage Consumer
@@ -140,6 +141,21 @@ These permissions may vary depending on the setup of the project. Consider the f
 *   [Permissions to storage for the Build Account](https://cloud.google.com/build/docs/securing-builds/store-manage-build-logs)
 *   [Permissions for the Cloud Build service account](https://cloud.google.com/build/docs/securing-builds/configure-access-for-cloud-build-service-account)
 *   [Viewing logs from Builds](https://cloud.google.com/build/docs/securing-builds/store-manage-build-logs#viewing_build_logs)
+
+## Configure the Cloud Build account
+
+In the source project, navigate to the [Cloud Build](https://console.cloud.google.com/cloud-build/settings/service-account) and locate the account that will execute the deployment process.
+
+![cloud build service account](images/5.png "image_tooltip")
+
+Locate the build account in [IAM](https://pantheon.corp.google.com/iam-admin/iam) (make sure it says _cloudbuild_):
+
+![Cloud build service account in IAM](images/6.png "image_tooltip")
+
+Grant the following permissions to the Cloud Build service account in both the source and target projects if they are different:
+
+- BigQuery Data Editor
+- BigQuery Job User
 
 ## [Optional] Create a Service Account for deployment with impersonation
 
@@ -187,26 +203,6 @@ gcloud iam service-accounts add-iam-policy-binding <<SERVICE ACCOUNT>>\
   --member="user:<<CONSULTANT EMAIL>>" \
   --role="roles/iam.serviceAccountTokenCreator"
 ```
-
-
-
-## Configure the Cloud Build account
-
-In the source project, navigate to the [Cloud Build](https://console.cloud.google.com/cloud-build/settings/service-account) and locate the account that will execute the deployment process.
-
-![cloud build service account](images/5.png "image_tooltip")
-
-
-Locate the build account in [IAM](https://pantheon.corp.google.com/iam-admin/iam) (make sure it says _cloudbuild_): 
-
-![Cloud build service account in IAM](images/6.png "image_tooltip")
-
-
-Grant the following permissions to the Cloud Build service account in both the source and target projects if they are different:
-
-
-*   BigQuery Data Editor
-*   BigQuery Job User
 
 
 ## Create a Storage bucket
@@ -390,7 +386,7 @@ If the build completes successfully all mandatory checks passed, otherwise revie
 
 ## Clone the Data Foundation repository
 
-Clone this repository into an environment where you can execute the `gcloud builds submit` command and edit the configuration files. We recommend using the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal).
+Clone this repository with submodules (`--recurse-submodules`) into an environment where you can execute the `gcloud builds submit` command and edit the configuration files. We recommend using the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal).
 
 ## Configure CDC
 
