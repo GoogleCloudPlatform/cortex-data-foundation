@@ -1,10 +1,6 @@
 # **Google Cloud Cortex Framework**
 
 
-
-Contents
-
-
 # About the Data Foundation for Google Cloud Cortex Framework
 The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that an be automatically deployed together with reference architectures. 
 
@@ -37,7 +33,7 @@ Before continuing with this guide, make sure you are familiar with:
 -   How to navigate the Cloud Console, [Cloud Shell](https://cloud.google.com/shell/docs/using-cloud-shell) and [Cloud Shell Editor](https://cloud.google.com/shell/docs/editor-overview)
 -   Fundamentals of [BigQuery](https://cloud.google.com/bigquery/docs/introduction)
 -   Fundamentals of [Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) or [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html)
--   Fundamental concepts of[ Change Data Capture and dataset structures](#understanding-change-data-capture-understanding-change-data-capture). 
+-   Fundamental concepts of[ Change Data Capture and dataset structures](#understanding-change-data-capture). 
 -   General navigation of [Cloud Build](https://cloud.google.com/build/docs/overview)
 -   Fundamentals of [Identity and Access Management](https://cloud.google.com/iam/docs/)
 
@@ -46,7 +42,7 @@ Before continuing with this guide, make sure you are familiar with:
 
 You will require at least one GCP project to host the BigQuery datasets and execute the deployment process. 
 
-This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure-dataset-structure). 
+This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure). 
 
 ![structure for parameters](images/10.png "image_tooltip")
 
