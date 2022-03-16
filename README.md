@@ -157,7 +157,7 @@ Grant the following permissions to the Cloud Build service account in both the s
 
 ## [Optional] Create a Service Account for deployment with impersonation
 
-The deployment can run through a service account with impersonation rights, by adding the flag [\--impersonate-service-account](https://cloud.google.com/sdk/gcloud/reference/builds/submit). This service account will trigger a Cloud Build job, that will in turn run specific steps through the Cloud Build service account. This allows the consultant to trigger a deployment process without direct access to the resources.
+The deployment can run through a service account with impersonation rights, by adding the flag [\--impersonate-service-account](https://cloud.google.com/sdk/gcloud/reference/builds/submit). This service account will trigger a Cloud Build job, that will in turn run specific steps through the Cloud Build service account. This allows a user to trigger a deployment process without direct access to the resources.
 
 The impersonation rights to the new, triggering service account need to be granted to the person running the command. 
 
@@ -198,7 +198,7 @@ gcloud projects add-iam-policy-binding <<SOURCE_PROJECT>> \
 --role="roles/cloudbuild.builds.editor"
 
 gcloud iam service-accounts add-iam-policy-binding <<SERVICE ACCOUNT>>\
-  --member="user:<<CONSULTANT EMAIL>>" \
+  --member="user:<<EXECUTING USER EMAIL>>" \
   --role="roles/iam.serviceAccountTokenCreator"
 ```
 
@@ -623,13 +623,13 @@ The following parameters will be required for the automated generation of change
 
 If Cloud Composer is available, create a connection to the Source Project[ in Cloud Composer](https://cloud.google.com/composer/docs/how-to/managing/connections#creating_new_airflow_connections) called sap\_cdc\_bq. 
 
-The GCS bucket structure in the template DAG expects the folders to be in /data/bq\_data\_replication .  Alternatively, you can mass modify the generated dags with a replace command as the consultant will instruct after deployment.
+The GCS bucket structure in the template DAG expects the folders to be in /data/bq\_data\_replication. You can modify this path prior to deployment.
 
 
 ![alt_text](images/20.png "image_tooltip")
 
 
-If you do not have an environment of Cloud Composer available yet, you can deploy it afterwards and move the files as the Consultant will instruct.
+If you do not have an environment of Cloud Composer available yet, you can deploy it afterwards and move the files into the DAG bucket.
 
 
 ## Configuring the flattener for SAP hierarchies
