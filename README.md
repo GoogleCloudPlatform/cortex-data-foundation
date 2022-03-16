@@ -22,7 +22,7 @@ _PJID_SRC=<<project for landing raw data>>,_PJID_TGT=<<project to deploy user-fa
 
 # **Deployment**
 
-You can find a step-by-step video going through a deployment with sample data in YouTube: [`[English version]`](https://youtu.be/_A0UrgR1gwk) - [`[Version en Español]`](https://youtu.be/jBBgSGoD3DU )
+You can find a step-by-step video going through a deployment with sample data in YouTube: [`[English version]`](https://youtu.be/pxfxOYPQw9E) - [`[Version en Español]`](https://youtu.be/jBBgSGoD3DU )
 
 # Prerequisites
 
