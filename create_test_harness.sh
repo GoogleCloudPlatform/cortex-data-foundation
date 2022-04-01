@@ -1,23 +1,11 @@
 #!/bin/bash
 
-# Copyright 2022 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Create test tables from GCS bucket
 project="$1"
 dataset="$2"
-location=${3:-US}
+sql_fl=${3: ecc}
+sql_flavor=$(echo "${sql_fl}" | tr '[:upper:]' '[:lower:]')
+location=${4:-US}
 location_low=$(echo "${location}" | tr '[:upper:]' '[:lower:]')
 
 N=10
@@ -60,8 +48,10 @@ run_with_lock() {
 }
 
 open_semaphore "${N}"
-for tab in $(gsutil ls "gs://kittycorn-test-harness-${location_low}"); do
-  run_with_lock process_table "${tab}"
+for tab in $(gsutil ls "gs://kittycorn-test-harness-${location_low}/${sql_flavor}/"); do
+  if [[  $tab != */ ]] ; then 
+    run_with_lock process_table "${tab}"
+  fi
 done
 
 wait

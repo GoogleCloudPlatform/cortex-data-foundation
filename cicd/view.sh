@@ -1,19 +1,5 @@
 #!/bin/bash
 
-# Copyright 2022 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 #--------------------
 # Help Message
 #--------------------
@@ -30,11 +16,11 @@ Options
 -a | source-project             : Source Dataset Project ID. Mandatory
 -b | target-project             : Target Dataset Project ID. Mandatory
 -x | cdc-processed-dataset      : Source Dataset Name. Mandatory
--y | raw-landing-dataset        : Raw Landing Dataset Name.
--r | target-reporting-dataset   : Target Dataset Name for Reporting (Default: SAP_REPORTING)
+-y | raw-landing-dataset        : Raw Landing Dataset Name. (Default: cdc-processed-dataset)
+-r | target-reporting-dataset   : Target Dataset Name for Reporting (Default: REPORTING)
 -s | target-models-dataset      : Target Dataset Name for ML (Default: ML_MODELS) 
 -l | location                   : Dataset Location (Default: US)
--m | mandt                      : SAP Mandante 
+-m | mandt                      : SAP Mandante. Mandatory
 -f | sql-flavour                : SQL Flavor Selection, ECC or S4. (Default: ECC)
 
 HELP_USAGE
@@ -69,13 +55,13 @@ validate() {
   fi
 
   if [ -z "${dataset_raw_landing-}" ]; then
-    echo 'INFO: "raw-landing-dataset" missing, defaulting to SAP_REPORTING.'
+    echo 'INFO: "raw-landing-dataset" missing, defaulting to dataset_cdc_processed.'
     dataset_raw_landing="${dataset_cdc_processed}"
   fi
 
   if [ -z "${dataset_reporting_tgt-}" ]; then
-    echo 'INFO: "target-reporting-dataset" missing, defaulting to SAP_REPORTING.'
-    dataset_reporting_tgt="SAP_REPORTING"
+    echo 'INFO: "target-reporting-dataset" missing, defaulting to REPORTING.'
+    dataset_reporting_tgt="REPORTING"
   fi
 
   if [ -z "${dataset_models_tgt-}" ]; then

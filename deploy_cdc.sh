@@ -21,8 +21,9 @@ dataset_tgt=$4
 tgt_bucket=$5
 log_bucket=$6
 gen_test=$7
+sql_flavour=$8
 echo "Deploying CDC and unfolding hierarchies"
 #"Source" in this context is where data is replicated and "Target" is where the CDC results are peristed
-gcloud builds submit --config=./src/SAP_CDC/cloudbuild.cdc.yaml --substitutions=_PJID_SRC="$project_id_src",_DS_RAW="$dataset_repl",_PJID_TGT="$project_id_tgt",_DS_CDC="$dataset_tgt",_GCS_BUCKET="$tgt_bucket",_GCS_LOG_BUCKET="$log_bucket",_TEST_DATA="$gen_test" ./src/SAP_CDC/
+gcloud builds submit --config=./src/SAP_CDC/cloudbuild.cdc.yaml --substitutions=_PJID_SRC="$project_id_src",_DS_RAW="$dataset_repl",_PJID_TGT="$project_id_tgt",_DS_CDC="$dataset_tgt",_GCS_BUCKET="$tgt_bucket",_GCS_LOG_BUCKET="$log_bucket",_TEST_DATA="$gen_test",_SQL_FLAVOUR="$sql_flavour" ./src/SAP_CDC/
 
 #pip install -r ./src/SAP_CDC/requirements.txt --user && cd ./src/SAP_CDC/src && python3 config_reader.py $project_id_src $dataset_repl $project_id_tgt $dataset_tgt $tgt_bucket $gen_test
