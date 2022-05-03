@@ -389,6 +389,8 @@ If the build completes successfully all mandatory checks passed, otherwise revie
 
 Clone this repository with submodules (`--recurse-submodules`) into an environment where you can execute the `gcloud builds submit` command and edit the configuration files. We recommend using the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal).
 
+If you have done a previous deployment, remember to navigate into the previously downloaded folder and execute a `git pull --recurse-submodules` to pull the latest changes.
+
 ## Configure CDC
 
 You can use the configuration in the file [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml) if you need to generate change-data capture processing scripts. See the [Appendix - Setting up CDC Processing](#setting-up-cdc-processing) for options. For test data, you can leave this file as a default.
@@ -396,6 +398,8 @@ You can use the configuration in the file [`setting.yaml`](https://github.com/Go
 Make any changes to the [DAG templates](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/src/template_dag/dag_sql.py) as required by your instance of Airflow or Cloud Composer. You will find more information in the [Appendix - Gathering Cloud Composer settings](#gathering-cloud-composer-settings)]
 
 **Note**: If you do not have an instance of Cloud Composer, you can still generate the scripts and create it later.
+
+This module is optional. If you want to add/process tables individfually after deployment, you can modify the `setting/yaml` file to process only the tables you need and re-execute the specific module with calling `deploy_cdc.sh` or `/src/SAP_CDC/cloudbuild.cdc.yaml` directly. 
 
 ## Configure Hierarchies
 
@@ -410,17 +414,17 @@ You will need the following parameters ready for deployment, based on your targe
 *   **Raw landing dataset** (`_DS_RAW`): Used by the CDC process, this is where the replication tool lands the data from SAP.  If using test data, create an empty dataset.
 *   **CDC Processed Dataset** (`_DS_CDC`): Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset.
 *   **Reporting Dataset** (`_DS_REPORTING`): Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed
-*   **ML dataset** (`_DS_ML`): Name of the dataset that stages results of Machine Learning algorithms or BQML models
+*   **ML dataset** (`_DS_MODELS`): Name of the dataset that stages results of Machine Learning algorithms or BQML models
 *   **Logs Bucket** (`_GCS_BUCKET`): Bucket for logs. Could be the default or [created previously]((#create-a-storage-bucket).
 *   **DAGs bucket** (`_TGT_BUCKET`): Bucket where DAGs will be generated as [created previously]((#create-a-storage-bucket). Avoid using the actual airflow bucket.
-*   **Deploy test data** (`_TEST_DATA`): Set to true if  the customer wants the _DATASET_REPL to be filled by tables with sample data, mimicking a replicated dataset. Default is --noreplace.
-*   **Generate and deploy CDC** (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set to true.
+*   **Deploy test data** (`_TEST_DATA`): Set to true if  the customer wants the _DATASET_REPL to be filled by tables with sample data, mimicking a replicated dataset. If set to false, `_DS_RAW` should contain the tables replicated from the SAP source. Default for table creation is --noreplace, meaning if the table exists, the script will not attempt to overwrite it.
+*   **Generate and deploy CDC** (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set it to true. If set to false, DAGs won't be generated and it should be assumed the `_DS_CDC` is the same as `_DS_RAW`.
 
 Optional parameters:
 
-*   **Location or Region** (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Options: US, ASIA or EU)
-*   **Mandant or Client** (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value.
-*   **SQL flavor for source system** (`_sql-flavour`): S4 or ECC. See the documentation for options. For test data, keep the default value.
+*   **Location or Region** (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Options are US, ASIA or EU, default is `US`). **Note**: Region granularity can only be achieved by manually modifying the deployment scripts at the moment.
+*   **Mandant or Client** (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value (`800`).
+*   **SQL flavor for source system** (`_SQL_FLAVOUR`): S4 or ECC. See the documentation for options. For test data, keep the default value (`ECC`).
 
 ## Execute the build
 
@@ -472,7 +476,13 @@ gsutil cp -r  gs://<<output bucket>>/hierarchies gs://<<composer dag bucket>>/da
 # Next steps
 
 ## Looker deployment
-Optionally, you can deploy the blocks from the [Looker Marketplace](https://marketplace.looker.com/marketplace/detail/cortex) and explore the pre-built visualizations.  you will find the instructions for the setup [in Looker](https://docs.looker.com/data-modeling/marketplace).
+Optionally, you can deploy the blocks from the [Looker Marketplace](https://marketplace.looker.com/marketplace/detail/cortex-finance) and explore the pre-built visualizations.  You will find the instructions for the setup [in Looker](https://docs.looker.com/data-modeling/marketplace).
+
+## Application Layer
+Deploy a sample micro-services based application through the [Google Cloud Marketplace](https://console.cloud.google.com/marketplace/product/cortex-public/cloud-cortex-application-layer). 
+
+## Customizations and upgrades
+We strongly encourage you to fork this repository and apply your changes to the code in your own fork. You can make use of the delivered deployment scripts in your development cycles and incorporate your own test scripts as needed. When a new release is published, you can compare the new release from our repository with your own changes by merging our code into your own fork. 
 
 # Support
 

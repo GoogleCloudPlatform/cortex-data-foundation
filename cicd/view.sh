@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 #--------------------
 # Help Message
 #--------------------
@@ -20,7 +34,7 @@ Options
 -r | target-reporting-dataset   : Target Dataset Name for Reporting (Default: REPORTING)
 -s | target-models-dataset      : Target Dataset Name for ML (Default: ML_MODELS) 
 -l | location                   : Dataset Location (Default: US)
--m | mandt                      : SAP Mandante. Mandatory
+-m | mandt                      : SAP Mandante. (Default: 100)
 -f | sql-flavour                : SQL Flavor Selection, ECC or S4. (Default: ECC)
 
 HELP_USAGE
@@ -75,8 +89,8 @@ validate() {
   fi
 
   if [ -z "${mandt-}" ]; then
-    echo 'ERROR: "mandt" is required. See help for details.'
-    exit 1
+    echo 'INFO: "mandt" is missing, defaulting to 100.'
+    mandt="100"
   fi
 
   if [[ -z "${sql_flavour-}" || -n "${sql_flavour-}" && $(echo "${sql_flavour}" | tr '[:upper:]' '[:lower:]') != "s4" ]]; then

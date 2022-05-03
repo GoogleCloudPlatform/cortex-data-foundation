@@ -1,3 +1,16 @@
+## May 2022 - Release 2.1.1 (minor update)
+
+*   Fixed AddressesMD date format to '9999-12-31'
+*   Merged original 800 and 200 demo client tables into test harness for ECC (now it has both 800 and 100). This client was mostly used for demos.
+*   Commenting out deployment of Product Recommender ML model as it requires specific reservations and a sample dataset that is only offered in the US region.
+*   Addressing [issue #4](https://github.com/GoogleCloudPlatform/cortex-data-foundation/issues/4) (Thanks, Ludovic Dessemon!)
+*   Ignoring .INCLUDE when generating DAGs and Runtime views
+*   Fixed RUNTIME view logic generation affecting keys with deletion
+*   Thanks to Andres Mora Achurra from Camanchaca for the feedback :)
+
+New Looker blocks available here replacing the older blocks: [https://marketplace.looker.com/marketplace/detail/cortex-finance](https://marketplace.looker.com/marketplace/detail/cortex-finance)
+
+
 ## March 2022 - Release 2.1
 
 ### Data Foundation
@@ -9,7 +22,7 @@ This release brings the following changes Cortex Data Foundation.
 * Templatized deployment and SQL Flavour for views, `setting.yaml `file and test harness to deploy either ECC or S4:
     1. New split source of data with `MANDT = 050` for ECC and `MANDT = 100` for S/4. These will populate automatically based on the `_SQL_FLAVOUR` parameter in the build (default to 'ECC')
     2. Original dataset from ECC and S/4 mixed still present in the source bucket (`MANDT = 800`)
-    3. Views `FixedAssets`, `SDStatus_Items`, `GLDocumentsHdr`, `BSID` and `BSAD` implementations, `InvoiceDocuments_flow`,`DeliveriesStatus_PerSalesOrg`, `SalesFulfillment_perOrder`, `SalesFulfillment`, `UoMUsage_SAMPLE` will be adapted to S/4 with source tables in the next minor release.
+    3. Views `FixedAssets`, `SDStatus_Items`, `GLDocumentsHdr`, `BSID` and `BSAD` implementations, `InvoiceDocuments_flow`,`DeliveriesStatus_PerSalesOrg`, `SalesFulfillment_perOrder`, `SalesFulfillment`, `UoMUsage_SAMPLE` will be adapted to S/4 with source tables in a next minor release.
 * Additional views for ECC and S/4 with Accounts Receivables and On-Time/In-Full analysis:
     -  Billing
     - OrderToCash
