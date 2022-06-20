@@ -1,6 +1,4 @@
 #!/bin/bash
-<<<<<<< HEAD
-=======
 
 # Copyright 2022 Google LLC
 #
@@ -16,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
->>>>>>> rel22
 project_id_src=$1
 dataset_repl=$2
 project_id_tgt=$3
