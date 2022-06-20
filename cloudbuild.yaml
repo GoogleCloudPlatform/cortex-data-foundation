@@ -59,5 +59,6 @@ substitutions:
   _SQL_FLAVOUR: "ECC"
   #_SQL_FLAVOUR: "S4"
   _MANDT: "100"
+  _GEN_EXT: "true"
 options:
   substitution_option: "ALLOW_LOOSE"

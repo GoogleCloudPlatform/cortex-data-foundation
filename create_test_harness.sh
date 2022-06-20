@@ -22,6 +22,9 @@ sql_flavor=$(echo "${sql_fl}" | tr '[:upper:]' '[:lower:]')
 location=${4:-US}
 location_low=$(echo "${location}" | tr '[:upper:]' '[:lower:]')
 
+
+valid_locations="us-central1 us-west4 us-west2 northamerica-northeast1 northamerica-northeast2 us-east4 us-west1 us-west3 southamerica-east1 southamerica-west1 us-east1 asia-south2 asia-east2 asia-southeast2 australia-southeast2 asia-south1 asia-northeast2 asia-northeast3 asia-southeast1 australia-southeast1 asia-east1 asia-northeast1 europe-west1 europe-north1 europe-west3 europe-west2 europe-west4 europe-central2 europe-west6"
+
 N=10
 
 open_semaphore() {
@@ -60,6 +63,15 @@ run_with_lock() {
   ) &
 
 }
+
+
+if [[  "${valid_locations}" =~ "${location_low}" ]] ; then 
+	echo "Creating test harness in location ${location_low}" 
+else
+	echo "ERROR: Location ${location_low} is not a valid location for the test harness." 
+    echo "Please set _TEST_DATA to false or use a supported location listed in README."
+    echo "If you believe this location should be supported and is supported by BigQuery, please create an issue."
+fi
 
 open_semaphore "${N}"
 for tab in $(gsutil ls "gs://kittycorn-test-harness-${location_low}/${sql_flavor}/"); do

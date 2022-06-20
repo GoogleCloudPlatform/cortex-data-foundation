@@ -18,7 +18,7 @@ Then change into the cloned directory execute the following command
 ```bash
 gcloud builds submit --project <<execution project, likely the source>> \
 --substitutions \
-_PJID_SRC=<<project for landing raw data>>,_PJID_TGT=<<project to deploy user-facing views>>,_DS_CDC=<<BQ dataset to land the result of CDC processing - must exist before deployment>>,_DS_RAW=<<BQ dataset to land raw data from replication - must exist before deployment>>,_DS_REPORTING=<<BQ dataset where Reporting views are created, will be created if it does not exist>>,_DS_MODELS=<<BQ dataset where ML views are created, will be created if it does not exist>>,_GCS_BUCKET=<<Bucket for logs - Cloud Build Service Account needs access to write here>>,_TGT_BUCKET=<<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>>,_TEST_DATA=true,_DEPLOY_CDC=true
+_PJID_SRC=<<project for landing raw data>>,_PJID_TGT=<<project to deploy user-facing views>>,_DS_CDC=<<BQ dataset to land the result of CDC processing - must exist before deployment>>,_DS_RAW=<<BQ dataset to land raw data from replication - must exist before deployment>>,_DS_REPORTING=<<BQ dataset where Reporting views are created, will be created if it does not exist>>,_DS_MODELS=<<BQ dataset where ML views are created, will be created if it does not exist>>,_GCS_BUCKET=<<Bucket for logs - Cloud Build Service Account needs access to write here>>,_TGT_BUCKET=<<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>>,_TEST_DATA=true,_DEPLOY_CDC=true,_GEN_EXT=true
 
 ```
 
@@ -80,6 +80,7 @@ The following Google Cloud components are required:
 *   Optional components:
     *   [Cloud Composer](https://console.cloud.google.com/marketplace/product/google/composer.googleapis.com) for change data capture (CDC) processing and hierarchy flattening through Directed Acyclic Graphs ([DAG](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html)s). You can find how to set up an instance of Cloud Composer in the [documentation](https://cloud.google.com/composer/docs/how-to/managing/creating). 
     *   Looker **(optional, connects to reporting templates. Requires manual setup) **
+    *   [Analytics Hub](https://cloud.google.com/analytics-hub) linked datasets are currently used for some external sources, such as the Weather DAG. You may choose to fill this structure with any other available source of choice for advanced scenarios.
 
 From the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal), you can enable Google Cloud Services using the _gcloud_ command line interface in your Google Cloud project.  
 
@@ -171,7 +172,7 @@ Navigate to the [Google Cloud Platform Console](https://console.cloud.google.com
 This role can be applied during the creation of the service account:
 
 
-![Cloud Build Svc accounr](images/2.png "image_tooltip")
+![Cloud Build Svc account](images/2.png "image_tooltip")
 
 
 Authorize the ID of user who will be running the deployment to impersonate the service account that was created in the previous step. Authorize your own ID so you can run an initial check as well.
@@ -222,7 +223,7 @@ Navigate to the _Permissions_ tab. Grant `Storage Object Creator` to the user ex
 
 ## [Optional] Create a Storage bucket for logs
 
-You can create a specific bucket for the Cloud Build process to store the logs. Create a [GCS bucket](https://console.cloud.google.com/storage) with uniform access control, in the same region where the deployment will run. 
+You can create a specific bucket for the Cloud Build process to store the logs. This is useful if you want to restrict data that may be stored in logs to a specific region. Create a [GCS bucket](https://console.cloud.google.com/storage) with uniform access control, in the same region where the deployment will run. 
 
 **Alternatively**, here is the command line to create this bucket: 
 
@@ -241,10 +242,10 @@ You can now run a simple script, the Cortex Deployment Checker, to simulate the 
 You will use the service account and Storage bucket created as prerequisites to test permissions and make sure the deployment is successful.
 
 
-1. Clone repository from https://github.com/fawix/mando-checker. You can complete this from the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal).
+1. Clone repository from https://github.com/lsubatin/mando-checker. You can complete this from the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal).
 
 ```bash
-git clone  https://github.com/fawix/mando-checker
+git clone  https://github.com/lsubatin/mando-checker
 ```
 
 
@@ -405,6 +406,32 @@ This module is optional. If you want to add/process tables individfually after d
 
 You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener])#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to true.
 
+## Configure External Datasets
+
+Some advanced use cases may require external datasets to complement an enterprise system of record such as SAP. In addition to external exchanges consumed from [Analytics hub](https://cloud.google.com/analytics-hub), some datasets may need custom or tailored methods to ingest data and join them with the reporting models. To deploy these sample datasets, if deploying fully for the first time, keep the `_GEN_EXT` flag as its default (true) and complete the prerequisites listed below. If complementing an existing deployment (i.e., the target datasets have already been generated), execute the  cloudbuild.cdc.yaml with `_DEPLOY_CDC=false` or the script `/src/SAP_CDC/generate_external_dags.sh`. Use flag `-h` for help with the parameters. 
+
+If you want to only deploy a subset of the DAGs, remove the undesired ones from the list at the beginning of `/src/SAP_CDC/generate_external_dags.sh`, under the marker `## CORTEX-CUSTOMER:`. 
+
+**Note:** You will need to configure the DAGs as follows:
+
+1. **Holiday Calendar**: This DAG retrieves the holiday calendars from  [PyPi Holidays](https://pypi.org/project/holidays/). You can adjust the list of countries and years to retrieve holidays, as well as parameters of the DAG from the file holiday_calendar.ini. Leave the defaults if using test data.
+2. **Product Hierachy Texts**: This DAG flattens materials and their product hierarchies. The resulting table can be used to feed the `Trends` list of terms to retrieve Interest Over Time. You can adjust the parameters of the DAG from the file `prod_hierarchy_texts.py`. Leave the defaults if using test data. You will need to adjust the levels of the hierarchy and the language under the markers for `## CORTEX-CUSTOMER:`. If your product hierarchy contains more levels, you may need to add an additional SELECT statement similar to the CTE `h1_h2_h3`.
+3. **Trends**: This DAG retrieves Interest Over Time for a specifc set of terms from [Google Search trends](https://trends.google.com/trends/). The terms can be configured in `trends.ini`. You will need to adjust the timeframe to `'today 7-d'` in `trends.py` after an initial run. We recommend getting familiarized with the results coming from the different terms to tune parameters. We also recommend partitioning large lists to multiple copies of this DAG running at different times. For more information about the underlying library being used, see [Pytrends](https://pypi.org/project/pytrends/).
+2. **Weather**: By default, this DAG uses the publicly available test dataset [**bigquery-public-data.geo_openstreetmap.planet_layers**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=open%20street%20map). The query also relies on an NOAA dataset only available through Analytics Hub, [**noaa_global_forecast_system**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=noaa%20global%20forecast).  **`This dataset needs to be created in the same region as the other datasets prior to executing deployment`**. If the datasets are not available, you can continue with the following instructions and follow additional steps to transfer the data into teh desired region. 
+
+**You can skip this configuration if using test data.**
+
+*       Navigate to [BigQuery > Analytics Hub](https://console.cloud.google.com/bigquery/analytics-hub)
+*       Click **Search Listings**. Search for `NOAA Global Forecast System`
+*       Click **Add dataset to project**. When prompted, keep `noaa_global_forecast_system` as the name of the dataset. If needed, adjust the name of the dataset and table in the FROM clauses in `weather_daily.sql`.
+*       Repeat the listing search for Dataset `OpenStreetMap Public Dataset`
+*       Adjust the FROM clauses containing `bigquery-public-data.geo_openstreetmap.planet_layers` in postcode.sql. 
+
+[**Analytics hub is currently only supported in EU and US locations**] (https://cloud.google.com/bigquery/docs/analytics-hub-introduction) and some datasets, such as NOAA Golbal Forecast, are only offered in a single multilocatiom. 
+If you are targetting a location different from the one available for the required dataset, we recommend creating a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to copy the new records from the Analytics hub linked dataset followed by a [transfer service](https://cloud.google.com/bigquery-transfer/docs/introduction) to copy those new records into a dataset located in the same location or region as the rest of your deployment. You will then need to adjust the SQL files (e.g., _sap-cortex-data-foundation/src/SAP_CDC/src/external_dag/weather/weather_daily.sql_)
+
+**Important Note:** Before copying these DAGs to Cloud Composer, you will need to [add the required python modules (holidays, pytrends) as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages). 
+
 ## Gather the parameters
 
 You will need the following parameters ready for deployment, based on your target structure:
@@ -417,14 +444,15 @@ You will need the following parameters ready for deployment, based on your targe
 *   **ML dataset** (`_DS_MODELS`): Name of the dataset that stages results of Machine Learning algorithms or BQML models
 *   **Logs Bucket** (`_GCS_BUCKET`): Bucket for logs. Could be the default or [created previously]((#create-a-storage-bucket).
 *   **DAGs bucket** (`_TGT_BUCKET`): Bucket where DAGs will be generated as [created previously]((#create-a-storage-bucket). Avoid using the actual airflow bucket.
-*   **Deploy test data** (`_TEST_DATA`): Set to true if  the customer wants the _DATASET_REPL to be filled by tables with sample data, mimicking a replicated dataset. If set to false, `_DS_RAW` should contain the tables replicated from the SAP source. Default for table creation is --noreplace, meaning if the table exists, the script will not attempt to overwrite it.
-*   **Generate and deploy CDC** (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set it to true. If set to false, DAGs won't be generated and it should be assumed the `_DS_CDC` is the same as `_DS_RAW`.
+*   **Generate and deploy CDC** (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set it to true so data is copied from the generated raw dataset into this dataset. If set to false, DAGs won't be generated and it should be assumed the `_DS_CDC` is the same as `_DS_RAW`.
+*   **Deploy test data** (`_TEST_DATA`): Set to true if  you want the _DATASET_REPL and _DS_CDC (if _DEPLOY_CDC is true) to be filled by tables with sample data, mimicking a replicated dataset. If set to false, `_DS_RAW` should contain the tables replicated from the SAP source. Default for table creation is --noreplace, meaning if the table exists, the script will not attempt to overwrite it.
 
 Optional parameters:
 
-*   **Location or Region** (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Options are US, ASIA or EU, default is `US`). **Note**: Region granularity can only be achieved by manually modifying the deployment scripts at the moment.
-*   **Mandant or Client** (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value (`800`).
-*   **SQL flavor for source system** (`_SQL_FLAVOUR`): S4 or ECC. See the documentation for options. For test data, keep the default value (`ECC`).
+*   **Location or Region** (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Default is `US`). **Note**: Restrictions listed under [BigQuery dataset locations](https://cloud.google.com/bigquery/docs/locations). Currently supported values are: S and EU (multilocations), us-central1, us-west4, us-west2, northamerica-northeast1, northamerica-northeast2, us-east4, us-west1, us-west3, southamerica-east1, southamerica-west1, us-east1, asia-south2, asia-east2, asia-southeast2, australia-southeast2, asia-south1, asia-northeast2, asia-northeast3, asia-southeast1, australia-southeast1, asia-east1, asia-northeast1, europe-west1, europe-north1, europe-west3, europe-west2, europe-west4, europe-central2, europe-west6.
+*   **Mandant or Client** (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`.
+*   **SQL flavor for source system** (`_SQL_FLAVOUR`): S4 or ECC. See the documentation for options. For test data, keep the default value (`ECC`). For Demand Sensing, only ECC test data is provided at this time.
+*   **Generate External Data** (`_GEN_EXT`): Generate DAGs to consume external data (e.g., weather, trends, holiday calendars). Some datasets have external dependencies that need to be configured before running this process. If _TEST_DATA is true, the tables for external datasets will be populated with sample data. Default: TRUE.
 
 ## Execute the build
 
@@ -482,7 +510,7 @@ Optionally, you can deploy the blocks from the [Looker Marketplace](https://mark
 Deploy a sample micro-services based application through the [Google Cloud Marketplace](https://console.cloud.google.com/marketplace/product/cortex-public/cloud-cortex-application-layer). 
 
 ## Customizations and upgrades
-We strongly encourage you to fork this repository and apply your changes to the code in your own fork. You can make use of the delivered deployment scripts in your development cycles and incorporate your own test scripts as needed. When a new release is published, you can compare the new release from our repository with your own changes by merging our code into your own fork. 
+We strongly encourage you to fork this repository and apply your changes to the code in your own fork. You can make use of the delivered deployment scripts in your development cycles and incorporate your own test scripts as needed. When a new release is published, you can compare the new release from our repository with your own changes by merging our code into your own fork in a separate branch. 
 
 # Support
 

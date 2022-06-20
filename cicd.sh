@@ -91,7 +91,11 @@ validate() {
     sql_flavour="s4"
   fi
 
+<<<<<<< HEAD
+  if [[ ! -f "dependencies_${sql_flavour}.txt" || ! -s "dependencies_${sql_flavour}.txt" ]]; then
+=======
   if [[ ! -f "dependencies_${sql_flavour}.txt"  || ! -s "dependencies_${sql_flavour}.txt" ]]; then
+>>>>>>> rel22
     echo "ERROR: Did not find dependencies file for ${sql_flavour}"
     exit 1
   fi
