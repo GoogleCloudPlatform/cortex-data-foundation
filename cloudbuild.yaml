@@ -27,9 +27,9 @@ steps:
     args:
       - "-c"
       - |
-        if [ '$_DEPLOY_CDC' = "true" ] ; then
-          ./deploy_cdc.sh '$_PJID_SRC' '$_DS_RAW' '$_PJID_SRC' '$_DS_CDC' '$_TGT_BUCKET' '$_GCS_BUCKET' '$_TEST_DATA' '$_SQL_FLAVOUR'
-        fi
+        gcloud builds submit \
+        --config=./src/SAP_CDC/cloudbuild.cdc.yaml \
+        --substitutions=_PJID_SRC='${_PJID_SRC}',_DS_RAW='${_DS_RAW}',_PJID_TGT='${_PJID_SRC}',_DS_CDC='${_DS_CDC}',_GCS_BUCKET='${_TGT_BUCKET}',_GCS_LOG_BUCKET='${_GCS_BUCKET}',_TEST_DATA='${_TEST_DATA}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_GEN_EXT='${_GEN_EXT}',_LOCATION='${_LOCATION}',_DEPLOY_CDC='${_DEPLOY_CDC}' ./src/SAP_CDC/
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: "bash"
     #args: ['cicd.sh', '$_PROJECT_ID_SRC', '$_PROJECT_ID_TGT', '$_DATASET_SRC', '${_VIEWS_DIR}', '${_MANDT}','${_LOCATION}']
