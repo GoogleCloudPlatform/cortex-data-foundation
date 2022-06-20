@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 ## June 2022 - Release 2.2
 *   New external datasets available: Holidays, Weather, Trends and product hierarchy flattener to feed the Trends search terms.
 *   Region-specific deployments with test data are now possible. Supported locations are: US and EU (multilocations). Supported regions: us-central1, us-west4, us-west2, northamerica-northeast1, northamerica-northeast2, us-east4, us-west1, us-west3, southamerica-east1, southamerica-west1, us-east1, asia-south2, asia-east2, asia-southeast2, australia-southeast2, asia-south1, asia-northeast2, asia-northeast3, asia-southeast1, australia-southeast1, asia-east1, asia-northeast1, europe-west1, europe-north1, europe-west3, europe-west2, europe-west4, europe-central2, europe-west6. More information on supported regions and limitations of regional datasets in BigQuery [here](https://cloud.google.com/bigquery/docs/locations).
@@ -10,9 +10,6 @@
 ### Known issues
 *   Analytics hub is [currently only supported in the EU and US regions](https://cloud.google.com/bigquery/docs/analytics-hub-introduction). If deploying the Weather DAG in a specific location where the source linked datasets are not available, you may need to resort to another source for weather data or create a scheduled query to feed a copy in the same location, and use a transfer service to copy the records into a table in the desired location. 
 
-
-=======
->>>>>>> rel22
 ## May 2022 - Release 2.1.1 (minor update)
 
 *   Fixed AddressesMD date format to '9999-12-31'
