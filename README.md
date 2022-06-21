@@ -400,37 +400,37 @@ Make any changes to the [DAG templates](https://github.com/GoogleCloudPlatform/c
 
 **Note**: If you do not have an instance of Cloud Composer, you can still generate the scripts and create it later.
 
-This module is optional. If you want to add/process tables individfually after deployment, you can modify the `setting/yaml` file to process only the tables you need and re-execute the specific module with calling `deploy_cdc.sh` or `/src/SAP_CDC/cloudbuild.cdc.yaml` directly. 
+This module is optional. If you want to add/process tables individually after deployment, you can modify the `setting/yaml` file to process only the tables you need and re-execute the specific module with calling `deploy_cdc.sh` or `/src/SAP_CDC/cloudbuild.cdc.yaml` directly. 
 
 ## Configure Hierarchies
 
-You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener])#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to true.
+You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to true.
 
 ## Configure External Datasets
 
-Some advanced use cases may require external datasets to complement an enterprise system of record such as SAP. In addition to external exchanges consumed from [Analytics hub](https://cloud.google.com/analytics-hub), some datasets may need custom or tailored methods to ingest data and join them with the reporting models. To deploy these sample datasets, if deploying fully for the first time, keep the `_GEN_EXT` flag as its default (true) and complete the prerequisites listed below. If complementing an existing deployment (i.e., the target datasets have already been generated), execute the  cloudbuild.cdc.yaml with `_DEPLOY_CDC=false` or the script `/src/SAP_CDC/generate_external_dags.sh`. Use flag `-h` for help with the parameters. 
+Some advanced use cases may require external datasets to complement an enterprise system of record such as SAP. In addition to external exchanges consumed from [Analytics hub](https://cloud.google.com/analytics-hub), some datasets may need custom or tailored methods to ingest data and join them with the reporting models. To deploy these sample datasets, if deploying fully for the first time, keep the `_GEN_EXT` flag as its default (`true`) and complete the prerequisites listed below. If complementing an existing deployment (i.e., the target datasets have already been generated), execute the  `cloudbuild.cdc.yaml` with `_DEPLOY_CDC=false` or the script `/src/SAP_CDC/generate_external_dags.sh`. Use flag `-h` for help with the parameters. 
 
-If you want to only deploy a subset of the DAGs, remove the undesired ones from the list at the beginning of `/src/SAP_CDC/generate_external_dags.sh`, under the marker `## CORTEX-CUSTOMER:`. 
+If you want to only deploy a subset of the DAGs, remove the undesired ones from the `EXTERNAL_DAGS` variable in the beginning of `/src/SAP_CDC/generate_external_dags.sh`.
 
 **Note:** You will need to configure the DAGs as follows:
 
-1. **Holiday Calendar**: This DAG retrieves the holiday calendars from  [PyPi Holidays](https://pypi.org/project/holidays/). You can adjust the list of countries and years to retrieve holidays, as well as parameters of the DAG from the file holiday_calendar.ini. Leave the defaults if using test data.
-2. **Product Hierachy Texts**: This DAG flattens materials and their product hierarchies. The resulting table can be used to feed the `Trends` list of terms to retrieve Interest Over Time. You can adjust the parameters of the DAG from the file `prod_hierarchy_texts.py`. Leave the defaults if using test data. You will need to adjust the levels of the hierarchy and the language under the markers for `## CORTEX-CUSTOMER:`. If your product hierarchy contains more levels, you may need to add an additional SELECT statement similar to the CTE `h1_h2_h3`.
-3. **Trends**: This DAG retrieves Interest Over Time for a specifc set of terms from [Google Search trends](https://trends.google.com/trends/). The terms can be configured in `trends.ini`. You will need to adjust the timeframe to `'today 7-d'` in `trends.py` after an initial run. We recommend getting familiarized with the results coming from the different terms to tune parameters. We also recommend partitioning large lists to multiple copies of this DAG running at different times. For more information about the underlying library being used, see [Pytrends](https://pypi.org/project/pytrends/).
-2. **Weather**: By default, this DAG uses the publicly available test dataset [**bigquery-public-data.geo_openstreetmap.planet_layers**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=open%20street%20map). The query also relies on an NOAA dataset only available through Analytics Hub, [**noaa_global_forecast_system**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=noaa%20global%20forecast).  **`This dataset needs to be created in the same region as the other datasets prior to executing deployment`**. If the datasets are not available, you can continue with the following instructions and follow additional steps to transfer the data into teh desired region. 
+1. **Holiday Calendar**: This DAG retrieves the holiday calendars from  [PyPi Holidays](https://pypi.org/project/holidays/). You can adjust the list of countries and years to retrieve holidays, as well as parameters of the DAG from the file `holiday_calendar.ini`. Leave the defaults if using test data.
+2. **Product Hierarchy Texts**: This DAG flattens materials and their product hierarchies. The resulting table can be used to feed the `Trends` list of terms to retrieve Interest Over Time. You can adjust the parameters of the DAG from the file `prod_hierarchy_texts.py`. Leave the defaults if using test data. You will need to adjust the levels of the hierarchy and the language under the markers for `## CORTEX-CUSTOMER:`. If your product hierarchy contains more levels, you may need to add an additional SELECT statement similar to the CTE `h1_h2_h3`.
+3. **Trends**: This DAG retrieves Interest Over Time for a specific set of terms from [Google Search trends](https://trends.google.com/trends/). The terms can be configured in `trends.ini`. You will need to adjust the timeframe to `'today 7-d'` in `trends.py` after an initial run. We recommend getting familiarized with the results coming from the different terms to tune parameters. We also recommend partitioning large lists to multiple copies of this DAG running at different times. For more information about the underlying library being used, see [Pytrends](https://pypi.org/project/pytrends/).
+2. **Weather**: By default, this DAG uses the publicly available test dataset [**bigquery-public-data.geo_openstreetmap.planet_layers**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=open%20street%20map). The query also relies on an NOAA dataset only available through Analytics Hub, [**noaa_global_forecast_system**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=noaa%20global%20forecast).  **`This dataset needs to be created in the same region as the other datasets prior to executing deployment`**. If the datasets are not available in your region, you can continue with the following instructions and follow additional steps to transfer the data into the desired region. 
 
 **You can skip this configuration if using test data.**
 
-*       Navigate to [BigQuery > Analytics Hub](https://console.cloud.google.com/bigquery/analytics-hub)
-*       Click **Search Listings**. Search for `NOAA Global Forecast System`
-*       Click **Add dataset to project**. When prompted, keep `noaa_global_forecast_system` as the name of the dataset. If needed, adjust the name of the dataset and table in the FROM clauses in `weather_daily.sql`.
-*       Repeat the listing search for Dataset `OpenStreetMap Public Dataset`
-*       Adjust the FROM clauses containing `bigquery-public-data.geo_openstreetmap.planet_layers` in postcode.sql. 
+*  Navigate to [BigQuery > Analytics Hub](https://console.cloud.google.com/bigquery/analytics-hub)
+* Click **Search Listings**. Search for "`NOAA Global Forecast System`"
+* Click **Add dataset to project**. When prompted, keep "`noaa_global_forecast_system`" as the name of the dataset. If needed, adjust the name of the dataset and table in the FROM clauses in `weather_daily.sql`.
+* Repeat the listing search for Dataset "`OpenStreetMap Public Dataset`".
+* Adjust the `FROM ` clauses containing `bigquery-public-data.geo_openstreetmap.planet_layers` in `postcode.sql`. 
 
-[**Analytics hub is currently only supported in EU and US locations**] (https://cloud.google.com/bigquery/docs/analytics-hub-introduction) and some datasets, such as NOAA Golbal Forecast, are only offered in a single multilocatiom. 
-If you are targetting a location different from the one available for the required dataset, we recommend creating a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to copy the new records from the Analytics hub linked dataset followed by a [transfer service](https://cloud.google.com/bigquery-transfer/docs/introduction) to copy those new records into a dataset located in the same location or region as the rest of your deployment. You will then need to adjust the SQL files (e.g., _sap-cortex-data-foundation/src/SAP_CDC/src/external_dag/weather/weather_daily.sql_)
+[**Analytics hub is currently only supported in EU and US locations**](https://cloud.google.com/bigquery/docs/analytics-hub-introduction) and some datasets, such as NOAA Global Forecast, are only offered in a single multilocatiom. 
+If you are targeting a location different from the one available for the required dataset, we recommend creating a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to copy the new records from the Analytics hub linked dataset followed by a [transfer service](https://cloud.google.com/bigquery-transfer/docs/introduction) to copy those new records into a dataset located in the same location or region as the rest of your deployment. You will then need to adjust the SQL files (e.g., `src/SAP_CDC/src/external_dag/weather/weather_daily.sql`)
 
-**Important Note:** Before copying these DAGs to Cloud Composer, you will need to [add the required python modules (holidays, pytrends) as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages). 
+**Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules (`holidays`, `pytrends`) [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**. 
 
 ## Gather the parameters
 
@@ -445,7 +445,7 @@ You will need the following parameters ready for deployment, based on your targe
 *   **Logs Bucket** (`_GCS_BUCKET`): Bucket for logs. Could be the default or [created previously]((#create-a-storage-bucket).
 *   **DAGs bucket** (`_TGT_BUCKET`): Bucket where DAGs will be generated as [created previously]((#create-a-storage-bucket). Avoid using the actual airflow bucket.
 *   **Generate and deploy CDC** (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set it to true so data is copied from the generated raw dataset into this dataset. If set to false, DAGs won't be generated and it should be assumed the `_DS_CDC` is the same as `_DS_RAW`.
-*   **Deploy test data** (`_TEST_DATA`): Set to true if  you want the _DATASET_REPL and _DS_CDC (if _DEPLOY_CDC is true) to be filled by tables with sample data, mimicking a replicated dataset. If set to false, `_DS_RAW` should contain the tables replicated from the SAP source. Default for table creation is --noreplace, meaning if the table exists, the script will not attempt to overwrite it.
+*   **Deploy test data** (`_TEST_DATA`): Set to true if  you want the _DATASET_REPL and _DS_CDC (if _DEPLOY_CDC is true) to be filled by tables with sample data, mimicking a replicated dataset. If set to false, `_DS_RAW` should contain the tables replicated from the SAP source. Default for table creation is `--noreplace`, meaning if the table exists, the script will not attempt to overwrite it.
 
 Optional parameters:
 
@@ -705,7 +705,7 @@ The following are examples of configurations for Cost Centers and Profit Centers
 ```
 sets_data:
 #Cost Centers: 
-# table: csks, select_fields (cost center): 'kostl', where clause: Controling Area (kokrs), Valid to (datbi)
+# table: csks, select_fields (cost center): 'kostl', where clause: Controlling Area (kokrs), Valid to (datbi)
 - setname: 'H1' 
   setclass: '0101'
   orgunit: '1000'
