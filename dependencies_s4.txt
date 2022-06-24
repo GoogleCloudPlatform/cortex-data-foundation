@@ -51,5 +51,9 @@ SAP_REPORTING/CostCenterAmountsHierarchy_SAMPLE.sql
 SAP_REPORTING/Billing.sql
 SAP_REPORTING/OrderToCash.sql
 SAP_REPORTING/AccountingDocumentsReceivables.sql
+SAP_REPORTING/AccountingDocumentsReceivables.sql
+SAP_REPORTING/HolidayCalendar.sql
+SAP_REPORTING/Trends.sql
+SAP_REPORTING/Weather.sql
 SAP_ML_MODELS/Clustering_SAMPLE.sql
 SAP_ML_MODELS/Product_recommender_SAMPLE.sql
