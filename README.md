@@ -504,7 +504,7 @@ gsutil cp -r  gs://<<output bucket>>/hierarchies gs://<<composer dag bucket>>/da
 # Next steps
 
 ## Looker deployment
-Optionally, you can deploy the blocks from the [Looker Marketplace](https://marketplace.looker.com/marketplace/detail/cortex-finance) and explore the pre-built visualizations.  You will find the instructions for the setup [in Looker](https://docs.looker.com/data-modeling/marketplace).
+Optionally, you can deploy the blocks from the [Looker Marketplace](https://marketplace.looker.com/marketplace/detail/cortex-sap-operational) and explore the pre-built visualizations.  You will find the instructions for the setup [in Looker](https://docs.looker.com/data-modeling/marketplace).
 
 ## Application Layer
 Deploy a sample micro-services based application through the [Google Cloud Marketplace](https://console.cloud.google.com/marketplace/product/cortex-public/cloud-cortex-application-layer). 
