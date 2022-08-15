@@ -69,6 +69,11 @@ else
   echo "ERROR: Location ${location_low} is not a valid location for the test harness."
   echo "Please set _TEST_DATA to false or use a supported location listed in README."
   echo "If you believe this location should be supported and is supported by BigQuery, please create an issue."
+  exit 1
+fi
+
+if [[ "${location_low}" == 'australia-southeast1' ]]; then
+    location_low=australia-southeast11
 fi
 
 open_semaphore "${N}"
