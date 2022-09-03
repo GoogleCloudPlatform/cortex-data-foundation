@@ -22,6 +22,7 @@ SAP_REPORTING/TelephoneCodes_T005K.sql
 SAP_REPORTING/CostCentersMD.sql
 SAP_REPORTING/SalesOrganizationsMD.sql
 SAP_REPORTING/SalesOrders.sql
+SAP_REPORTING/SalesOrders_V2.sql
 SAP_REPORTING/Regions_T005S.sql
 SAP_REPORTING/RegionsMD.sql
 SAP_REPORTING/SDDocumentFlow.sql
@@ -55,5 +56,6 @@ SAP_REPORTING/AccountingDocumentsReceivables.sql
 SAP_REPORTING/HolidayCalendar.sql
 SAP_REPORTING/Trends.sql
 SAP_REPORTING/Weather.sql
+SAP_REPORTING/WeatherDaily.sql
 SAP_ML_MODELS/Clustering_SAMPLE.sql
 SAP_ML_MODELS/Product_recommender_SAMPLE.sql
