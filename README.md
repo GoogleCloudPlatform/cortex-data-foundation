@@ -2,9 +2,9 @@
 
 
 # About the Data Foundation for Google Cloud Cortex Framework
-The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that an be automatically deployed together with reference architectures. 
+The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that can be automatically deployed together with reference architectures.
 
-The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-relationship diagram [here](images/erd.png).
+The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-relationship diagram [for ECC here](images/erd_ecc.png) and for [S/4 here](images/erd_s4.png).
 
 
 # TL;DR for setup
@@ -38,51 +38,51 @@ Before continuing with this guide, make sure you are familiar with:
 -   How to navigate the Cloud Console, [Cloud Shell](https://cloud.google.com/shell/docs/using-cloud-shell) and [Cloud Shell Editor](https://cloud.google.com/shell/docs/editor-overview)
 -   Fundamentals of [BigQuery](https://cloud.google.com/bigquery/docs/introduction)
 -   Fundamentals of [Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) or [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html)
--   Fundamental concepts of[ Change Data Capture and dataset structures](#understanding-change-data-capture). 
+-   Fundamental concepts of[ Change Data Capture and dataset structures](#understanding-change-data-capture).
 -   General navigation of [Cloud Build](https://cloud.google.com/build/docs/overview)
 -   Fundamentals of [Identity and Access Management](https://cloud.google.com/iam/docs/)
 
 
 ## Establish project and dataset structure
 
-You will require at least one GCP project to host the BigQuery datasets and execute the deployment process. 
+You will require at least one GCP project to host the BigQuery datasets and execute the deployment process.
 
-This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure). 
+This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure).
 
 ![structure for parameters](images/10.png "image_tooltip")
 
-If you currently have a replication tool from SAP ECC or S/4 HANA, such as the [BigQuery Connector for SAP](https://cloud.google.com/solutions/sap/docs/bq-connector-for-sap-install-config), you can use the same project (Source Project) or a different one for reporting. 
+If you currently have a replication tool from SAP ECC or S/4 HANA, such as the [BigQuery Connector for SAP](https://cloud.google.com/solutions/sap/docs/bq-connector-for-sap-install-config), you can use the same project (Source Project) or a different one for reporting.
 
-**Note:** If you are using an existing dataset with data replicated from SAP, you can find the list of required tables in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml). If you do not have all of the required tables replicated, only the views that depend on missing tables will fail to deploy. 
+**Note:** If you are using an existing dataset with data replicated from SAP, you can find the list of required tables in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml). If you do not have all of the required tables replicated, only the views that depend on missing tables will fail to deploy.
 
 You will need to identify:
 
-*   **Source Google Cloud Project:** Project where the source data is located, from which the data models will consume. 
-*   **Target Google Cloud Project:** Project where the Data Foundation for SAP predefined data models will be deployed and accessed by end-users. This may or may not be different from the source project depending on your needs. 
+*   **Source Google Cloud Project:** Project where the source data is located, from which the data models will consume.
+*   **Target Google Cloud Project:** Project where the Data Foundation for SAP predefined data models will be deployed and accessed by end-users. This may or may not be different from the source project depending on your needs.
 *   **Source BigQuery Dataset:** BigQuery dataset where the source SAP data is replicated to or where the test data will be created.
 *   **CDC BigQuery Dataset:** BigQuery dataset where the CDC processed data lands the latest available records. This may or may not be the same as the source dataset.
 *   **Target BigQuery reporting dataset:** BigQuery dataset where the Data Foundation for SAP predefined data models will be deployed.
 *   **Target BigQuery machine learning dataset:** BigQuery dataset where the BQML predefined models will be deployed.
 
-**Alternatively**, if you do not have a replication tool set up or do not wish to use the replicated data, the deployment process can generate test tables and data for you. You will still need to [create](https://cloud.google.com/bigquery/docs/datasets) and identify the datasets ahead of time.
+**Alternatively**, if you do not have a replication tool set up or do not wish to use the replicated data, the deployment process can generate test tables and fake data for you. You will still need to [create](https://cloud.google.com/bigquery/docs/datasets) and identify the datasets ahead of time.
 
 
 ## Enable Required Components
 
-The following Google Cloud components are required: 
+The following Google Cloud components are required:
 
 *   Google Cloud Project
 *   BigQuery instance and datasets
 *   Service Account with Impersonation rights
-*   Cloud Storage Buckets 
+*   Cloud Storage Buckets
 *   Cloud Build API
 *   Cloud Resource Manager API
 *   Optional components:
-    *   [Cloud Composer](https://console.cloud.google.com/marketplace/product/google/composer.googleapis.com) for change data capture (CDC) processing and hierarchy flattening through Directed Acyclic Graphs ([DAG](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html)s). You can find how to set up an instance of Cloud Composer in the [documentation](https://cloud.google.com/composer/docs/how-to/managing/creating). 
+    *   [Cloud Composer](https://console.cloud.google.com/marketplace/product/google/composer.googleapis.com) for change data capture (CDC) processing and hierarchy flattening through Directed Acyclic Graphs ([DAG](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html)s). You can find how to set up an instance of Cloud Composer in the [documentation](https://cloud.google.com/composer/docs/how-to/managing/creating).
     *   Looker **(optional, connects to reporting templates. Requires manual setup) **
     *   [Analytics Hub](https://cloud.google.com/analytics-hub) linked datasets are currently used for some external sources, such as the Weather DAG. You may choose to fill this structure with any other available source of choice for advanced scenarios.
 
-From the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal), you can enable Google Cloud Services using the _gcloud_ command line interface in your Google Cloud project.  
+From the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal), you can enable Google Cloud Services using the _gcloud_ command line interface in your Google Cloud project.
 
 Replace the `<<SOURCE_PROJECT>>` placeholder with your source project. Copy and paste the following command into the cloud shell:
 
@@ -113,8 +113,9 @@ The Data Foundation for SAP data models require a number of raw tables to be rep
 If you do not have a replication tool or do not wish to use replicated data the deployment process can create the tables and populate them with sample test data.
 
 Notes:
-*   If a table does not exist during deployment, only the views that require it will fail. 
+*   If a table does not exist during deployment, only the views that require it will fail.
 *   The SQL files refer to the tables in lowercase. See the [documentation in BigQuery](https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#case_sensitivity) for more information on case sensitivity.
+*   The structure of the source SAP table is expected as SAP generates it. That is, the same name and the same datatypes. If in doubt about a conversion option, we recommend following the [default table mapping](https://cloud.google.com/solutions/sap/docs/bq-connector/latest/planning#default_data_type_mapping).
 
 ### CDC processing flags
 
@@ -123,7 +124,7 @@ If not using test data, make sure the replication tool includes the fields requi
 
 ### DD03L for metadata
 
-If you are **not planning on deploying test data**, and if you **are planning on generating CDC DAG scripts** during deployment, make sure table **DD03L** is replicated from SAP in the source project. 
+If you are **not planning on deploying test data**, and if you **are planning on generating CDC DAG scripts** during deployment, make sure table **DD03L** is replicated from SAP in the source project.
 
 This table contains metadata about tables, like the list of keys, and is needed for the CDC generator and dependency resolver to work. This table will also allow you to add tables not currently covered by the model to generated CDC scripts, like custom or `Z` tables.
 
@@ -139,7 +140,7 @@ If an individual is executing the deployment with their own account, they will n
 *   Project Viewer or Storage Object Viewer
 
 These permissions may vary depending on the setup of the project. Consider the following documentation if you run into errors:
-*   [Permissions to run Cloud Build](https://cloud.google.com/build/docs/securing-builds/configure-access-to-resources) 
+*   [Permissions to run Cloud Build](https://cloud.google.com/build/docs/securing-builds/configure-access-to-resources)
 *   [Permissions to storage for the Build Account](https://cloud.google.com/build/docs/securing-builds/store-manage-build-logs)
 *   [Permissions for the Cloud Build service account](https://cloud.google.com/build/docs/securing-builds/configure-access-for-cloud-build-service-account)
 *   [Viewing logs from Builds](https://cloud.google.com/build/docs/securing-builds/store-manage-build-logs#viewing_build_logs)
@@ -163,7 +164,7 @@ Grant the following permissions to the Cloud Build service account in both the s
 
 The deployment can run through a service account with impersonation rights, by adding the flag [\--impersonate-service-account](https://cloud.google.com/sdk/gcloud/reference/builds/submit). This service account will trigger a Cloud Build job, that will in turn run specific steps through the Cloud Build service account. This allows a user to trigger a deployment process without direct access to the resources.
 
-The impersonation rights to the new, triggering service account need to be granted to the person running the command. 
+The impersonation rights to the new, triggering service account need to be granted to the person running the command.
 
 Navigate to the [Google Cloud Platform Console](https://console.cloud.google.com/iam-admin/serviceaccounts/create) and follow the steps to create a service account with the following role:
 
@@ -181,7 +182,7 @@ Authorize the ID of user who will be running the deployment to impersonate the s
 ![Authorize impersonation](images/3.png "image_tooltip")
 
 
-Once the service account has been created, navigate to the[ IAM Service Account administration](https://console.cloud.google.com/iam-admin/serviceaccounts), click on the service account, and into the Permissions tab. 
+Once the service account has been created, navigate to the[ IAM Service Account administration](https://console.cloud.google.com/iam-admin/serviceaccounts), click on the service account, and into the Permissions tab.
 
 Click **Grant Access**, type in the ID of the user who will execute the deployment and has impersonation rights, and assign the following role:
 
@@ -223,15 +224,15 @@ Navigate to the _Permissions_ tab. Grant `Storage Object Creator` to the user ex
 
 ## [Optional] Create a Storage bucket for logs
 
-You can create a specific bucket for the Cloud Build process to store the logs. This is useful if you want to restrict data that may be stored in logs to a specific region. Create a [GCS bucket](https://console.cloud.google.com/storage) with uniform access control, in the same region where the deployment will run. 
+You can create a specific bucket for the Cloud Build process to store the logs. This is useful if you want to restrict data that may be stored in logs to a specific region. Create a [GCS bucket](https://console.cloud.google.com/storage) with uniform access control, in the same region where the deployment will run.
 
-**Alternatively**, here is the command line to create this bucket: 
+**Alternatively**, here is the command line to create this bucket:
 
 ```bash
 gsutil mb -l <REGION/MULTI-REGION> gs://<BUCKET NAME>
 ```
 
-You will need to grant `Object Admin` permissions to the Cloud Build service account. 
+You will need to grant `Object Admin` permissions to the Cloud Build service account.
 
 # Setup
 
@@ -249,7 +250,7 @@ git clone  https://github.com/lsubatin/mando-checker
 ```
 
 
-2. From Cloud Shell , change into the directory: 
+2. From Cloud Shell , change into the directory:
 
 ```bash
 cd mando-checker
@@ -311,7 +312,7 @@ The table below contains the parameters that can be passed to the build for furt
    </td>
    <td style="background-color: #e3f2fd">Y
    </td>
-   <td style="background-color: #e3f2fd">The project ID that will contain the tables and bucket. Defaults to the same project ID running the build 
+   <td style="background-color: #e3f2fd">The project ID that will contain the tables and bucket. Defaults to the same project ID running the build
    </td>
   </tr>
   <tr>
@@ -319,7 +320,7 @@ The table below contains the parameters that can be passed to the build for furt
    </td>
    <td style="background-color: null">Y
    </td>
-   <td style="background-color: null">Name of the GCS bucket which will contain the logs. 
+   <td style="background-color: null">Name of the GCS bucket which will contain the logs.
    </td>
   </tr>
   <tr>
@@ -327,7 +328,7 @@ The table below contains the parameters that can be passed to the build for furt
    </td>
    <td style="background-color: #e3f2fd">N
    </td>
-   <td style="background-color: #e3f2fd">Test dataset to be created. 
+   <td style="background-color: #e3f2fd">Test dataset to be created.
 <p>
 Default: "DEPLOY_DATASET_TEST"
    </td>
@@ -337,7 +338,7 @@ Default: "DEPLOY_DATASET_TEST"
    </td>
    <td style="background-color: null">N
    </td>
-   <td style="background-color: null">Test table to be created. 
+   <td style="background-color: null">Test table to be created.
 <p>
 Default: "DEPLOY_TABLE_TEST"
    </td>
@@ -347,7 +348,7 @@ Default: "DEPLOY_TABLE_TEST"
    </td>
    <td style="background-color: #e3f2fd">N
    </td>
-   <td style="background-color: #e3f2fd">Test file to be created. 
+   <td style="background-color: #e3f2fd">Test file to be created.
 <p>
 Default: "deploy_gcs_file_test_cloudbuild.txt"
    </td>
@@ -357,9 +358,9 @@ Default: "deploy_gcs_file_test_cloudbuild.txt"
    </td>
    <td style="background-color: null">N
    </td>
-   <td style="background-color: null">Location used for BQ ( 
+   <td style="background-color: null">Location used for BQ (
 <p>
-https://cloud.google.com/bigquery/docs/locations )  
+https://cloud.google.com/bigquery/docs/locations )
 <p>
 Default: "US"
    </td>
@@ -370,8 +371,6 @@ Default: "US"
 ## How it works
 
 The Cortex Deployment Checker is a very simple utility that will try to exercise the required permissions to ensure that they are correctly set up.
-
-
 
 1. List the given bucket
 2. Write to the bucket
@@ -400,7 +399,7 @@ Make any changes to the [DAG templates](https://github.com/GoogleCloudPlatform/c
 
 **Note**: If you do not have an instance of Cloud Composer, you can still generate the scripts and create it later.
 
-This module is optional. If you want to add/process tables individually after deployment, you can modify the `setting/yaml` file to process only the tables you need and re-execute the specific module with calling `deploy_cdc.sh` or `/src/SAP_CDC/cloudbuild.cdc.yaml` directly. 
+This module is optional. If you want to add/process tables individually after deployment, you can modify the `setting/yaml` file to process only the tables you need and re-execute the specific module with calling `deploy_cdc.sh` or `/src/SAP_CDC/cloudbuild.cdc.yaml` directly.
 
 ## Configure Hierarchies
 
@@ -408,7 +407,7 @@ You can use the configuration in the file [`sets.yaml`](https://github.com/Googl
 
 ## Configure External Datasets
 
-Some advanced use cases may require external datasets to complement an enterprise system of record such as SAP. In addition to external exchanges consumed from [Analytics hub](https://cloud.google.com/analytics-hub), some datasets may need custom or tailored methods to ingest data and join them with the reporting models. To deploy these sample datasets, if deploying fully for the first time, keep the `_GEN_EXT` flag as its default (`true`) and complete the prerequisites listed below. If complementing an existing deployment (i.e., the target datasets have already been generated), execute the  `cloudbuild.cdc.yaml` with `_DEPLOY_CDC=false` or the script `/src/SAP_CDC/generate_external_dags.sh`. Use flag `-h` for help with the parameters. 
+Some advanced use cases may require external datasets to complement an enterprise system of record such as SAP. In addition to external exchanges consumed from [Analytics hub](https://cloud.google.com/analytics-hub), some datasets may need custom or tailored methods to ingest data and join them with the reporting models. To deploy these sample datasets, if deploying fully for the first time, keep the `_GEN_EXT` flag as its default (`true`) and complete the prerequisites listed below. If complementing an existing deployment (i.e., the target datasets have already been generated), execute the  `cloudbuild.cdc.yaml` with `_DEPLOY_CDC=false` or the script `/src/SAP_CDC/generate_external_dags.sh`. Use flag `-h` for help with the parameters.
 
 If you want to only deploy a subset of the DAGs, remove the undesired ones from the `EXTERNAL_DAGS` variable in the beginning of `/src/SAP_CDC/generate_external_dags.sh`.
 
@@ -417,7 +416,7 @@ If you want to only deploy a subset of the DAGs, remove the undesired ones from 
 1. **Holiday Calendar**: This DAG retrieves the holiday calendars from  [PyPi Holidays](https://pypi.org/project/holidays/). You can adjust the list of countries and years to retrieve holidays, as well as parameters of the DAG from the file `holiday_calendar.ini`. Leave the defaults if using test data.
 2. **Product Hierarchy Texts**: This DAG flattens materials and their product hierarchies. The resulting table can be used to feed the `Trends` list of terms to retrieve Interest Over Time. You can adjust the parameters of the DAG from the file `prod_hierarchy_texts.py`. Leave the defaults if using test data. You will need to adjust the levels of the hierarchy and the language under the markers for `## CORTEX-CUSTOMER:`. If your product hierarchy contains more levels, you may need to add an additional SELECT statement similar to the CTE `h1_h2_h3`.
 3. **Trends**: This DAG retrieves Interest Over Time for a specific set of terms from [Google Search trends](https://trends.google.com/trends/). The terms can be configured in `trends.ini`. You will need to adjust the timeframe to `'today 7-d'` in `trends.py` after an initial run. We recommend getting familiarized with the results coming from the different terms to tune parameters. We also recommend partitioning large lists to multiple copies of this DAG running at different times. For more information about the underlying library being used, see [Pytrends](https://pypi.org/project/pytrends/).
-2. **Weather**: By default, this DAG uses the publicly available test dataset [**bigquery-public-data.geo_openstreetmap.planet_layers**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=open%20street%20map). The query also relies on an NOAA dataset only available through Analytics Hub, [**noaa_global_forecast_system**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=noaa%20global%20forecast).  **`This dataset needs to be created in the same region as the other datasets prior to executing deployment`**. If the datasets are not available in your region, you can continue with the following instructions and follow additional steps to transfer the data into the desired region. 
+2. **Weather**: By default, this DAG uses the publicly available test dataset [**bigquery-public-data.geo_openstreetmap.planet_layers**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=open%20street%20map). The query also relies on an NOAA dataset only available through Analytics Hub, [**noaa_global_forecast_system**](https://console.cloud.google.com/bigquery/analytics-hub/exchanges(analyticshub:search)?queryText=noaa%20global%20forecast).  **`This dataset needs to be created in the same region as the other datasets prior to executing deployment`**. If the datasets are not available in your region, you can continue with the following instructions and follow additional steps to transfer the data into the desired region.
 
 **You can skip this configuration if using test data.**
 
@@ -425,12 +424,12 @@ If you want to only deploy a subset of the DAGs, remove the undesired ones from 
 * Click **Search Listings**. Search for "`NOAA Global Forecast System`"
 * Click **Add dataset to project**. When prompted, keep "`noaa_global_forecast_system`" as the name of the dataset. If needed, adjust the name of the dataset and table in the FROM clauses in `weather_daily.sql`.
 * Repeat the listing search for Dataset "`OpenStreetMap Public Dataset`".
-* Adjust the `FROM ` clauses containing `bigquery-public-data.geo_openstreetmap.planet_layers` in `postcode.sql`. 
+* Adjust the `FROM ` clauses containing `bigquery-public-data.geo_openstreetmap.planet_layers` in `postcode.sql`.
 
-[**Analytics hub is currently only supported in EU and US locations**](https://cloud.google.com/bigquery/docs/analytics-hub-introduction) and some datasets, such as NOAA Global Forecast, are only offered in a single multilocatiom. 
+[**Analytics hub is currently only supported in EU and US locations**](https://cloud.google.com/bigquery/docs/analytics-hub-introduction) and some datasets, such as NOAA Global Forecast, are only offered in a single multilocatiom.
 If you are targeting a location different from the one available for the required dataset, we recommend creating a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to copy the new records from the Analytics hub linked dataset followed by a [transfer service](https://cloud.google.com/bigquery-transfer/docs/introduction) to copy those new records into a dataset located in the same location or region as the rest of your deployment. You will then need to adjust the SQL files (e.g., `src/SAP_CDC/src/external_dag/weather/weather_daily.sql`)
 
-**Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules (`holidays`, `pytrends`) [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**. 
+**Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules (`holidays`, `pytrends`) [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**.
 
 ## Gather the parameters
 
@@ -451,8 +450,42 @@ Optional parameters:
 
 *   **Location or Region** (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Default is `US`). **Note**: Restrictions listed under [BigQuery dataset locations](https://cloud.google.com/bigquery/docs/locations). Currently supported values are: S and EU (multilocations), us-central1, us-west4, us-west2, northamerica-northeast1, northamerica-northeast2, us-east4, us-west1, us-west3, southamerica-east1, southamerica-west1, us-east1, asia-south2, asia-east2, asia-southeast2, australia-southeast2, asia-south1, asia-northeast2, asia-northeast3, asia-southeast1, australia-southeast1, asia-east1, asia-northeast1, europe-west1, europe-north1, europe-west3, europe-west2, europe-west4, europe-central2, europe-west6.
 *   **Mandant or Client** (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`.
-*   **SQL flavor for source system** (`_SQL_FLAVOUR`): S4 or ECC. See the documentation for options. For test data, keep the default value (`ECC`). For Demand Sensing, only ECC test data is provided at this time.
+*   **SQL flavor for source system** (`_SQL_FLAVOUR`): S4, ECC or UNION. See the documentation for options. For test data, keep the default value (`ECC`). For Demand Sensing, only ECC test data is provided at this time. UNION is currently an experimental feature and should be used after both an S4 and an ECC deployments have been completed.
 *   **Generate External Data** (`_GEN_EXT`): Generate DAGs to consume external data (e.g., weather, trends, holiday calendars). Some datasets have external dependencies that need to be configured before running this process. If _TEST_DATA is true, the tables for external datasets will be populated with sample data. Default: TRUE.
+
+## Configure Currency and Language Templates
+If you are not using test data, from the cloned Data Foundation repository, navigate to the SAP_REPORTING submodule in `cortex-data-foundation/src/SAP/SAP_REPORTING` and modify the CURRENCY and LANGUAGE variables. These variables will replace placeholders in the SQL. Keep the single quotes around the values.
+
+You can use single values:
+
+```
+CURRENCY='USD'
+LANGUAGE='E'
+```
+
+Or you can use multiple values by separating them with commas:
+
+```
+CURRENCY='USD','ARS'
+LANGUAGE='E','S'
+```
+
+## Configure the UNION option
+The UNION option for `_SQL_FLAVOUR` allows for an additional implementation to apply a `UNION` operation between views sourcing data from an ECC system and views sourcing data from an S/4HANA system. This feature is currently experimental and we are seeking feedback on it. The `UNION` dataset depends on the ECC and S/4HANA reporting datasets to exist. The following chart explains the flow of data when using `UNION`:
+
+![Union sourcing from ECC and S4 reporting](images/union.jpg)
+
+After deploying the reporting datasets for S/4 and ECC, navigate to the SAP_REPORTING submodule from the cloned Data Foundation repository (`cortex-data-foundation/src/SAP/SAP_REPORTING`), open the file `sap_config.env` and configure the datasets for ECC and S/4 respectively (i.e., DS_CDC_ECC, DS_CDC_S4, DS_RAW_ECC, DS_RAW_S4). You can leave the datasets that do not have a _SQL_FLAVOUR in their name empty.
+
+![Sample config.env file](images/env_file.png)
+
+Since the deployment for CDC and DAG generation needs to occur first and for each source system, the UNION option will only execute the SAP_REPORTING submodule. You can execute the submodule directly or from the Data Foundation deployer. If using the Data Foundation, after configuring the `sap_config.env` file, this is what the command would look like:
+
+```bash
+gcloud builds submit --project <<Source Project>> \
+--substitutions _PJID_SRC=<<Source Project>>,_PJID_TGT=<<Target Project>>,_GCS_BUCKET=<<Bucket for Logs>>,_GEN_EXT=false,_SQL_FLAVOUR=union
+
+```
 
 ## Execute the build
 
@@ -486,6 +519,7 @@ And identify any issues with individual builds:
 
 ![SQL error](images/14.png "image_tooltip")
 
+We recommend pasting the generated SQL into BigQuery to identify and correct the errors more easily. Most errors will be related to fields that are selected but not present in the replicated source. The BigQuery UI will help identify and comment those out.
 
 ## Move the files into the DAG bucket
 
@@ -506,11 +540,17 @@ gsutil cp -r  gs://<<output bucket>>/hierarchies gs://<<composer dag bucket>>/da
 ## Looker deployment
 Optionally, you can deploy the blocks from the [Looker Marketplace](https://marketplace.looker.com/marketplace/detail/cortex-sap-operational) and explore the pre-built visualizations.  You will find the instructions for the setup [in Looker](https://docs.looker.com/data-modeling/marketplace).
 
+## Demand Sensing
+You can deploy the Demand Sensing use case [from the Marketplace](https://console.cloud.google.com/marketplace/product/cortex-public/cortex-demand-sensing). Learn more from the documentation.
 ## Application Layer
-Deploy a sample micro-services based application through the [Google Cloud Marketplace](https://console.cloud.google.com/marketplace/product/cortex-public/cloud-cortex-application-layer). 
+Deploy a sample micro-services based application through the [Google Cloud Marketplace](https://console.cloud.google.com/marketplace/product/cortex-public/cloud-cortex-application-layer).
 
 ## Customizations and upgrades
-We strongly encourage you to fork this repository and apply your changes to the code in your own fork. You can make use of the delivered deployment scripts in your development cycles and incorporate your own test scripts as needed. When a new release is published, you can compare the new release from our repository with your own changes by merging our code into your own fork in a separate branch. 
+We strongly encourage you to fork this repository and apply your changes to the code in your own fork. You can make use of the delivered deployment scripts in your development cycles and incorporate your own test scripts as needed. When a new release is published, you can compare the new release from our repository with your own changes by merging our code into your own fork in a separate branch. Suggestions for changes or possible csutomizations in the code are flagged with the comment `## CORTEX-CUSTOMER`. We recommend listing these after the initial deployment.
+
+## Enable TURBO mode
+
+For your own customizations and a faster deployment in your own development pipelines, you can use the `TURBO` variable in SAP_REPORTING/sap_config.env. When set to true, the deployment process will dynamically generate a `cloudbuild.views.yaml` file with each view in dependencies_ecc.txt or dependencies_s4.txt as a single step of the build. This allows for a 10x faster deployment. The limitation is that if an error occurs when deploying a view, the build process will stop. The maximum number for steps in a cloudbuild.yaml file is 100. If you are still fixing potential structure mismatches between the SELECT clauses in the views and the fields available in your replicated tables, `TURBO=false` will take longer but will attempt to generate all views even if one fails. This could help identify more errors in a single run.
 
 # Support
 
@@ -524,9 +564,9 @@ To file issues and feature requests against these models or deployers, create an
 
 ### Replicating raw data
 
-The goal of the Data Foundation for SAP is to expose data and analytics models for reporting and applications. The models consume the data replicated from an SAP ECC or SAP S/4HANA system using a preferred replication tool, like the [BigQuery Connector for SAP](https://cloud.google.com/blog/products/data-analytics/bigquery-connector-for-sap).
+The goal of the Data Foundation for SAP is to expose data and analytics models for reporting and applications. The models consume the data replicated from an SAP ECC or SAP S/4HANA system using a preferred replication tool, like those listed in the [Data Integration Guides for SAP](https://cloud.google.com/solutions/sap/docs/sap-data-integration-guides).
 
-Data from SAP ECC or S/4HANA is expected to be replicated in raw form, that is, with the same structure as the tables in SAP and without transformations. The names of the tables in BigQuery should be lower case for cortex data model compatibility reasons. 
+Data from SAP ECC or S/4HANA is expected to be replicated in raw form, that is, with the same structure as the tables in SAP and without transformations. The names of the tables in BigQuery should be lower case for cortex data model compatibility reasons.
 
 For example, fields in table T001 are replicated using their equivalent data type in BigQuery, without transformations:
 
@@ -557,7 +597,7 @@ Some replication tools can merge or upsert the records when inserting them into 
 
 ## Optional - Using different projects to segregate access
 
-Some customers choose to have different projects for different functions to keep users from having excessive access to some data. The deployment allows for using two projects, one for processing replicated data, where only technical users have access to the raw data, and one for reporting, where business users can query the predefined models or views. 
+Some customers choose to have different projects for different functions to keep users from having excessive access to some data. The deployment allows for using two projects, one for processing replicated data, where only technical users have access to the raw data, and one for reporting, where business users can query the predefined models or views.
 
 
 ![alt_text](images/18.png "image_tooltip")
@@ -575,7 +615,7 @@ Cloud Composer can schedule the scripts to process the merge operations periodic
 ![alt_text](images/19.png "image_tooltip")
 
 
-The scheduled frequency can be customized to fit the business needs. 
+The scheduled frequency can be customized to fit the business needs.
 
 Download and open the sample file using gsutil from the Cloud Shell as follows:
 
@@ -592,7 +632,7 @@ The following example shows an extract from the configuration file:
 
 ```
 data_to_replicate:
-  - base_table: adrc 
+  - base_table: adrc
     load_frequency: "@hourly"
   - base_table: adr6
     target_table: adr6_cdc
@@ -613,7 +653,7 @@ If you want to create DAGs or runtime views to process changes for tables that e
 
 
 ```
-  - base_table: zztable_customer 
+  - base_table: zztable_customer
     load_frequency: "@daily"
   - base_table: zzspecial_table
     load_frequency: "RUNTIME"
@@ -632,17 +672,17 @@ ON ${p_key}
 WHEN MATCHED AND S.operation_flag='D' AND S.is_deleted = true THEN
   DELETE
 WHEN NOT MATCHED AND S.operation_flag='I' THEN
-  INSERT (${fields}) 
-  VALUES 
+  INSERT (${fields})
+  VALUES
   (${fields})
 WHEN MATCHED AND S.operation_flag='U' THEN
-UPDATE SET 
+UPDATE SET
     ${update_fields}
 
 ```
 
 
-Alternatively, if your business requires near-real time insights and the replication tool supports it, the deployment tool accepts the option RUNTIME. This means a CDC script will not be generated. Instead, a  view will scan and fetch the latest available record at runtime for [immediate consistency](https://cloud.google.com/architecture/database-replication-to-bigquery-using-change-data-capture#immediate_consistency_approach). 
+Alternatively, if your business requires near-real time insights and the replication tool supports it, the deployment tool accepts the option RUNTIME. This means a CDC script will not be generated. Instead, a  view will scan and fetch the latest available record at runtime for [immediate consistency](https://cloud.google.com/architecture/database-replication-to-bigquery-using-change-data-capture#immediate_consistency_approach).
 
 The following parameters will be required for the automated generation of change-data-capture batch processes:
 
@@ -662,7 +702,7 @@ The following parameters will be required for the automated generation of change
 
 ## Gathering Cloud Composer Settings
 
-If Cloud Composer is available, create a connection to the Source Project[ in Cloud Composer](https://cloud.google.com/composer/docs/how-to/managing/connections#creating_new_airflow_connections) called sap\_cdc\_bq. 
+If Cloud Composer is available, create a connection to the Source Project[ in Cloud Composer](https://cloud.google.com/composer/docs/how-to/managing/connections#creating_new_airflow_connections) called sap\_cdc\_bq.
 
 The GCS bucket structure in the template DAG expects the folders to be in /data/bq\_data\_replication. You can modify this path prior to deployment.
 
@@ -675,7 +715,7 @@ If you do not have an environment of Cloud Composer available yet, you can deplo
 
 ## Configuring the flattener for SAP hierarchies
 
-The deployment process can optionally flatten hierarchies represented as sets (e.g. transaction GS03) in SAP. The process can also generate the DAGs for these hierarchies to be refreshed periodically and automatically. This process requires configuration prior to the deployment and should be known by a Financial or Controlling consultant or power user. 
+The deployment process can optionally flatten hierarchies represented as sets (e.g. transaction GS03) in SAP. The process can also generate the DAGs for these hierarchies to be refreshed periodically and automatically. This process requires configuration prior to the deployment and should be known by a Financial or Controlling consultant or power user.
 
 Download and open the sample file using gsutil from the Cloud Shell as follows:
 
@@ -704,9 +744,9 @@ The following are examples of configurations for Cost Centers and Profit Centers
 
 ```
 sets_data:
-#Cost Centers: 
+#Cost Centers:
 # table: csks, select_fields (cost center): 'kostl', where clause: Controlling Area (kokrs), Valid to (datbi)
-- setname: 'H1' 
+- setname: 'H1'
   setclass: '0101'
   orgunit: '1000'
   mandt:  '800'
@@ -714,18 +754,18 @@ sets_data:
   key_field: 'kostl'
   where_clause: [ kokrs = '1000', datbi >= cast('9999-12-31' as date)]
   load_frequency: "@daily"
-#Profit Centers: 
+#Profit Centers:
 # setclass: 0106, table: cepc, select_fields (profit center): 'cepc', where clause: Controlling Area (kokrs), Valid to (datbi)
-- setname: 'HE' 
+- setname: 'HE'
   setclass: '0106'
   orgunit: '1000'
   mandt:  '800'
   table: 'cepc'
   key_field: 'prctr'
-  where_clause: [ kokrs = '1000', datbi >= cast('9999-12-31' as date) ]  
+  where_clause: [ kokrs = '1000', datbi >= cast('9999-12-31' as date) ]
   load_frequency: "@monthly"
-#G/L Accounts: 
-# table: ska1, select_fields (GL Account): 'saknr', where clause: Chart of Accounts (KTOPL), set will be manual. May also need to poll Financial Statement versions.  
+#G/L Accounts:
+# table: ska1, select_fields (GL Account): 'saknr', where clause: Chart of Accounts (KTOPL), set will be manual. May also need to poll Financial Statement versions.
 
 ```
 

@@ -13,13 +13,19 @@
 # limitations under the License.
 
 steps:
+  # - name: gcr.io/cloud-builders/gcloud
+  #   entrypoint: "bash"
+  #   args:
+  #     - "-c"
+  #     - |
+  #        ./validate_build_config.sh '${_PJID_SRC}' '${_DS_RAW}' '${_SQL_FLAVOUR}' '${_LOCATION}'
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: "bash"
     args:
       - "-c"
       - |
         if [ '$_TEST_DATA' = "true" ] ; then
-          ./create_test_harness.sh '${_PJID_SRC}' '${_DS_RAW}' '${_SQL_FLAVOUR}' '${_LOCATION}' 
+          ./create_test_harness.sh '${_PJID_SRC}' '${_DS_RAW}' '${_SQL_FLAVOUR}' '${_LOCATION}'
         fi
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: "bash"
@@ -27,31 +33,33 @@ steps:
     args:
       - "-c"
       - |
-        gcloud builds submit \
-        --config=./src/SAP_CDC/cloudbuild.cdc.yaml \
-        --substitutions=_PJID_SRC='${_PJID_SRC}',_DS_RAW='${_DS_RAW}',_PJID_TGT='${_PJID_SRC}',_DS_CDC='${_DS_CDC}',_GCS_BUCKET='${_TGT_BUCKET}',_GCS_LOG_BUCKET='${_GCS_BUCKET}',_TEST_DATA='${_TEST_DATA}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_GEN_EXT='${_GEN_EXT}',_LOCATION='${_LOCATION}',_DEPLOY_CDC='${_DEPLOY_CDC}' ./src/SAP_CDC/
+        if [ '$_DEPLOY_CDC' = "true" ] || [ '$_GEN_EXT' = "true" ] ; then
+          gcloud builds submit ./src/SAP/SAP_CDC  \
+          --config=./src/SAP/SAP_CDC/cloudbuild.cdc.yaml \
+          --substitutions=_PJID_SRC='${_PJID_SRC}',_DS_RAW='${_DS_RAW}',_PJID_TGT='${_PJID_SRC}',_DS_CDC='${_DS_CDC}',_GCS_BUCKET='${_TGT_BUCKET}',_GCS_LOG_BUCKET='${_GCS_BUCKET}',_TEST_DATA='${_TEST_DATA}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_GEN_EXT='${_GEN_EXT}',_LOCATION='${_LOCATION}',_DEPLOY_CDC='${_DEPLOY_CDC}'
+        fi
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: "bash"
-    #args: ['cicd.sh', '$_PROJECT_ID_SRC', '$_PROJECT_ID_TGT', '$_DATASET_SRC', '${_VIEWS_DIR}', '${_MANDT}','${_LOCATION}']
     args:
       - "-c"
       - |-
-        ./cicd.sh \
-          --source-project '${_PJID_SRC}' \
-          --target-project '${_PJID_TGT}' \
-          --cdc-processed-dataset '${_DS_CDC}' \
-          --raw-landing-dataset '${_DS_RAW}' \
-          --target-reporting-dataset '${_DS_REPORTING}' \
-          --target-models-dataset '${_DS_MODELS}' \
-          --location '${_LOCATION}' \
-          --mandt '${_MANDT}' \
-          --sql-flavour '${_SQL_FLAVOUR}' \
-            '${_VIEWS_DIR}'
+        gcloud builds submit ./src/SAP/SAP_REPORTING  \
+        --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
+        --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION='${_LOCATION}',_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}'
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |-
+        gcloud builds submit ./src/SAP/SAP_ML_MODELS  \
+        --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
+        --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION='${_LOCATION}',_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}'
+
 
 logsBucket: "gs://$_GCS_BUCKET"
 timeout: 10200s
 substitutions:
-  _VIEWS_DIR: src/views
+  # _VIEWS_DIR: src/SAP
   _TEST_DATA: "false"
   _LOCATION: "US"
   _DS_REPORTING: "REPORTING"

@@ -1,9 +1,12 @@
-[submodule "src/SAP_CDC"]
-	path = src/SAP_CDC
-	url = ../cortex-dag-generator
-[submodule "src/views/SAP_ML_MODELS"]
-	path = src/views/SAP_ML_MODELS
-	url = ../cortex-ml-models
-[submodule "src/views/SAP_REPORTING"]
-	path = src/views/SAP_REPORTING
+[submodule "src/SAP/SAP_REPORTING"]
+	path = src/SAP/SAP_REPORTING
 	url = ../cortex-reporting
+	branch = main
+[submodule "src/SAP/SAP_ML_MODELS"]
+	path = src/SAP/SAP_ML_MODELS
+	url = ../cortex-ml-models
+	branch = main
+[submodule "src/SAP/SAP_CDC"]
+	path = src/SAP/SAP_CDC
+	url = ../cortex-dag-generator
+	branch = main
