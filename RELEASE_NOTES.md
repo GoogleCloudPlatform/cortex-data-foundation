@@ -12,9 +12,9 @@
 *   New views: WeatherDaily, SalesOrders_V2, DeliveryBlockingReasonsMD, BillingBlockingReasonsMD, StorageLocationsMD, PurchaseDocumentTypesMD, MovementTypesMD, ReasonForMovementTypesMD, SpecialStocksMD, PurchasingOrganizationsMD, BatchesMD,  MaterialPlantsMD, ProductionOrders, PurchasingGroupsMD, MaterialsValuation, MaterialsMovement, MaterialTypesMD, BillOfMaterialsMD, DivisionsMD, ValuationAreasMD.
 *   New DAG for currency conversion and currency decimal shifting. This will be improved to run a smaller range of conversion dates in a future release.
 *   When test data is set to true, the dynamically generated MERGE operation will now copy the test data from the raw landing dataset into the CDC dataset. Test data in CDC dataset is no longer copied as it is from the raw landing. Test data is still meant to provide a base for specific demo scenarios and is still not guaranteed to be a reliable source with any quality or referential integrity.
-*   We have started marking releases with tags. This release is now [v3.0](https://github.com/GoogleCloudPlatform/cortex-data-foundation/releases/tag/v.3.0)
+*   We have started marking releases with tags. This release is now [v3.0](https://github.com/GoogleCloudPlatform/cortex-data-foundation/releases/tag/v3.0)
 *   Views for ECC are now matched in S4. See S/4HANA ERD for more information.
-*   New guide with recommendations for upgrades in the `docs` directory.
+*   New guide with [recommendations for upgrades](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/docs/upgrade_recommendations/upgrade_recommendations.md) in the `docs` directory.
 
 ### Upgrade Recommendations
 Since most views have at least a minor change in their dataset jinja templates (i.e., going from `{{ dataset_cdc_processed }}` to `{{ dataset_cdc_processed_ecc }}` ), we recommend the following:
