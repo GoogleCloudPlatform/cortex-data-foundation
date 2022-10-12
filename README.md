@@ -4,7 +4,7 @@
 # About the Data Foundation for Google Cloud Cortex Framework
 The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that can be automatically deployed together with reference architectures.
 
-The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-relationship diagram [for ECC here](images/erd_ecc.png) and for [S/4 here](images/erd_s4.png).
+The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-relationship diagram [for ECC here](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf))   and for [S/4 here](images/erd_s4.png) ([PDF](docs/erd_s4.pdf)) .
 
 
 # TL;DR for setup
