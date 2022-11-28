@@ -13,13 +13,7 @@
 # limitations under the License.
 
 steps:
-  # - name: gcr.io/cloud-builders/gcloud
-  #   entrypoint: "bash"
-  #   args:
-  #     - "-c"
-  #     - |
-  #        ./validate_build_config.sh '${_PJID_SRC}' '${_DS_RAW}' '${_SQL_FLAVOUR}' '${_LOCATION}'
-  - name: gcr.io/cloud-builders/gcloud
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v1.5
     entrypoint: "bash"
     args:
       - "-c"
@@ -60,10 +54,10 @@ logsBucket: "gs://$_GCS_BUCKET"
 timeout: 10200s
 substitutions:
   # _VIEWS_DIR: src/SAP
-  _TEST_DATA: "false"
+  # _TEST_DATA: "false"
   _LOCATION: "US"
-  _DS_REPORTING: "REPORTING"
-  _DS_MODELS: "ML_MODELS"
+  # _DS_REPORTING: "REPORTING"
+  # _DS_MODELS: "ML_MODELS"
   _SQL_FLAVOUR: "ECC"
   #_SQL_FLAVOUR: "S4"
   _MANDT: "100"

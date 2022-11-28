@@ -4,7 +4,7 @@
 # About the Data Foundation for Google Cloud Cortex Framework
 The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that can be automatically deployed together with reference architectures.
 
-The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-relationship diagram [for ECC here](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf))   and for [S/4 here](images/erd_s4.png) ([PDF](docs/erd_s4.pdf)) .
+The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find and entity-relationship diagram [for ECC here](images/erd_ecc.png) and for [S/4 here](images/erd_s4.png).
 
 
 # TL;DR for setup
@@ -16,9 +16,9 @@ git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-dat
 Then change into the cloned directory execute the following command
 
 ```bash
-gcloud builds submit --project <<execution project, likely the source>> \
+gcloud builds submit --project <execution project, likely the source> \
 --substitutions \
-_PJID_SRC=<<project for landing raw data>>,_PJID_TGT=<<project to deploy user-facing views>>,_DS_CDC=<<BQ dataset to land the result of CDC processing - must exist before deployment>>,_DS_RAW=<<BQ dataset to land raw data from replication - must exist before deployment>>,_DS_REPORTING=<<BQ dataset where Reporting views are created, will be created if it does not exist>>,_DS_MODELS=<<BQ dataset where ML views are created, will be created if it does not exist>>,_GCS_BUCKET=<<Bucket for logs - Cloud Build Service Account needs access to write here>>,_TGT_BUCKET=<<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>>,_TEST_DATA=true,_DEPLOY_CDC=true,_GEN_EXT=true
+_PJID_SRC=<project for landing raw data>,_PJID_TGT=<project to deploy user-facing views>,_DS_CDC=<BQ dataset to land the result of CDC processing - must exist before deployment>,_DS_RAW=<BQ dataset to land raw data from replication - must exist before deployment>,_DS_REPORTING=<BQ dataset where Reporting views are created, will be created if it does not exist>,_DS_MODELS=<BQ dataset where ML views are created, will be created if it does not exist>,_GCS_BUCKET=<Bucket for logs - Cloud Build Service Account needs access to write here>,_TGT_BUCKET=<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>,_TEST_DATA=true,_DEPLOY_CDC=true,_GEN_EXT=true
 
 ```
 
@@ -84,11 +84,12 @@ The following Google Cloud components are required:
 
 From the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal), you can enable Google Cloud Services using the _gcloud_ command line interface in your Google Cloud project.
 
-Replace the `<<SOURCE_PROJECT>>` placeholder with your source project. Copy and paste the following command into the cloud shell:
+Replace the `<SOURCE_PROJECT>` placeholder with your source project. Copy and paste the following command into the cloud shell:
 
 
 ```bash
-gcloud config set project <<SOURCE_PROJECT>>
+gcloud config set project <SOURCE_PROJECT>
+
 gcloud services enable bigquery.googleapis.com \
                        cloudbuild.googleapis.com \
                        composer.googleapis.com \
@@ -194,16 +195,16 @@ Click **Grant Access**, type in the ID of the user who will execute the deployme
 **Alternatively,** you can complete this step from the Cloud Shell:
 
 ```bash
-gcloud iam service-accounts create <<SERVICE ACCOUNT>> \
+gcloud iam service-accounts create <SERVICE ACCOUNT> \
     --description="Service account for Cortex deployment" \
     --display-name="my-cortex-service-account"
 
-gcloud projects add-iam-policy-binding <<SOURCE_PROJECT>> \
---member="serviceAccount:<<SERVICE ACCOUNT>>@<<SOURCE_PROJECT>>.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding <SOURCE_PROJECT> \
+--member="serviceAccount:<SERVICE ACCOUNT>@<SOURCE_PROJECT>.iam.gserviceaccount.com" \
 --role="roles/cloudbuild.builds.editor"
 
-gcloud iam service-accounts add-iam-policy-binding <<SERVICE ACCOUNT>>\
-  --member="user:<<EXECUTING USER EMAIL>>" \
+gcloud iam service-accounts add-iam-policy-binding <SERVICE ACCOUNT>\
+  --member="user:<EXECUTING USER EMAIL>" \
   --role="roles/iam.serviceAccountTokenCreator"
 ```
 
@@ -261,14 +262,14 @@ cd mando-checker
 
 ```bash
 gcloud builds submit \
-   --project <<SOURCE_PROJECT>> \
-   --substitutions _DEPLOY_PROJECT_ID=<<SOURCE_PROJECT>>,_DEPLOY_BUCKET_NAME=<<GCS_BUCKET>>,_LOG_BUCKET_NAME=<<LOG_BUCKET>> .
+   --project <SOURCE_PROJECT> \
+   --substitutions _DEPLOY_PROJECT_ID=<SOURCE_PROJECT>,_DEPLOY_BUCKET_NAME=<GCS_BUCKET>,_LOG_BUCKET_NAME=<LOG_BUCKET> .
 ```
 
 If using a service account for impersonation, add the following flag:
 
 ```bash
-   --impersonate-service-account <<SERVICE ACCOUNT>>@<<SOURCE_PROJECT>>.iam.gserviceaccount.com \
+   --impersonate-service-account <SERVICE ACCOUNT>@<SOURCE_PROJECT>.iam.gserviceaccount.com \
 ```
 
 Where
@@ -358,9 +359,7 @@ Default: "deploy_gcs_file_test_cloudbuild.txt"
    </td>
    <td style="background-color: null">N
    </td>
-   <td style="background-color: null">Location used for BQ (
-<p>
-https://cloud.google.com/bigquery/docs/locations )
+   <td style="background-color: null">Location used for BQ (https://cloud.google.com/bigquery/docs/locations)
 <p>
 Default: "US"
    </td>
@@ -395,15 +394,66 @@ If you have done a previous deployment, remember to navigate into the previously
 
 You can use the configuration in the file [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml) if you need to generate change-data capture processing scripts. See the [Appendix - Setting up CDC Processing](#setting-up-cdc-processing) for options. For test data, you can leave this file as a default.
 
-Make any changes to the [DAG templates](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/src/template_dag/dag_sql.py) as required by your instance of Airflow or Cloud Composer. You will find more information in the [Appendix - Gathering Cloud Composer settings](#gathering-cloud-composer-settings)]
+Make any changes to the [DAG templates](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/src/template_dag/dag_sql.py) as required by your instance of Airflow or Cloud Composer. You will find more information in the [Appendix - Gathering Cloud Composer settings](#gathering-cloud-composer-settings).
 
 **Note**: If you do not have an instance of Cloud Composer, you can still generate the scripts and create it later.
 
-This module is optional. If you want to add/process tables individually after deployment, you can modify the `setting/yaml` file to process only the tables you need and re-execute the specific module with calling `deploy_cdc.sh` or `/src/SAP_CDC/cloudbuild.cdc.yaml` directly.
+This module is optional. If you want to add/process tables individually after deployment, you can modify the `setting.yaml` file to process only the tables you need and re-execute the specific module with calling `src/SAP_CDC/deploy_cdc.sh` or `src/SAP_CDC/cloudbuild.cdc.yaml` directly.
+
+### Performance optimization for CDC Tables
+For certain CDC datasets, you may want to take advantages of BigQuery [table partitioning](https://cloud.google.com/bigquery/docs/partitioned-tables), [table clustering](https://cloud.google.com/bigquery/docs/clustered-tables) or both. This choice depends on many factors - the size and data of the table, columns available in the table, and your need of real time data with views vs data materialized as tables. By default, CDC settings do not apply table partitioning or table clustering - the choice is yours to configure it based on what works best for you.
+
+You can read more about partitioning and clustering for SAP [here](https://cloud.google.com/blog/products/sap-google-cloud/design-considerations-for-sap-data-modeling-in-bigquery).
+
+**NOTE**:
+1. This feature only applies when a dataset in `setting.yaml` is configured for replication as a table (e.g. `load_frequency = "@daily"`) and not defined as a view (`load_frequency = "RUNTIME"`).
+2. A table can be both - a partitioned table as well as a clustered table.
+
+#### Table Partitioning
+
+Partition can be enabled by specifying `partition_details` property in `setting.yaml` for any base table.
+
+Example:
+
+```yaml
+   - base_table: vbap
+     load_frequency: "@daily"
+     partition_details: {
+       column: "erdat", partition_type: "time", time_grain: "day"
+     }
+```
+
+| Property               | Description                                                            | Value           |
+| ---------------------  | ---------------------------------------------------------------------- | --------------- |
+| `column`               | Column by which the CDC table will be partitioned                      | Column name     |
+| `partition_type`       | Type of Partition                                                      | `"time"` for time based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#date_timestamp_partitioned_tables))<br>`"integer_range"` for integer based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#integer_range)) |
+| `time_grain`           | Time part to partition with <br>Required when `partition_type = "time"`| `"hour"`, `"day"`, `"month"` OR `"year"` |
+| `integer_range_bucket` | Bucket range <br>Required when `partition_type = "integer_range"`      | `"start"` = Start value<br> `"end"` = End value<br>`"interval`" = Interval of range |
+
+**NOTE**: See BigQuery Table Partition [documentation](https://cloud.google.com/bigquery/docs/partitioned-tables) details to understand these options and related limitations.
+
+#### Table Clustering
+
+Clustering can be by specifying `cluster_details` property in `setting.yaml` for any base table.
+
+Example:
+
+```yaml
+   - base_table: vbak
+     load_frequency: "@daily"
+     cluster_details: {columns: ["vkorg"]}
+```
+| Property               | Description                                | Value                                             |
+| ---------------------  | -------------------------------------------| ------------------------------------------------- |
+| `columns`              | Columns by which a table will be clustered | List of column names<br>e.g. `["mjahr", "matnr"]` |
+
+
+**NOTE**: See BigQuery Table Cluster [documentation](https://cloud.google.com/bigquery/docs/clustered-tables) details to understand these options and related limitations.
+
 
 ## Configure Hierarchies
 
-You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to true.
+You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to `true`.
 
 ## Configure External Datasets
 
@@ -435,39 +485,50 @@ If you are targeting a location different from the one available for the require
 
 You will need the following parameters ready for deployment, based on your target structure:
 
-*   **Source Project** (`_PJID_SRC`): Project where the source dataset is and the build will run.
-*   **Target Project** (`_PJID_TGT`): Target project for user-facing datasets (reporting and ML datasets)
-*   **Raw landing dataset** (`_DS_RAW`): Used by the CDC process, this is where the replication tool lands the data from SAP.  If using test data, create an empty dataset.
-*   **CDC Processed Dataset** (`_DS_CDC`): Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset.
-*   **Reporting Dataset** (`_DS_REPORTING`): Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed
-*   **ML dataset** (`_DS_MODELS`): Name of the dataset that stages results of Machine Learning algorithms or BQML models
-*   **Logs Bucket** (`_GCS_BUCKET`): Bucket for logs. Could be the default or [created previously]((#create-a-storage-bucket).
-*   **DAGs bucket** (`_TGT_BUCKET`): Bucket where DAGs will be generated as [created previously]((#create-a-storage-bucket). Avoid using the actual airflow bucket.
-*   **Generate and deploy CDC** (`_DEPLOY_CDC`): Generate the DAG files into a target bucket based on the tables in settings.yaml.  If using test data, set it to true so data is copied from the generated raw dataset into this dataset. If set to false, DAGs won't be generated and it should be assumed the `_DS_CDC` is the same as `_DS_RAW`.
-*   **Deploy test data** (`_TEST_DATA`): Set to true if  you want the _DATASET_REPL and _DS_CDC (if _DEPLOY_CDC is true) to be filled by tables with sample data, mimicking a replicated dataset. If set to false, `_DS_RAW` should contain the tables replicated from the SAP source. Default for table creation is `--noreplace`, meaning if the table exists, the script will not attempt to overwrite it.
+|Parameter              | Parameter Name    | Description                                                                                 |
+|---------------------  |------------------|---------------------------------------------------------------------------------------------|
+|Source Project         |`_PJID_SRC`    | Project where the source dataset is and the build will run.                                 |
+|Target Project         |`_PJID_TGT`    | Target project for user-facing datasets (reporting and ML datasets).                        |
+|Raw landing dataset    |`_DS_RAW`      | Used by the CDC process, this is where the replication tool lands the data from SAP.  If using test data, create an empty dataset.|
+|CDC Processed Dataset  |`_DS_CDC`      | Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset.|
+|Reporting Dataset      |`_DS_REPORTING`| Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed.|
+|ML dataset             |`_DS_MODELS`   | Name of the dataset that stages results of Machine Learning algorithms or BQML models.|
+|Logs Bucket            |`_GCS_BUCKET`  | Bucket for logs. Could be the default or [created previously](#create-a-storage-bucket).|
+|DAGs bucket            |`_TGT_BUCKET`  | Bucket where DAGs will be generated as [created previously](#create-a-storage-bucket). Avoid using the actual airflow bucket.|
+|Generate and deploy CDC|`_DEPLOY_CDC`  | Generate the DAG files into a target bucket based on the tables in `settings.yaml`.<br>If using test data, set it to `true` so data is copied from the generated raw dataset into this dataset. <br>If set to `false`, DAGs won't be generated and it should be assumed the `_DS_CDC` is the same as `_DS_RAW`.|
+|Deploy test data       |`_TEST_DATA`   | Set to `true` if you want the `_DS_REPORTING` and `_DS_CDC` (if `_DEPLOY_CDC` is `true`) to be filled by tables with sample data, mimicking a replicated dataset. <br>If set to `false`, `_DS_RAW` should contain the tables replicated from the SAP source. <br>Default for table creation is `--noreplace`, meaning if the table exists, the script will not attempt to overwrite it.|
+
 
 Optional parameters:
-
-*   **Location or Region** (`_LOCATION`): Location where the BigQuery dataset and GCS buckets are (Default is `US`). **Note**: Restrictions listed under [BigQuery dataset locations](https://cloud.google.com/bigquery/docs/locations). Currently supported values are: S and EU (multilocations), us-central1, us-west4, us-west2, northamerica-northeast1, northamerica-northeast2, us-east4, us-west1, us-west3, southamerica-east1, southamerica-west1, us-east1, asia-south2, asia-east2, asia-southeast2, australia-southeast2, asia-south1, asia-northeast2, asia-northeast3, asia-southeast1, australia-southeast1, asia-east1, asia-northeast1, europe-west1, europe-north1, europe-west3, europe-west2, europe-west4, europe-central2, europe-west6.
-*   **Mandant or Client** (`_MANDT`): Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`.
-*   **SQL flavor for source system** (`_SQL_FLAVOUR`): S4, ECC or UNION. See the documentation for options. For test data, keep the default value (`ECC`). For Demand Sensing, only ECC test data is provided at this time. UNION is currently an experimental feature and should be used after both an S4 and an ECC deployments have been completed.
-*   **Generate External Data** (`_GEN_EXT`): Generate DAGs to consume external data (e.g., weather, trends, holiday calendars). Some datasets have external dependencies that need to be configured before running this process. If _TEST_DATA is true, the tables for external datasets will be populated with sample data. Default: TRUE.
+|Parameter              | Parameter Name    | Description                                                                                 |
+|---------------------  |------------------|---------------------------------------------------------------------------------------------|
+|Location or Region|`_LOCATION`|Location where the BigQuery dataset and GCS buckets are. <br><br>Default is `US`. <br><br>**Note:** Restrictions listed under [BigQuery dataset locations](https://cloud.google.com/bigquery/docs/locations). Currently supported values are: S and EU (multilocations), `us-central1`, `us-west4`, `us-west2`, `northamerica-northeast1`, `northamerica-northeast2`, `us-east4`, `us-west1`, `us-west3`, `southamerica-east1`, `southamerica-west1`, `us-east1`, `asia-south2`, `asia-east2`, `asia-southeast2`, `australia-southeast2`, `asia-south1`, `asia-northeast2`, `asia-northeast3`, `asia-southeast1`, `australia-southeast1`, `asia-east1`, `asia-northeast1`, `europe-west1`, `europe-north1`, `europe-west3`, `europe-west2`, `europe-west4`, `europe-central2`, `europe-west6`.|
+|Mandant or Client|`_MANDT`|Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`.|
+|SQL flavor for source system|`_SQL_FLAVOUR`|`S4`, `ECC` or `UNION`.<br><br>See the documentation for options. For test data, keep the default value (`ECC`). For Demand Sensing, only `ECC` test data is provided at this time. `UNION` is currently an experimental feature and should be used after both an S4 and an ECC deployments have been completed.|
+|Generate External Data|`_GEN_EXT`|Generate DAGs to consume external data (e.g., weather, trends, holiday calendars). Some datasets have external dependencies that need to be configured before running this process. If `_TEST_DATA` is `true`, the tables for external datasets will be populated with sample data. <br><br>Default: `true`.|
 
 ## Configure Currency and Language Templates
-If you are not using test data, from the cloned Data Foundation repository, navigate to the SAP_REPORTING submodule in `cortex-data-foundation/src/SAP/SAP_REPORTING` and modify the CURRENCY and LANGUAGE variables. These variables will replace placeholders in the SQL. Keep the single quotes around the values.
+If you are not using test data, from the cloned Data Foundation repository, navigate to the `SAP_REPORTING` submodule in `cortex-data-foundation/src/SAP/SAP_REPORTING` and modify the `CURRENCY` and `LANGUAGE` variables in `sap_config.env`. These variables will replace placeholders in the SQL. Keep the single quotes around the values.
 
 You can use single values:
 
-```
+```bash
 CURRENCY='USD'
 LANGUAGE='E'
 ```
 
 Or you can use multiple values by separating them with commas:
 
-```
+```bash
 CURRENCY='USD','ARS'
 LANGUAGE='E','S'
+```
+
+## Check for `CORTEX_CUSTOMER` tags
+Most SAP customers will have specific customizations of their systems, such as additional documents in a flow or specific types of a record. These are specific to each customer and configured by functional analysts as the business needs arise. The spots on the SQL code where these specific enhancements could be done are marked with a comment starting with `## CORTEX-CUSTOMER`. You can check for these comments after cloning the repository with a command like:
+
+```bash
+grep -R CORTEX-CUSTOMER
 ```
 
 ## Configure the UNION option
@@ -475,20 +536,25 @@ The UNION option for `_SQL_FLAVOUR` allows for an additional implementation to a
 
 ![Union sourcing from ECC and S4 reporting](images/union.jpg)
 
-After deploying the reporting datasets for S/4 and ECC, navigate to the SAP_REPORTING submodule from the cloned Data Foundation repository (`cortex-data-foundation/src/SAP/SAP_REPORTING`), open the file `sap_config.env` and configure the datasets for ECC and S/4 respectively (i.e., DS_CDC_ECC, DS_CDC_S4, DS_RAW_ECC, DS_RAW_S4). You can leave the datasets that do not have a _SQL_FLAVOUR in their name empty.
+After deploying the reporting datasets for S/4 and ECC, navigate to the `SAP_REPORTING` submodule from the cloned Data Foundation repository (`cortex-data-foundation/src/SAP/SAP_REPORTING`), open the file `sap_config.env` and configure the datasets for ECC and S/4 respectively (i.e., `DS_CDC_ECC`, `DS_CDC_S4`, `DS_RAW_ECC`, `DS_RAW_S4`). You can leave the datasets that do not have a `_SQL_FLAVOUR` in their name empty.
 
 ![Sample config.env file](images/env_file.png)
 
 Since the deployment for CDC and DAG generation needs to occur first and for each source system, the UNION option will only execute the SAP_REPORTING submodule. You can execute the submodule directly or from the Data Foundation deployer. If using the Data Foundation, after configuring the `sap_config.env` file, this is what the command would look like:
 
 ```bash
-gcloud builds submit --project <<Source Project>> \
---substitutions _PJID_SRC=<<Source Project>>,_PJID_TGT=<<Target Project>>,_GCS_BUCKET=<<Bucket for Logs>>,_GEN_EXT=false,_SQL_FLAVOUR=union
+gcloud builds submit --project <Source Project> \
+--substitutions _PJID_SRC=<Source Project>,_PJID_TGT=<Target Project>,_GCS_BUCKET=<Bucket for Logs>,_GEN_EXT=false,_SQL_FLAVOUR=union
 
 ```
 
 ## Execute the build
 
+Clone the repository and its submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-data-foundation
+```
 Switch to the directory where the data foundation was cloned:
 
 ```bash
@@ -498,9 +564,9 @@ cd cortex-data-foundation
 Run the Build command with the parameters you identified earlier:
 
 ```bash
-gcloud builds submit --project <<execution project, likely the source>> \
+gcloud builds submit --project <execution project, likely the source> \
 --substitutions \
-_PJID_SRC=<<project for landing raw data>>,_PJID_TGT=<<project to deploy user-facing views>>,_DS_CDC=<<BQ dataset to land the result of CDC processing - must exist before deployment>>,_DS_RAW=<<BQ dataset to land raw data from replication - must exist before deployment>>,_DS_REPORTING=<<BQ dataset where Reporting views are created, will be created if it does not exist>>,_DS_MODELS=<<BQ dataset where ML views are created, will be created if it does not exist>>,_GCS_BUCKET=<<Bucket for logs - Cloud Build Service Account needs access to write here>>,_TGT_BUCKET=<<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>>,_TEST_DATA=true,_DEPLOY_CDC=false
+_PJID_SRC=<project for landing raw data>,_PJID_TGT=<project to deploy user-facing views>,_DS_CDC=<BQ dataset to land the result of CDC processing - must exist before deployment>,_DS_RAW=<BQ dataset to land raw data from replication - must exist before deployment>,_DS_REPORTING=<BQ dataset where Reporting views are created, will be created if it does not exist>,_DS_MODELS=<BQ dataset where ML views are created, will be created if it does not exist>,_GCS_BUCKET=<Bucket for logs - Cloud Build Service Account needs access to write here>,_TGT_BUCKET=<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>,_TEST_DATA=true,_DEPLOY_CDC=false
 ```
 
 If you have enough permissions, you can see the progress from [Cloud Build](https://console.cloud.google.com/cloud-build/).
@@ -526,15 +592,9 @@ We recommend pasting the generated SQL into BigQuery to identify and correct the
 If you opted to generate the CDC files and have an instance of Airflow, you can move them into their final bucket with the following command:
 
 ```bash
-gsutil cp -r  gs://<<output bucket>>/dags gs://<<composer dag bucket>>/dags
-gsutil cp -r  gs://<<output bucket>>/data gs://<<composer sql bucket>>/data/bq_data_replication
+gsutil cp -r  gs://<output bucket>/dags* gs://<composer dag bucket>/dags
+gsutil cp -r  gs://<output bucket>/data/* gs://<composer sql bucket>/data/
 ```
-If sets were generated, move the Python library for hierarchies into a folder called hierarchies:
-
-```bash
-gsutil cp -r  gs://<<output bucket>>/hierarchies gs://<<composer dag bucket>>/dags/hierarchies/
-```
-
 # Next steps
 
 ## Looker deployment
@@ -550,7 +610,7 @@ We strongly encourage you to fork this repository and apply your changes to the 
 
 ## Enable TURBO mode
 
-For your own customizations and a faster deployment in your own development pipelines, you can use the `TURBO` variable in SAP_REPORTING/sap_config.env. When set to true, the deployment process will dynamically generate a `cloudbuild.views.yaml` file with each view in dependencies_ecc.txt or dependencies_s4.txt as a single step of the build. This allows for a 10x faster deployment. The limitation is that if an error occurs when deploying a view, the build process will stop. The maximum number for steps in a cloudbuild.yaml file is 100. If you are still fixing potential structure mismatches between the SELECT clauses in the views and the fields available in your replicated tables, `TURBO=false` will take longer but will attempt to generate all views even if one fails. This could help identify more errors in a single run.
+For your own customizations and a faster deployment in your own development pipelines, you can use the `TURBO` variable in `SAP_REPORTING/sap_config.env`. When set to true, the deployment process will dynamically generate a `cloudbuild.views.yaml` file with each view in dependencies_ecc.txt or dependencies_s4.txt as a single step of the build. This allows for a 10x faster deployment. The limitation is that if an error occurs when deploying a view, the build process will stop. The maximum number for steps in a cloudbuild.yaml file is 100. If you are still fixing potential structure mismatches between the SELECT clauses in the views and the fields available in your replicated tables, `TURBO=false` will take longer but will attempt to generate all views even if one fails. This could help identify more errors in a single run.
 
 # Support
 
@@ -620,7 +680,7 @@ The scheduled frequency can be customized to fit the business needs.
 Download and open the sample file using gsutil from the Cloud Shell as follows:
 
 
-```
+```bash
 gsutil cp gs://cortex-mando-sample-files/mando_samples/settings.yaml .
 ```
 
@@ -630,7 +690,7 @@ You will notice the file uses[ scheduling supported by Apache Airflow](https://a
 The following example shows an extract from the configuration file:
 
 
-```
+```yaml
 data_to_replicate:
   - base_table: adrc
     load_frequency: "@hourly"
@@ -652,7 +712,7 @@ This configuration will:
 If you want to create DAGs or runtime views to process changes for tables that exist in SAP and are not listed in the file, add them to this file before deployment. For example, the following configuration creates a CDC script for custom table “_zztable\_customer”_ and a runtime view to scan changes in real time for another custom table called “_zzspecial\_table”_:
 
 
-```
+```yaml
   - base_table: zztable_customer
     load_frequency: "@daily"
   - base_table: zzspecial_table
@@ -665,7 +725,7 @@ This will work as long as the table DD03L is replicated in the source dataset an
 The following template generates the processing of changes. Modifications, such as the name of the timestamp field, or additional operations, can be done at this point:
 
 
-```
+```sql
 MERGE `${target_table}` T
 USING (SELECT * FROM `${base_table}` WHERE recordstamp > (SELECT IF(MAX(recordstamp) IS NOT NULL, MAX(recordstamp),TIMESTAMP("1940-12-25 05:30:00+00")) FROM `${target_table}`)) S
 ON ${p_key}
@@ -678,7 +738,6 @@ WHEN NOT MATCHED AND S.operation_flag='I' THEN
 WHEN MATCHED AND S.operation_flag='U' THEN
 UPDATE SET
     ${update_fields}
-
 ```
 
 
@@ -720,7 +779,7 @@ The deployment process can optionally flatten hierarchies represented as sets (e
 Download and open the sample file using gsutil from the Cloud Shell as follows:
 
 
-```
+```bash
 gsutil cp gs://cortex-mando-sample-files/mando_samples/sets.yaml .
 ```
 

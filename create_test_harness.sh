@@ -24,45 +24,6 @@ location_low=$(echo "${location}" | tr '[:upper:]' '[:lower:]')
 
 valid_locations="us-central1 us-west4 us-west2 northamerica-northeast1 northamerica-northeast2 us-east4 us-west1 us-west3 southamerica-east1 southamerica-west1 us-east1 asia-south2 asia-east2 asia-southeast2 australia-southeast2 asia-south1 asia-northeast2 asia-northeast3 asia-southeast1 australia-southeast1 asia-east1 asia-northeast1 europe-west1 europe-north1 europe-west3 europe-west2 europe-west4 europe-central2 europe-west6"
 
-N=10
-
-open_semaphore() {
-  mkfifo pipe-$$
-  exec 3<>pipe-$$
-  rm pipe-$$
-  local i=$1
-  for (( ; i > 0; i--)); do
-    printf %s 000 >&3
-  done
-}
-
-process_table() {
-  tab=$1
-
-  tabname=$(basename "${tab}" .parquet)
-
-  echo "Processing ${tabname}"
-  exists=$(bq show --project_id "${project}" --location="${location}" "${dataset}.${tabname}")
-  if [[ "${exists}" == *"Not found"* ]]; then
-    bq load --location="${location}" --project_id "${project}" --noreplace --source_format=PARQUET "${dataset}.${tabname}" "${tab}"
-    echo
-  else
-    echo "Table ${tabname} already exists, skipping"
-  fi
-}
-
-run_with_lock() {
-  local x
-  # this read waits until there is something to read
-  read -u 3 -n 3 x && ((0 == x)) || exit $x
-  ( 
-    ("$@")
-    # push the return code of the command to the semaphore
-    printf '%.3d' $? >&3
-  ) &
-
-}
-
 if [[ "${valid_locations}" =~ "${location_low}" ]]; then
   echo "Creating test harness in location ${location_low}"
 else
@@ -76,11 +37,24 @@ if [[ "${location_low}" == 'australia-southeast1' ]]; then
     location_low=australia-southeast11
 fi
 
-open_semaphore "${N}"
-for tab in $(gsutil ls "gs://kittycorn-test-harness-${location_low}/${sql_flavor}/"); do
-  if [[ $tab != */ ]]; then
-    run_with_lock process_table "${tab}"
-  fi
-done
+# Temporary URL list file.
+url_list_file=$(mktemp)
 
-wait
+# Getting a list of URLs.
+gsutil ls "gs://kittycorn-test-harness-${location_low}/${sql_flavor}/" >> "${url_list_file}"
+
+# Disable existing on error because need to delete the temp file
+set +e
+
+# Loading to BigQuery.
+python3 src/utils/bqload.py --source-list-file "${url_list_file}" --dataset "${project}.${dataset}" \
+  --location "${location}" --parallel-jobs 10
+ERR_CODE=$?
+
+# Enable exiting on error back.
+set -e
+
+# Deleting temporary file.
+rm -f "${url_list_file}"
+
+exit $ERR_CODE
