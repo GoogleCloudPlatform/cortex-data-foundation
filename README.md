@@ -34,7 +34,7 @@ You can find a step-by-step video going through a deployment with sample data in
 
 Before continuing with this guide, make sure you are familiar with:
 
--   Google Cloud Platform [fundamentals](https://www.coursera.org/lecture/gcp-fundamentals/welcome-to-gcp-fundamentals-I6zpd)
+-   Google Cloud Platform [fundamentals](https://www.cloudskillsboost.google/course_templates/60)
 -   How to navigate the Cloud Console, [Cloud Shell](https://cloud.google.com/shell/docs/using-cloud-shell) and [Cloud Shell Editor](https://cloud.google.com/shell/docs/editor-overview)
 -   Fundamentals of [BigQuery](https://cloud.google.com/bigquery/docs/introduction)
 -   Fundamentals of [Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) or [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html)
