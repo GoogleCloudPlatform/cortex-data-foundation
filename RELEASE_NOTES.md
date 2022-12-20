@@ -1,3 +1,13 @@
+## December 2022 - Release 4.0
+*   **🎆Welcome Salesforce.com to Cortex Data Foundation🎆🐈🦄**: New [module for Salesforce](https://github.com/GoogleCloudPlatform/cortex-salesforce), to be implemented alongside the SAP models or on its own. The module includes optional integration and CDC scripts and reporting views for Leads Capture & Conversion, Opportunity Trends & Pipeline, Sales Activity and Engagement, Case Overview and Trends, Case Management & Resolution, Accounts with Cases. See the [entity-relationship diagram](images/erd_sfdc.png) for a list of tables and views. Check the [Looker repository](https://github.com/looker-open-source/block-cortex-salesforce) for sample dashboards.
+*   New configuration file (`config/config.json`) for deployment parameters. We maintain backward compatibility with the existing `gcloud builds submit` command parameters. Enhanced parameters like SAP UNION datasets and those for Salesforce, can be configured in config.json. See the [instructions for configuration in the README](https://github.com/GoogleCloudPlatform/cortex-data-foundation#configure-the-deployment-file) for more details. This file format will replace the `.env` format for SAP_REPORTING in the next releases.
+*   New preview models for SAP Finance: AccountingDocumentsReceivable, AccountsPayable, AccountsPayableTurnover, CashDiscountUtilization, CurrencyConversion (exposing table processed by DAG), VendorPerformance, VendorConfig (dependant on TVARVC values). While PREVIEW views allow us to gain early feedback, they are also subject to change.
+*   New split views for SAP Order-To-Cash: SalesOrderPricing, PricingConditions. See the [updated Looker reports](https://github.com/looker-open-source/block-cortex-sap) to make use of the split models.
+
+### Known issues and limitations
+*   Salesforce integration DAGs have been tested in Airflow 1.0. Airflow 2.0 may require library updates or use of backwards compatible libraries to be tested and confirmed in the next release.
+*   Finance views for SAP are good candidates for partial or total materialization. Check BigQuery's execution details to identify opportunities to create materialization processes and further optimizations that fit your data best.
+
 ## November 2022 - Release 3.1
 *   **New partitioning and clustering configuration for CDC deployment:** Configurable partitioning and clustering on deployment of CDC landing tables and scripts. See example in [setting.yaml](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml) and [the README instructions](https://github.com/GoogleCloudPlatform/cortex-data-foundation#performance-optimization-for-cdc-tables).
 *   **New date dimension 📅** generated from external DAGs through `_GEN_EXT=true` to allow for more flexibility in reporting. This table has been incorporated into views POSchedule, MaterialsValuation, PurchaseDocuments, Deliveries, Billing, SalesOrderScheduleLine, AccountingDocuments, InvoiceDocuments_Flow, POOrderHistory and SalesOrders_V2. The straucture of the table will be generated without data if `_GEN_EXT=false`.
@@ -84,7 +94,7 @@ This release brings the following changes Cortex Data Foundation.
 * Additional views for ECC and S/4 with Accounts Receivables and On-Time/In-Full analysis:
     -  Billing
     - OrderToCash
-    - AccountingDocumentsReceivables
+    - AccountingDocumentsReceivable
 * Additional helper functions for currency conversion
 * Additional function for Due Date calculation for discounts
 * New helper function for Fiscal period

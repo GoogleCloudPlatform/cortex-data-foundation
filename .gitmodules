@@ -10,3 +10,7 @@
 	path = src/SAP/SAP_CDC
 	url = ../cortex-dag-generator
 	branch = main
+[submodule "src/SFDC"]
+	path = src/SFDC
+	url = ../cortex-salesforce
+	branch = main
