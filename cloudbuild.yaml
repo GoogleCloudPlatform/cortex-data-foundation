@@ -103,13 +103,13 @@ steps:
 
 logsBucket: "gs://$_GCS_BUCKET"
 timeout: 10200s
-# substitutions:
-#   _TEST_DATA: "true"
-#   _DEPLOY_CDC: "true"
-#   _DEPLOY_SAP: "true"
-#   _DEPLOY_SFDC: "true"
-#   _LOCATION: "US"
-#   _GEN_EXT: "true"
+substitutions:
+  _TEST_DATA: "true"
+  _DEPLOY_CDC: "true"
+  _DEPLOY_SAP: "true"
+  _DEPLOY_SFDC: "true"
+  _GEN_EXT: "true"
+  # _LOCATION: "US"
   # _DS_REPORTING: "REPORTING"
   # _DS_MODELS: "ML_MODELS"
   # _SQL_FLAVOUR: "ecc"

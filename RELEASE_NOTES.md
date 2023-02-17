@@ -4,8 +4,8 @@
 *   Salesforce integration now updates the RAW tables with changes, merging changes on landing. This removes the need for additional CDC processing. Deltas are captured using SystemModstamp provided by Salesforce APIs. See details in README.
 *   `IsArchived` flag is removed from CDC processing for Salesforce.
 *   Errors originating from gsutil steps in cloudbuild.sfdc.yaml not finding files to copy are now caught and surfaced gracefully.
-*   Removing `substitution` defaults from cloudbuild.yaml file so all configurations are either passed from the command line or read from `config/config.json`.
-*   Detecting version for Airflow in DAG templates to use updated libraries for Airflow v2 in SAP and Salesforce.
+*   Removing some `substitution` defaults (e.g., LOCATION) from cloudbuild.yaml file so all configurations are either passed from the command line or read from `config/config.json`. 🚨🔪🚨[TL;DR submit sample call](https://github.com/GoogleCloudPlatform/cortex-data-foundation#tldr-for-setup) was updated to default these flags. These parameters will be removed from subsitution defaults in future releases. 🚨🔪🚨
+*   Detecting version for Airflow in DAG templates to use updated libraries for Airflow v2 in SAP and Salesforce. This remvoes some deprecation warnings but may need additional libraries installed in your Airflow instance.
 *   Fix for test harness data not loading in an intended location when the location is not passed as a substitution.
 *   Checking existence of DAG-generated files before attempting to copy with `gsutil` to avoid errors.
 *   **NOTE**: 🚨🚨Structure of RAW landed tables has changed🚨🚨 to not require additional DAG processing. Please check the documentation on mapping and use of the new extraction process before upgrading to avoid disruption. We recommend pausing the replication, making abackup copy of any loaded tables, modifying the schemata of existing loaded tables and testing the new DAGs work with the new columns. The DAG will start fetching records using the last SystemModstamp present in RAW.

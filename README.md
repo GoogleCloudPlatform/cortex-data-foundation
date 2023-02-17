@@ -18,7 +18,7 @@ Then change into the cloned directory execute the following command
 ```bash
 gcloud builds submit --project <execution project, likely the source> \
 --substitutions \
-_PJID_SRC=<project for landing raw data>,_PJID_TGT=<project to deploy user-facing views>,_DS_CDC=<BQ dataset to land the result of CDC processing - must exist before deployment>,_DS_RAW=<BQ dataset to land raw data from replication - must exist before deployment>,_DS_REPORTING=<BQ dataset where Reporting views are created, will be created if it does not exist>,_DS_MODELS=<BQ dataset where ML views are created, will be created if it does not exist>,_GCS_BUCKET=<Bucket for logs - Cloud Build Service Account needs access to write here>,_TGT_BUCKET=<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>,_TEST_DATA=true,_DEPLOY_CDC=true,_GEN_EXT=true
+_PJID_SRC=<project for landing raw data>,_PJID_TGT=<project to deploy user-facing views>,_DS_CDC=<BQ dataset to land the result of CDC processing - must exist before deployment>,_DS_RAW=<BQ dataset to land raw data from replication - must exist before deployment>,_DS_REPORTING=<BQ dataset where Reporting views are created, will be created if it does not exist>,_DS_MODELS=<BQ dataset where ML views are created, will be created if it does not exist>,_GCS_BUCKET=<Bucket for logs - Cloud Build Service Account needs access to write here>,_TGT_BUCKET=<Bucket for DAG scripts - don’t use the actual Airflow bucket - Cloud Build Service Account needs access to write here>,_TEST_DATA=true,_DEPLOY_CDC=true,_GEN_EXT=true,_DEPLOY_SAP=true,_DEPLOY_SFDC=true
 
 ```
 
