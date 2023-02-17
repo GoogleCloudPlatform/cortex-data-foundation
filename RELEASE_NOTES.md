@@ -1,3 +1,14 @@
+## February 2023 - Release 4.1
+*   More options for Salesforce integration with provided scripts or external tools: End-to-end integration from Salesforce APIs (provided out-of-the-box), structure mapping with no change data capture processing and optional CDC and mapping generation scripts. See the [README](https://github.com/GoogleCloudPlatform/cortex-data-foundation#loading-salesforce-data-into-bigquery) for more instructions
+*   Option for `sequential` deployment (TURBO=false) for SFDC incorporated.
+*   Salesforce integration now updates the RAW tables with changes, merging changes on landing. This removes the need for additional CDC processing. Deltas are captured using SystemModstamp provided by Salesforce APIs. See details in README.
+*   `IsArchived` flag is removed from CDC processing for Salesforce.
+*   Errors originating from gsutil steps in cloudbuild.sfdc.yaml not finding files to copy are now caught and surfaced gracefully.
+*   Removing `substitution` defaults from cloudbuild.yaml file so all configurations are either passed from the command line or read from `config/config.json`.
+*   Detecting version for Airflow in DAG templates to use updated libraries for Airflow v2 in SAP and Salesforce.
+*   Fix for test harness data not loading in an intended location when the location is not passed as a substitution.
+*   Checking existence of DAG-generated files before attempting to copy with `gsutil` to avoid errors.
+*   **NOTE**: 🚨🚨Structure of RAW landed tables has changed🚨🚨 to not require additional DAG processing. Please check the documentation on mapping and use of the new extraction process before upgrading to avoid disruption. We recommend pausing the replication, making abackup copy of any loaded tables, modifying the schemata of existing loaded tables and testing the new DAGs work with the new columns. The DAG will start fetching records using the last SystemModstamp present in RAW.
 ## December 2022 - Release 4.0
 *   **🎆Welcome Salesforce.com to Cortex Data Foundation🎆🐈🦄**: New [module for Salesforce](https://github.com/GoogleCloudPlatform/cortex-salesforce), to be implemented alongside the SAP models or on its own. The module includes optional integration and CDC scripts and reporting views for Leads Capture & Conversion, Opportunity Trends & Pipeline, Sales Activity and Engagement, Case Overview and Trends, Case Management & Resolution, Accounts with Cases. See the [entity-relationship diagram](images/erd_sfdc.png) for a list of tables and views. Check the [Looker repository](https://github.com/looker-open-source/block-cortex-salesforce) for sample dashboards.
 *   New configuration file (`config/config.json`) for deployment parameters. We maintain backward compatibility with the existing `gcloud builds submit` command parameters. Enhanced parameters like SAP UNION datasets and those for Salesforce, can be configured in config.json. See the [instructions for configuration in the README](https://github.com/GoogleCloudPlatform/cortex-data-foundation#configure-the-deployment-file) for more details. This file format will replace the `.env` format for SAP_REPORTING in the next releases.
@@ -7,7 +18,6 @@
 ### Known issues and limitations
 *   Salesforce integration DAGs have been tested in Airflow 1.0. Airflow 2.0 may require library updates or use of backwards compatible libraries to be tested and confirmed in the next release.
 *   Finance views for SAP are good candidates for partial or total materialization. Check BigQuery's execution details to identify opportunities to create materialization processes and further optimizations that fit your data best.
-
 ## November 2022 - Release 3.1
 *   **New partitioning and clustering configuration for CDC deployment:** Configurable partitioning and clustering on deployment of CDC landing tables and scripts. See example in [setting.yaml](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml) and [the README instructions](https://github.com/GoogleCloudPlatform/cortex-data-foundation#performance-optimization-for-cdc-tables).
 *   **New date dimension 📅** generated from external DAGs through `_GEN_EXT=true` to allow for more flexibility in reporting. This table has been incorporated into views POSchedule, MaterialsValuation, PurchaseDocuments, Deliveries, Billing, SalesOrderScheduleLine, AccountingDocuments, InvoiceDocuments_Flow, POOrderHistory and SalesOrders_V2. The straucture of the table will be generated without data if `_GEN_EXT=false`.

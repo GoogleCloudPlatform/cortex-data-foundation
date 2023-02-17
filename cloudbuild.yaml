@@ -14,7 +14,7 @@
 
 steps:
   # validate_deploy_config leaves the validated config.json file in workspace/config so it's available for other build steps
-  - name: gcr.io/kittycorn-public/deploy-kittycorn:v1.5
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
     id: 'validate_deploy_config'
     waitFor: ['-']
@@ -26,7 +26,7 @@ steps:
            --mandt '${_MANDT}' --sql-flavour '${_SQL_FLAVOUR}' --test-data '${_TEST_DATA}' --gen-ext '${_GEN_EXT}'  \
            --deploy-sap '${_DEPLOY_SAP}' --deploy-sfdc '${_DEPLOY_SFDC}'
 
-  - name: gcr.io/kittycorn-public/deploy-kittycorn:v1.5
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
     id: 'sap-test-harness'
     waitFor: ['validate_deploy_config']
@@ -35,9 +35,9 @@ steps:
       - |
         if [ '$_TEST_DATA' = "true" ] && [ '$_DEPLOY_SAP' = "true" ]; then
           source load_env_from_config.sh
-          ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_ $$_SQL_FLAVOUR_ '${_LOCATION}'
+          ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_ $$_SQL_FLAVOUR_ $$_LOCATION_
         fi
-  - name: gcr.io/kittycorn-public/deploy-kittycorn:v1.5
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
     id: 'sfdc-test-harness'
     waitFor: ['validate_deploy_config']
@@ -46,7 +46,7 @@ steps:
       - |
         if [ '$_TEST_DATA' = "true" ] && [ '$_DEPLOY_SFDC' = "true" ]; then
           source load_env_from_config.sh
-          ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_SFDC_ "sfdc" '${_LOCATION}'
+          ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_SFDC_ "sfdc" $$_LOCATION_
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sap-cdc'
@@ -72,7 +72,7 @@ steps:
           cp config/config.env src/SAP/SAP_REPORTING/sap_config.env
           gcloud builds submit ./src/SAP/SAP_REPORTING  \
           --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
-          --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION='${_LOCATION}',_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}'
+          --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION=$$_LOCATION_,_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}'
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sap-ml-models'
@@ -85,7 +85,7 @@ steps:
           source load_env_from_config.sh
           gcloud builds submit ./src/SAP/SAP_ML_MODELS  \
           --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
-          --substitutions=_PJID_SRC=$$_PJID_SRC_,_PJID_TGT=$$_PJID_TGT_,_DS_RAW=$$_DS_RAW_,_DS_CDC=$$_DS_CDC_,_DS_REPORTING=$$_DS_REPORTING_,_DS_MODELS=$$_DS_MODELS_,_SQL_FLAVOUR=$$_SQL_FLAVOUR_,_LOCATION='${_LOCATION}',_MANDT=$$_MANDT_,_GCS_BUCKET='${_GCS_BUCKET}'
+          --substitutions=_PJID_SRC=$$_PJID_SRC_,_PJID_TGT=$$_PJID_TGT_,_DS_RAW=$$_DS_RAW_,_DS_CDC=$$_DS_CDC_,_DS_REPORTING=$$_DS_REPORTING_,_DS_MODELS=$$_DS_MODELS_,_SQL_FLAVOUR=$$_SQL_FLAVOUR_,_LOCATION=$$_LOCATION_,_MANDT=$$_MANDT_,_GCS_BUCKET='${_GCS_BUCKET}'
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sfdc-deploy'
@@ -103,16 +103,17 @@ steps:
 
 logsBucket: "gs://$_GCS_BUCKET"
 timeout: 10200s
-substitutions:
-  _TEST_DATA: "true"
-  _DEPLOY_CDC: "true"
-  _DEPLOY_SAP: "true"
-  _DEPLOY_SFDC: "true"
-  _LOCATION: "US"
-  _GEN_EXT: "true"
+# substitutions:
+#   _TEST_DATA: "true"
+#   _DEPLOY_CDC: "true"
+#   _DEPLOY_SAP: "true"
+#   _DEPLOY_SFDC: "true"
+#   _LOCATION: "US"
+#   _GEN_EXT: "true"
   # _DS_REPORTING: "REPORTING"
   # _DS_MODELS: "ML_MODELS"
   # _SQL_FLAVOUR: "ecc"
   # _MANDT: ""
+  # _GEN_EXT: ""
 options:
   substitution_option: "ALLOW_LOOSE"

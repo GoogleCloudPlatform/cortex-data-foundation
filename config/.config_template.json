@@ -1,37 +1,37 @@
 {
-    "testData" : "TEST_DATA",
-    "generateExtraData" : "GEN_EXT",
-    "deployCDC" : "DEPLOY_CDC",
-    "deploySAP" : "DEPLOY_SAP",
-    "deploySFDC" : "DEPLOY_SFDC",
-    "turboMode" : "TURBO",
-    "projectIdSource" : "PJID_SRC",
-    "projectIdTarget" : "PJID_TGT",
-    "location" : "LOCATION",
-    "languages" : "LANGUAGE",
-    "currencies" : "CURRENCY",
-    "SAP" : {
-        "datasets" : {
-            "cdc" : "DS_CDC",
-            "raw" : "DS_RAW",
-            "ml" : "DS_MODELS",
-            "reporting" : "DS_REPORTING",
-            "cdcECC" : "DS_CDC_ECC",
-            "rawECC" : "DS_RAW_ECC",
-            "cdcS4" : "DS_CDC_S4",
-            "rawS4" : "DS_RAW_S4"
+    "testData": "TEST_DATA",
+    "generateExtraData": "GEN_EXT",
+    "deployCDC": "DEPLOY_CDC",
+    "deploySAP": "DEPLOY_SAP",
+    "deploySFDC": "DEPLOY_SFDC",
+    "turboMode": "TURBO",
+    "projectIdSource": "PJID_SRC",
+    "projectIdTarget": "PJID_TGT",
+    "location": "LOCATION",
+    "languages": "LANGUAGE",
+    "currencies": "CURRENCY",
+    "SAP": {
+        "datasets": {
+            "cdc": "DS_CDC",
+            "raw": "DS_RAW",
+            "ml": "DS_MODELS",
+            "reporting": "DS_REPORTING",
+            "cdcECC": "DS_CDC_ECC",
+            "rawECC": "DS_RAW_ECC",
+            "cdcS4": "DS_CDC_S4",
+            "rawS4": "DS_RAW_S4"
         },
-        "SQLFlavor" : "SQL_FLAVOUR",
-        "mandt" : "MANDT",
-        "mandtECC" : "MANDT_ECC",
-        "mandtS4" : "MANDT_S4"
+        "SQLFlavor": "SQL_FLAVOUR",
+        "mandt": "MANDT",
+        "mandtECC": "MANDT_ECC",
+        "mandtS4": "MANDT_S4"
     },
-    "SFDC" : {
-        "datasets" : {
-            "cdc" : "DS_CDC_SFDC",
-            "raw" : "DS_RAW_SFDC",
-            "reporting" : "DS_REPORTING_SFDC"
+    "SFDC": {
+        "createMappingViews": "SFDC_CREATE_MAPPING_VIEWS",
+        "datasets": {
+            "cdc": "DS_CDC_SFDC",
+            "raw": "DS_RAW_SFDC",
+            "reporting": "DS_REPORTING_SFDC"
         }
     }
-
 }

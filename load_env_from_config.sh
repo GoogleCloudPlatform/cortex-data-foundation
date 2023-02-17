@@ -244,5 +244,6 @@ fi
 export _DS_RAW_SFDC_="${DS_RAW_SFDC}"
 export _DS_CDC_SFDC_="${DS_CDC_SFDC}"
 export _DS_REPORTING_SFDC_="${DS_REPORTING_SFDC}"
+export _SFDC_CREATE_MAPPING_VIEWS_="${SFDC_CREATE_MAPPING_VIEWS}"
 
 make_defaults

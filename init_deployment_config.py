@@ -70,6 +70,7 @@ CFG_LANGUAGE = ""
 CFG_SFDC_DS_CDC = ""
 CFG_SFDC_DS_RAW = ""
 CFG_SFDC_DS_REPORTING = ""
+CFG_SFDC_CREATE_MAPPING_VIEWS = ""
 
 
 def load_config(config_file):
@@ -191,6 +192,7 @@ def main():
     CFG_SAP_MANDT = cfg["SAP"]["mandt"]
     CFG_SAP_MANDT_ECC = cfg["SAP"]["mandtECC"]
     CFG_SAP_MANDT_S4 = cfg["SAP"]["mandtS4"]
+    CFG_SFDC_CREATE_MAPPING_VIEWS = cfg["SFDC"]["createMappingViews"]
     CFG_SFDC_DS_CDC = cfg["SFDC"]["datasets"]["cdc"]
     CFG_SFDC_DS_RAW = cfg["SFDC"]["datasets"]["raw"]
     CFG_SFDC_DS_REPORTING = cfg["SFDC"]["datasets"]["reporting"]
@@ -278,6 +280,7 @@ def main():
         # For backwards compatibility with TL;DR command in the GitHub README,
         # these will default to SAP's assigned values from gcloud builds
         # --substitutions
+        "SFDC_CREATE_MAPPING_VIEWS": [CFG_SFDC_CREATE_MAPPING_VIEWS, True],
         "DS_CDC_SFDC": [CFG_SFDC_DS_CDC, args.DS_CDC, CFG_SAP_DS_CDC],
         "DS_RAW_SFDC": [CFG_SFDC_DS_RAW, args.DS_RAW, CFG_SAP_DS_RAW],
         "DS_REPORTING_SFDC": [
@@ -339,7 +342,7 @@ def main():
     template = env.get_template("config_env.jinja")
     output_config_env = template.render(jinja_replacements)
     with open("config/config.env", mode="w",
-                encoding="utf-8") as output_env_file:
+              encoding="utf-8") as output_env_file:
         output_env_file.write(output_config_env)
 
 

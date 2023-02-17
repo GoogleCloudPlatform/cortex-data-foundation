@@ -4,7 +4,7 @@
 # About the Data Foundation for Google Cloud Cortex Framework
 The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that can be automatically deployed together with reference architectures.
 
-The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find the entity-relationship diagram [for SAP ECC here](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf)), the one for [SAP S/4 here](images/erd_s4.png) ([PDF](docs/erd_s4.pdf)) and one for [Salesforce.com here](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf)).
+The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. You can find the entity-relationship diagram [for SAP ECC here](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf)), the one for [SAP S/4 here](images/erd_s4.png)([PDF](docs/erd_s4.pdf)) and one for [Salesforce.com here](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf)).
 
 
 # TL;DR for setup
@@ -53,19 +53,19 @@ This is where the deployment process will trigger Cloud Build runs. In the proje
 
 You will need to identify:
 
-*   **What to deploy (SAP, Salesforce.com or everything)?:** Decide whether you want to deploy models for both workloads at the same time or only one set of models (SAP or Salesforce).
+*   **Deploy SAP, Salesforce.com or everything?:** Decide whether you want to deploy models for both workloads at the same time or only one set of models (SAP or Salesforce).
 *   **Source Google Cloud Project:** Project where the source data is located, from which the data models will consume. This project is normally accessed by technical practitioners.
 *   **Target Google Cloud Project:** Project where the Data Foundation predefined data models will be deployed and accessed by end-users. This may or may not be different from the source project depending on your needs.
-*   **Source BigQuery Dataset (RAW):** BigQuery dataset where the source SAP or Salesforce data is replicated to or where the test data will be created. The recommendation is to have two separate datasets, one for each source (i.e., one raw dataset for SAP and one raw dataset for Salesforce).
-*   **CDC BigQuery Dataset:** BigQuery dataset where the CDC processed data lands the latest available records. This may or may not be the same as the source dataset if the tool landing the data performs the CDC merge operation. The recommendation is to have two separate CDC datasets, one for each source (i.e., one cdc dataset for SAP and one cdc dataset for Salesforce).
-*   **Target BigQuery reporting dataset:** BigQuery dataset where the Data Foundation predefined data models will be deployed. The recommendation is to have two separate reporting datasets, one for each source (i.e., one reporting dataset for SAP and one reporting dataset for Salesforce). This dataset is automatically created by the deployer if it does not exist.
+*   **Source BigQuery Dataset (RAW):** BigQuery dataset where the source SAP or Salesforce data is replicated to or where the test data will be created. The recommendation is to have two separate datasets, one for each source (i.e., one raw dataset for SAP and one raw dataset forSalesforce).
+*   **CDC BigQuery Dataset:** BigQuery dataset where the CDC processed data lands the latest available records. This may or may not be the same as the source dataset if the tool landing the data performs the CDC merge operation. The recommendation is to have two separate CDC datasets, one for each source (i.e., one cdc dataset for SAP and one cdc dataset forSalesforce).
+*   **Target BigQuery reporting dataset:** BigQuery dataset where the Data Foundation predefined data models will be deployed. The recommendation is to have two separate reporting datasets, one for each source (i.e., one reporting dataset for SAP and one reporting dataset forSalesforce). This dataset is automatically created by the deployer if it does not exist.
 *   **Target BigQuery machine learning dataset:** BigQuery dataset where the BQML predefined models will be deployed. This dataset is automatically created by the deployer if it does not exist.
 
 **Alternatively**, if you do not have a replication tool set up or do not wish to use the replicated data, the deployment process can generate test tables and fake data for you. You will still need to [create](https://cloud.google.com/bigquery/docs/datasets) and identify the datasets ahead of time.
 
 ### Loading SAP data into BigQuery
 
-If you currently have a replication tool from SAP ECC or S/4 HANA, you can use the same project (Source Project) or a different one for reporting.
+If you currently have a replication tool from SAP ECC or S/4 HANA, such as the [BigQuery Connector for SAP](https://cloud.google.com/solutions/sap/docs/bq-connector-for-sap-install-config), you can use the same project (Source Project) or a different one for reporting.
 
 **Note:** If you are using an existing dataset with data replicated from SAP, you can find the list of required tables in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml). If you do not have all of the required tables replicated, only the views that depend on missing tables will fail to deploy.
 
@@ -73,11 +73,19 @@ If you currently have a replication tool from SAP ECC or S/4 HANA, you can use t
 
 We provide a replication solution based on Python scripts scheduled in [Apache Airflow](https://airflow.apache.org/) and [Salesforce Bulk API 2.0](https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/bulk_api_2_0.htm). These Python scripts can be adapted and scheduled in the tool of choice.
 
-There are two sets of scripts:
-- API call and load into RAW
+There are three sets of processing options for data integration:
+- API call and load into RAW, updating existing records if needed
+- Source-to-target structure mapping views
 - CDC processing scripts
 
-If you have datasets already loaded through a different tool, the RAW processing scripts contain mapping files to map the structure of your tool into the names and data types of the structure required by the reporting views.
+If you have datasets already loaded through a different tool in append-always mode, the CDC processing scripts contain mapping files to map the schema of the tables as generated by your tool into the names and data types of the structure required by the reporting views in Cortex Data Foundation. You can also add custom fields in the schema definition so they are incorporated in the CDC processing.
+
+ ❗For CDC scripts to work, the **Id** for each API (e.g., `Account Id`) and the [**SystemModStamp**](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/system_fields.htm) need to be present in the source table. These fields should either have their original name (Id, SystemModstamp) or being mapped respectively to the {object_name}Id and SystemModstamp.
+
+For example, the source table with data of Account object should have original Id and SystemModstamp fields. If these fields have different names, then src/SFDC/src/table_schema/accounts.csv file must be updated with id field's name mapped to AccountId and whatever system modification timestamp field mapped to SystemModstamp.
+
+
+If you already have the replication and CDC working for Salesforce APIs and only need the mapping, you can edit the [mapping files](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/cdc_dag_generator/table_schema) to generate views that translate the structure generated by the integration tool to the strcuture expercted by Cortex Data Foundation reporting views.
 
 ## Enable Required Components
 
@@ -131,20 +139,20 @@ Notes:
 
 Depending on the source system, the following applies as well:
 
+**Salesforce.com**
+*   The structure of the source tables follows *snake_case* naming in plural, i.e. `some_objects`. The columns have the same data types as how Salesforce represents them internally. Some fields have been renamed for better readability in the reporting layer.
+*   Data Foundation comes with a set of replication and mapping scripts to load Salesforce data into BigQuery (see Appendix). You can use your own replication tool as long as the schema in the `CDC processed` dataset matches the schema [documented in the mapping](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/raw_dag_generator/table_schema). A one-time mapping tool is provided to assist with this.
+*   Any required tables that did not exist within the raw dataset will be created as empty tables during deployment. This is to ensure the CDC deployment step runs correctly.
+*  For CDC scripts to work, the **Id** for each API (e.g., `Account Id`) and the [**SystemModStamp**](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/system_fields.htm) need to be present in the source table. The provided RAW processing scripts fetch these fields automatically from the APIs and update the target replication table.
+*  The provided RAW processing scripts do not require additional change data capture processing. This behavior is set during deployment by default.
+
 **SAP ECC or S/4**
 *   The structure of the source SAP table is expected to be the same as SAP generates it. That is, the same name and the same data types. If in doubt about a conversion option, we recommend following the [default table mapping](https://cloud.google.com/solutions/sap/docs/bq-connector/latest/planning#default_data_type_mapping).
 *   The Data Foundation can work with any replication tool that produces the schema as noted above.
 
-**Salesforce.com**
-*   The structure of the source tables follows *snake_case* naming in plural, i.e. `some_objects`. The columns have the same data types as how Salesforce represents them internally.
-*   Data Foundation comes with a set of replication and mapping scripts to load Salesforce data into BigQuery (see [Appendix](#confguring-salesforce-to-bigquery-extraction-module)). You can use your own replication tool as long as the schema in the `CDC processed` dataset matches the schema [documented in the mapping](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/raw_dag_generator/table_schema)
-*   Any required tables that did not exist within the raw dataset will be created as empty tables during deployment. This is to ensure the CDC deployment step runs correctly.
-
-### CDC processing flags
+### CDC processing flags for SAP
 
 If not using test data, make sure the replication tool includes the fields required for CDC processing or merges changes when inserting them into BigQuery. You can find more details about this requirement [here](#setting-up-cdc-processing). For SAP, the BigQuery Connector for SAP can include these fields by default with the [Extra Field flag](https://cloud.google.com/solutions/sap/docs/bq-connector-for-sap-planning#default-field-names).
-
-For Salesforce.com, the raw DAG generator inserts the timestamp and operation flag when calling the APIs. This is not a requirement for processing if an alternative replication tool takes care of CDC processing.
 
 
 ### DD03L for SAP metadata
@@ -413,15 +421,48 @@ Clone this repository with submodules (`--recurse-submodules`) into an environme
 
 If you have done a previous deployment, remember to navigate into the previously downloaded folder and execute a `git pull --recurse-submodules` to pull the latest changes.
 
-## Configure CDC
+## Configure CDC for SAP
+
+_You can skip this step if not implementing SAP or if using test data._
 
 You can use the configuration in the file [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml) if you need to generate change-data capture processing scripts. See the [Appendix - Setting up CDC Processing](#setting-up-cdc-processing) for options. For test data, you can leave this file as a default.
 
 Make any changes to the [DAG templates](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/src/template_dag/dag_sql.py) as required by your instance of Airflow or Cloud Composer. You will find more information in the [Appendix - Gathering Cloud Composer settings](#gathering-cloud-composer-settings).
 
+This module is optional. If you want to add/process tables individually after deployment, you can modify the `setting.yaml` file to process only the tables you need and re-execute the specific module with calling `src/SAP_CDC/deploy_cdc.sh` or `src/SAP_CDC/cloudbuild.cdc.yaml` directly.
+
+## Configure API integration and CDC for Salesforce
+
+_You can skip this step if not implementing Salesforce or if using test data._
+
+Following a principle of openness, customers are free to use the provided replication scripts for Salesforce or a data replication tool of their choice as long as data meets the same structure and level of aggregation as provided by the Salesforce APIs. If you are using another tool for replication, this tool can either append updates as new records (_[append always](https://cloud.google.com/bigquery/docs/migration/database-replication-to-bigquery-using-change-data-capture#overview_of_cdc_data_replication)_ pattern) or update existing records with changes when landing the data in BigQuery. If the tool does not update the records and replicates any changes as new records into a target (RAW) table, Cortex Data Foundation provides the option to create change-data-capture processing scripts.
+
+To ensure the names of tables, names of fields, and data types are consistent with the structures expected by Cortex regardless of the replication tool, you can modify the mapping configuration to map your replication tool or existing schemata. This will generate mapping views compatible with the structure expected by Cortex Data Foundation.
+
+![Three options depending on replication tool](images/dataflows.png)
+
+You can use the configuration in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-salesforce/blob/main/config/setting.yaml) to configure the generation of scripts to call the salesforce APIs and replicate the data into the RAW dataset (section `salesforce_to_raw_tables`) and the generation of scripts to process changes incoming into the RAW dataset and into the CDC processed dataset (section `raw_to_cdc_tables`).
+
+By default, the scripts provided to read from APIs update changes into the RAW dataset, so CDC processing scripts are not required, and mapping views to align the source schema to the expected schema are created instead.
+
+The generation of CDC processing scripts is not executed if `SFDC.createMappingViews` in the [config.json](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/config/config.json#L29) file remains true (default behavior). If CDC scripts are required, set `SFDC.createMappingViews` to false.  This second step also allows for mapping between the source schemata into the required schemata as required by Cortex Data Foundation.
+
+The following example of a `setting.yaml` configuration file illustrates the generation of mapping views when a replication tool updates the data directly into the replicated dataset, as illustrated in `option 3` (i.e., no CDC is required, only re-mapping of tables and field names). Since no CDC is required, this option executes as long as the parameter `SFDC.createMappingViews` in the config.json file remains `true`.
+
+![settings.yaml example](images/settingyaml.png)
+
+In this example, removing the configuration for a base table or all of them from the sections will skip the generation of DAGs of that base table or the entire section, as illustrated for `salesforce_to_raw_tables`. For this scenario, setting the parameters _GEN_CDC=false has the same effect, as no CDC processing scripts need to be generated.
+
+The following example illustrates the mapping of the field `unicornId` as landed by a replication tool to the name and type expected by Cortex Data Foundation, `AccountId` as a `String`.
+
+![Only remap](images/remap.png)
+
+Make any changes to the [DAG templates for CDC](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/cdc_dag_generator/templates) or for [RAW](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/raw_dag_generator/templates) as required by your instance of Airflow or Cloud Composer. You will find more information in the [Appendix - Gathering Cloud Composer settings](#gathering-cloud-composer-settings).
+
+If you do not need any DAGs for RAW data generation from API calls or CDC processing, set [parameter](#gather-the-parameters-for-deployment) `_GEN_CDC` or `deployCDC` to `false`. Alternatively, you can remove the contents of the sections in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-salesforce/blob/main/config/setting.yaml). If data structures are known to be consistent with those expected by Cortex Data Foundation, you can skip the generation of mapping views with [parameter](#gather-the-parameters-for-deployment) `SFDC.createMappingViews` set to `false`.
+
 **Note**: If you do not have an instance of Cloud Composer, you can still generate the scripts and create it later.
 
-This module is optional. If you want to add/process tables individually after deployment, you can modify the `setting.yaml` file to process only the tables you need and re-execute the specific module with calling `src/SAP_CDC/deploy_cdc.sh` or `src/SAP_CDC/cloudbuild.cdc.yaml` directly.
 
 ### Performance optimization for CDC Tables
 For certain CDC datasets, you may want to take advantages of BigQuery [table partitioning](https://cloud.google.com/bigquery/docs/partitioned-tables), [table clustering](https://cloud.google.com/bigquery/docs/clustered-tables) or both. This choice depends on many factors - the size and data of the table, columns available in the table, and your need of real time data with views vs data materialized as tables. By default, CDC settings do not apply table partitioning or table clustering - the choice is yours to configure it based on what works best for you.
@@ -504,7 +545,11 @@ If you are targeting a location different from the one available for the require
 
 **Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules (`holidays`, `pytrends`) [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**.
 
-## Gather the parameters
+## Gather the parameters for deployment
+
+Consider your target deployment:
+
+![structure for parameters](images/10.png "image_tooltip")
 
 You will need the following parameters ready for deployment, based on your target structure:
 
@@ -541,9 +586,10 @@ Optional parameters:
 |Mandant or Client for S4 | N/A: File only | `SAP.mandtS4` |Default mandant or client for SAP ECC in UNION scenario. For test data, keep the default value (`100`). For Demand Sensing, use `900`.|
 |SQL flavor for source system|`_SQL_FLAVOUR`|  `SAP.SQLFlavor` |`S4`, `ECC` or `UNION`.<br><br>See the documentation for options. For test data, keep the default value (`ECC`). For Demand Sensing, only `ECC` test data is provided at this time. `UNION` is currently an experimental feature and should be used after both an S4 and an ECC deployments have been completed.|
 |Generate External Data|`_GEN_EXT`| N/A: Parameter only | Generate DAGs to consume external data (e.g., weather, trends, holiday calendars). Some datasets have external dependencies that need to be configured before running this process. If `_TEST_DATA` is `true`, the tables for external datasets will be populated with sample data. <br><br>Default: `true`.|
-|Currency | N/A: File only| `currencies` | If not using test data, enter a single currency (e.g., `[ "CAD" ]`) or multiple currencies (e.g., `[ "CAD", "USD" ]`) as relevant to your business.  These valueas are used to replace placeholders in SQL. |
-|Language | N/A: File only| `languages` | If not using test data, enter a single language (e.g., `[ "CAD" ]`) or multiple languages (e.g., `[ "E", "S" ]`) as relevant to your business. These valueas are used to replace placeholders in SQL.|
+|Currency | N/A: File only| `currencies` | If not using test data, enter a single currency (e.g., `[ "CAD" ]`) or multiple currencies (e.g., `[ "CAD", "USD" ]`) as relevant to your business.  These valueas are used to replace placeholders in SQL in SAP models. |
+|Language | N/A: File only| `languages` | If not using test data, enter a single language (e.g., `[ "E" ]`) or multiple languages (e.g., `[ "E", "S" ]`) as relevant to your business. These valueas are used to replace placeholders in SQL in SAP models.|
 |Turbo | N/A: File only| `turboMode` | Execute all views builds as a step in the same Cloud Build process, in parallel for a faster deployment. If set to `false`, each reporting views is generated in its own sequential build step. We recommend only setting it to `true` when using test data or after any mismatch between reporting columns and the source data have been resolved. |
+|Create mapping views | N/A: File only| `SFDC.createMappingViews` | The provided DAGs to fetch new records from the Salesforce APIs update records on landing. This value set to **true** will generate views in the CDC processed dataset to surface tables with the "latest version of the truth" from the RAW dataset. If **false**  and `_GEN_CDC=true`, DAGs will be generated with change data capture processing based on SystemModstamp. See details on [CDC processing for Salesforce](#configure-api-integration-and-cdc-for-salesforce). Default: `true` |
 
 
 ## Configure the Deployment File
@@ -555,7 +601,7 @@ Open the file in cortex-data-foundation/config/config.json. You can use the Clou
 
 ![edit cortex-data-foundation/config/config.json](images/config1.png)
 
-&#x1F53B; **Note**: If a parameter is passed when invoking the ```gcloud builds submit``` through the --substitutions flag, it overrides the value in the `config.json` file.
+&#x1F53B; **Note**: If a parameter is passed when invoking the ```gcloud builds submit``` through the --substitutions flag, it overrides the value in the `config.json` file. The `substitutions` definitions in the cloudbuild.yaml file act as a parameter passed in the command line, and also override file configurations.
 
 For example, consider this config.json file with these values for SAP datasets:
 
@@ -577,7 +623,7 @@ gcloud builds submit  \
 _DS_CDC=UNICORN,_GEN_EXT=false,_TGT_BUCKET=some_gcs_bucket,_GCS_BUCKET=some_logging_cbucket
 ```
 
-The previous call will point the CDC dataset to a dataset called `UNICORN` from the substitution parameter, and the RAW dataset to one called `SCARYJSON13` as no substitution parameter is passed. The generation of extra data is disabled by the parameter passed in the call (`_GEN_EXT=false`), while all other boolean parameters that control the execution of build steps (i.e., `_TEST_DATA`,`_DEPLOY_SAP`,`_DEPLOY_SFDC`,`_DEPLOY_CDC`) are defaulted to `true` in the [cloudbuild.yaml file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/cloudbuild.yaml).
+The previous call will point the CDC dataset to a dataset called `UNICORN` from the substitution parameter, and the RAW dataset to one called `SCARYJSON13` as no substitution parameter is passed. The generation of extra data is disabled by the parameter passed in the call (`_GEN_EXT=false`), while all other boolean parameters that control the execution of build steps (i.e., `_TEST_DATA`,`_DEPLOY_SAP`,`_DEPLOY_SFDC`,`_DEPLOY_CDC`) are defaulted to `true` in the `config.json` file.
 
 ## Check for `CORTEX_CUSTOMER` tags
 Many SAP and Salesforce customers will have specific customizations of their systems, such as additional documents in a flow or specific types of a record. These are specific to each customer and configured by functional analysts as the business needs arise. The spots on the SQL code where these specific enhancements could be done are marked with a comment starting with `## CORTEX-CUSTOMER`. You can check for these comments after cloning the repository with a command like:
@@ -585,10 +631,14 @@ Many SAP and Salesforce customers will have specific customizations of their sys
 ```bash
 grep -R CORTEX-CUSTOMER
 ```
-## (SAP only) Configure the UNION option to combine SAP ECC and S/4HANA data
+## [Optional - SAP only] Configure the UNION option to combine SAP ECC and S/4HANA data
+
+**This feature is experimental.**
+
 The UNION option for `_SQL_FLAVOUR` allows for an additional implementation to apply a `UNION` operation between views sourcing data from an ECC system and views sourcing data from an S/4HANA system. This feature is currently experimental and we are seeking feedback on it. The `UNION` dataset depends on the ECC and S/4HANA reporting datasets to exist. The following chart explains the flow of data when using `UNION`:
 
 ![Union sourcing from ECC and S4 reporting](images/union.jpg)
+
 
 After deploying the reporting datasets for S/4 and ECC, open the file `config/config.json` and configure the datasets for ECC and S/4 respectively (i.e., `SAP.datasets.cdcECC`, `SAP.datasets.cdcS4`, `SAP.datasets.rawECC`, `SAP.datasets.rawS4`). You can leave the datasets that do not have a `_SQL_FLAVOUR` in their name empty.
 
@@ -602,7 +652,7 @@ gcloud builds submit --project <Source Project> \
 
 ```
 
-**NOTE**: If you are looking to ONLY execute the Reporting build from the build in the [sap_reporting submodule](https://github.com/GoogleCloudPlatform/cortex-reporting), the configuration is currently taken from [sap_config.env](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/sap_config.env). This configuration file will be replaced in future releases for config.json.
+**NOTE**: If you are looking to ONLY execute the Reporting build from the build in the [sap_reporting submodule](https://github.com/GoogleCloudPlatform/cortex-reporting), the configuration is currently taken from [sap_config.env](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/sap_config.env). This configuration file will be replace in future releases for config.json.
 
 ## Execute the build
 
@@ -688,7 +738,7 @@ For your own customizations and a faster deployment in your own development pipe
 
 # Support
 
-To file issues and feature requests against these models or deployers, [create an issue](https://github.com/GoogleCloudPlatform/cortex-data-foundation/issues/new) in this repo.
+To file issues and feature requests against these models or deployers, create an issue in this repo.
 
 # Appendix
 
@@ -723,8 +773,13 @@ For example, the following image shows the latest records for each partner recor
 
 Data from SAP or Salesforce is replicated into a BigQuery dataset  -the source or replicated dataset- and the updated or merged results are inserted into another dataset- the CDC dataset. The reporting views select data from the CDC dataset, to ensure the reporting tools and applications always have the latest version of a table.
 
-![alt_text](images/17.png "image_tooltip")
+The following flow depicts the CDC processing for SAP, dependent on the `operational_flag` and `recordstamp`.
 
+![Replication with recordstamp and operation flag merged into cdc processed](images/17.png "image_tooltip")
+
+The following flow depicts the integration from APIs into RAW and CDC processing for Salesforce, dependent on the `Id` and `SystemModStamp` fields produced by Salesforce APIs.
+
+![Replication with system modstamp and id mapped into cortex schema and merged into cdc processed](images/17b.png "image_tooltip")
 
 Some replication tools can merge or upsert the records when inserting them into BigQuery, so the generation of these scripts is optional. In this case, the setup will only have a single dataset. The REPORTING  dataset will fetch updated records for reporting from that dataset.
 

@@ -1,37 +1,42 @@
 {
-    "testData" : true,
-    "generateExtraData" : true,
-    "deployCDC" : true,
-    "deploySAP" : true,
-    "deploySFDC" : true,
-    "turboMode" : true,
-    "projectIdSource" : "",
-    "projectIdTarget" : "",
-    "location" : "US",
-    "languages" : ["E", "S"],
-    "currencies" : ["USD"],
-    "SAP" : {
-        "datasets" : {
-            "cdc" : "",
-            "raw" : "",
-            "ml" : "ML_MODELS",
-            "reporting" : "REPORTING",
-            "cdcECC" : "",
-            "rawECC" : "",
-            "cdcS4" : "",
-            "rawS4" : ""
+    "testData": true,
+    "generateExtraData": true,
+    "deployCDC": true,
+    "deploySAP": true,
+    "deploySFDC": true,
+    "turboMode": true,
+    "projectIdSource": "",
+    "projectIdTarget": "",
+    "location": "US",
+    "languages": [
+        "E",
+        "S"
+    ],
+    "currencies": [
+        "USD"
+    ],
+    "SAP": {
+        "datasets": {
+            "cdc": "",
+            "raw": "",
+            "ml": "ML_MODELS",
+            "reporting": "REPORTING",
+            "cdcECC": "",
+            "rawECC": "",
+            "cdcS4": "",
+            "rawS4": ""
         },
-        "SQLFlavor" : "ecc",
-        "mandt" : "100",
-        "mandtECC" : "100",
-        "mandtS4" : "100"
+        "SQLFlavor": "ecc",
+        "mandt": "100",
+        "mandtECC": "100",
+        "mandtS4": "100"
     },
-    "SFDC" : {
-        "datasets" : {
-            "cdc" : "",
-            "raw" : "",
-            "reporting" : ""
+    "SFDC": {
+        "createMappingViews": true,
+        "datasets": {
+            "cdc": "",
+            "raw": "",
+            "reporting": ""
         }
     }
-
 }
