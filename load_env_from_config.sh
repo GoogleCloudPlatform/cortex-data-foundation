@@ -79,11 +79,8 @@ export _SQL_FLAVOUR_="${7}"; export _TEST_DATA_="${8}";
 export _CURRENCY_="${9}"; export _LANGUAGE_="${10}";
 export _GCS_LOG_BUCKET_="${11}"; export _GCS_BUCKET_="${12}";
 export _DEPLOY_CDC_="${13}"; export _GEN_EXT_="${14}";
-export _RUN_EXT_SQL_="${15}"
-export _DS_REPORTING_="${16}"
-export _DS_MODELS="${17}"
-
-
+export _RUN_EXT_SQL_="${15}"; export _DS_REPORTING_="${16}"
+export _DS_MODELS="${17}"; export _DEPLOY_SFDC_="${18}"
 
 
 if [ -f "${CONFIG_FILE}" ]

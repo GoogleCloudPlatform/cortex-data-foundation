@@ -33,9 +33,14 @@ steps:
     args:
       - "-c"
       - |
-        source load_env_from_config.sh
+        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
+            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
+            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
+            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
         if [ $$_TEST_DATA_ = "true" ] && [ $$_DEPLOY_SAP_ = "true" ]; then
           ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_ $$_SQL_FLAVOUR_ $$_LOCATION_
+        else
+          echo "==Skipping Test Harness for SAP=="
         fi
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
@@ -44,9 +49,14 @@ steps:
     args:
       - "-c"
       - |
-        source load_env_from_config.sh
+        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
+            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
+            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
+            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
         if [ $$_TEST_DATA_ = "true" ] && [ $$_DEPLOY_SFDC_ = "true" ]; then
           ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_SFDC_ "sfdc" $$_LOCATION_
+        else
+          echo "==Skipping Test Harness for SFDC=="
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sap-cdc'
@@ -55,12 +65,17 @@ steps:
     args:
       - "-c"
       - |
-        source load_env_from_config.sh
+        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
+            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
+            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
+            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
         if [ $$_DEPLOY_SAP_ = "true" ] && ( [  $$_DEPLOY_CDC_ = "true" ] || [ $$_GEN_EXT_ = "true" ] ); then
           cp config/config.env src/SAP/SAP_CDC/config/sap_config.env
           gcloud builds submit ./src/SAP/SAP_CDC  \
           --config=./src/SAP/SAP_CDC/cloudbuild.cdc.yaml \
           --substitutions=_PJID_SRC='${_PJID_SRC}',_DS_RAW='${_DS_RAW}',_PJID_TGT='${_PJID_SRC}',_DS_CDC='${_DS_CDC}',_GCS_BUCKET='${_TGT_BUCKET}',_GCS_LOG_BUCKET='${_GCS_BUCKET}',_TEST_DATA='${_TEST_DATA}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_GEN_EXT='${_GEN_EXT}',_LOCATION='${_LOCATION}',_DEPLOY_CDC='${_DEPLOY_CDC}'
+        else
+          echo "==Skipping CDC for SAP=="
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sap-reporting'
@@ -69,13 +84,18 @@ steps:
     args:
       - "-c"
       - |-
-        source load_env_from_config.sh
+        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
+            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
+            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
+            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
         if [ $$_DEPLOY_SAP_ = "true" ]; then
           cp config/config.env src/SAP/SAP_REPORTING/sap_config.env
           cp config/config.json src/SAP/SAP_REPORTING/sap_config.json
           gcloud builds submit ./src/SAP/SAP_REPORTING  \
             --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
             --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION='${_LOCATION}',_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}',_TGT_BUCKET='${_TGT_BUCKET}'
+        else
+          echo "==Skipping Reporting for SAP=="
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sap-ml-models'
@@ -84,11 +104,16 @@ steps:
     args:
       - "-c"
       - |-
-        source load_env_from_config.sh
+        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
+            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
+            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
+            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
         if [ $$_DEPLOY_SAP_ = "true" ] && [ $$_SQL_FLAVOUR_ != "union" ]; then
           gcloud builds submit ./src/SAP/SAP_ML_MODELS  \
           --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
           --substitutions=_PJID_SRC=$$_PJID_SRC_,_PJID_TGT=$$_PJID_TGT_,_DS_RAW=$$_DS_RAW_,_DS_CDC=$$_DS_CDC_,_DS_REPORTING=$$_DS_REPORTING_,_DS_MODELS=$$_DS_MODELS_,_SQL_FLAVOUR=$$_SQL_FLAVOUR_,_LOCATION='${_LOCATION}',_MANDT=$$_MANDT_,_GCS_BUCKET='${_GCS_BUCKET}'
+        else
+          echo "==Skipping ML for SAP=="
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sfdc-deploy'
@@ -97,12 +122,17 @@ steps:
     args:
       - "-c"
       - |-
-        source load_env_from_config.sh
+        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
+            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
+            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
+            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
         if [ $$_DEPLOY_SFDC_ = "true" ]; then
           cp config/config.json src/SFDC/config/sfdc_config.json
           gcloud builds submit ./src/SFDC  \
           --config=./src/SFDC/cloudbuild.sfdc.yaml  \
           --substitutions=_TEST_DATA='${_TEST_DATA}',_DEPLOY_CDC='${_DEPLOY_CDC}',_GCS_LOGS_BUCKET='${_GCS_BUCKET}',_TGT_BUCKET='${_TGT_BUCKET}',_LOCATION='${_LOCATION}'
+        else
+          echo "==Skipping SFDC=="
         fi
 
 logsBucket: "gs://$_GCS_BUCKET"

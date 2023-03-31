@@ -199,7 +199,7 @@ while true; do
       shift 2
       ;;
     -k | --deploy-cdc)
-      deploy_sfdc=$2
+      deploy_cdc=$2
       shift 2
       ;;
     --)
