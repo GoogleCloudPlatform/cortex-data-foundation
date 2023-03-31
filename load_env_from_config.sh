@@ -45,8 +45,29 @@ make_defaults(){
     fi
     if [[ "${_TEST_DATA_}" == "" ]]
     then
-        export _TEST_DATA_="false"
-        export TEST_DATA="false"
+        export _TEST_DATA_="true"
+        export TEST_DATA="true"
+    fi
+
+    if [[ "${_LOCATION_}" == "" ]]
+    then
+        export _LOCATION_="US"
+        export LOCATION="US"
+    fi
+    if [[ "${_DEPLOY_SAP_}" == "" ]]
+    then
+        export _DEPLOY_SAP_="true"
+        export DEPLOY_SAP="true"
+    fi
+    if [[ "${_DEPLOY_SFDC_}" == "" ]]
+    then
+        export _DEPLOY_SFDC_="true"
+        export DEPLOY_SFDC="true"
+    fi
+    if [[ "${_DEPLOY_CDC_}" == "" ]]
+    then
+        export _DEPLOY_CDC_="true"
+        export DEPLOY_CDC="true"
     fi
 }
 
@@ -61,6 +82,9 @@ export _DEPLOY_CDC_="${13}"; export _GEN_EXT_="${14}";
 export _RUN_EXT_SQL_="${15}"
 export _DS_REPORTING_="${16}"
 export _DS_MODELS="${17}"
+
+
+
 
 if [ -f "${CONFIG_FILE}" ]
 then
@@ -217,6 +241,20 @@ then
     export _DEPLOY_CDC_="${DEPLOY_CDC}"
 else
     export DEPLOY_CDC="${_DEPLOY_CDC_}"
+fi
+
+if [[ "${_DEPLOY_SFDC_}" == "" ]]
+then
+    export _DEPLOY_SFDC_="${DEPLOY_SFDC}"
+else
+    export DEPLOY_SFDC="${_DEPLOY_SFDC_}"
+fi
+
+if [[ "${_DEPLOY_SAP_}" == "" ]]
+then
+    export _DEPLOY_SAP_="${DEPLOY_SAP}"
+else
+    export DEPLOY_SAP="${_DEPLOY_SAP_}"
 fi
 
 if [[ "${_TEST_DATA_}" == "" ]]

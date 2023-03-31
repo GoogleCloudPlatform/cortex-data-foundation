@@ -24,7 +24,7 @@ steps:
          ./validate_deploy_config.sh --source-project '${_PJID_SRC}' --target-project '${_PJID_TGT}' --cdc-processed-dataset '${_DS_CDC}'  \
            --raw-landing-dataset '${_DS_RAW}' --reporting-dataset '${_DS_REPORTING}' --models-dataset '${_DS_MODELS}' --location '${_LOCATION}'  \
            --mandt '${_MANDT}' --sql-flavour '${_SQL_FLAVOUR}' --test-data '${_TEST_DATA}' --gen-ext '${_GEN_EXT}'  \
-           --deploy-sap '${_DEPLOY_SAP}' --deploy-sfdc '${_DEPLOY_SFDC}'
+           --deploy-sap '${_DEPLOY_SAP}' --deploy-sfdc '${_DEPLOY_SFDC}' --deploy-cdc '${_DEPLOY_CDC}'
 
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
@@ -33,8 +33,8 @@ steps:
     args:
       - "-c"
       - |
-        if [ '$_TEST_DATA' = "true" ] && [ '$_DEPLOY_SAP' = "true" ]; then
-          source load_env_from_config.sh
+        source load_env_from_config.sh
+        if [ $$_TEST_DATA_ = "true" ] && [ $$_DEPLOY_SAP_ = "true" ]; then
           ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_ $$_SQL_FLAVOUR_ $$_LOCATION_
         fi
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
@@ -44,8 +44,8 @@ steps:
     args:
       - "-c"
       - |
-        if [ '$_TEST_DATA' = "true" ] && [ '$_DEPLOY_SFDC' = "true" ]; then
-          source load_env_from_config.sh
+        source load_env_from_config.sh
+        if [ $$_TEST_DATA_ = "true" ] && [ $$_DEPLOY_SFDC_ = "true" ]; then
           ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_SFDC_ "sfdc" $$_LOCATION_
         fi
   - name: gcr.io/cloud-builders/gcloud
@@ -55,7 +55,8 @@ steps:
     args:
       - "-c"
       - |
-        if [ '$_DEPLOY_SAP' = "true" ] && ( [  '$_DEPLOY_CDC' = "true" ] || [ '$_GEN_EXT' = "true" ] ); then
+        source load_env_from_config.sh
+        if [ $$_DEPLOY_SAP_ = "true" ] && ( [  $$_DEPLOY_CDC_ = "true" ] || [ $$_GEN_EXT_ = "true" ] ); then
           cp config/config.env src/SAP/SAP_CDC/config/sap_config.env
           gcloud builds submit ./src/SAP/SAP_CDC  \
           --config=./src/SAP/SAP_CDC/cloudbuild.cdc.yaml \
@@ -68,11 +69,13 @@ steps:
     args:
       - "-c"
       - |-
-        if [ '$_DEPLOY_SAP' = "true" ]; then
+        source load_env_from_config.sh
+        if [ $$_DEPLOY_SAP_ = "true" ]; then
           cp config/config.env src/SAP/SAP_REPORTING/sap_config.env
+          cp config/config.json src/SAP/SAP_REPORTING/sap_config.json
           gcloud builds submit ./src/SAP/SAP_REPORTING  \
-          --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
-          --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION=$$_LOCATION_,_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}'
+            --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
+            --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION='${_LOCATION}',_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}',_TGT_BUCKET='${_TGT_BUCKET}'
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sap-ml-models'
@@ -81,11 +84,11 @@ steps:
     args:
       - "-c"
       - |-
-        if [ '$_DEPLOY_SAP' = "true" ]; then
-          source load_env_from_config.sh
+        source load_env_from_config.sh
+        if [ $$_DEPLOY_SAP_ = "true" ] && [ $$_SQL_FLAVOUR_ != "union" ]; then
           gcloud builds submit ./src/SAP/SAP_ML_MODELS  \
           --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
-          --substitutions=_PJID_SRC=$$_PJID_SRC_,_PJID_TGT=$$_PJID_TGT_,_DS_RAW=$$_DS_RAW_,_DS_CDC=$$_DS_CDC_,_DS_REPORTING=$$_DS_REPORTING_,_DS_MODELS=$$_DS_MODELS_,_SQL_FLAVOUR=$$_SQL_FLAVOUR_,_LOCATION=$$_LOCATION_,_MANDT=$$_MANDT_,_GCS_BUCKET='${_GCS_BUCKET}'
+          --substitutions=_PJID_SRC=$$_PJID_SRC_,_PJID_TGT=$$_PJID_TGT_,_DS_RAW=$$_DS_RAW_,_DS_CDC=$$_DS_CDC_,_DS_REPORTING=$$_DS_REPORTING_,_DS_MODELS=$$_DS_MODELS_,_SQL_FLAVOUR=$$_SQL_FLAVOUR_,_LOCATION='${_LOCATION}',_MANDT=$$_MANDT_,_GCS_BUCKET='${_GCS_BUCKET}'
         fi
   - name: gcr.io/cloud-builders/gcloud
     id: 'sfdc-deploy'
@@ -94,7 +97,8 @@ steps:
     args:
       - "-c"
       - |-
-        if [ '$_DEPLOY_SFDC' = "true" ]; then
+        source load_env_from_config.sh
+        if [ $$_DEPLOY_SFDC_ = "true" ]; then
           cp config/config.json src/SFDC/config/sfdc_config.json
           gcloud builds submit ./src/SFDC  \
           --config=./src/SFDC/cloudbuild.sfdc.yaml  \
@@ -108,7 +112,6 @@ substitutions:
   _DEPLOY_CDC: "true"
   _DEPLOY_SAP: "true"
   _DEPLOY_SFDC: "true"
-  _GEN_EXT: "true"
   # _LOCATION: "US"
   # _DS_REPORTING: "REPORTING"
   # _DS_MODELS: "ML_MODELS"

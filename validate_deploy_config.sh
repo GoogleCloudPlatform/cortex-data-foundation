@@ -42,6 +42,7 @@ test_data=""
 gen_ext=""
 deploy_sap=""
 deploy_sfdc=""
+deploy_cdc=""
 
 #################################################################
 ##  Functions
@@ -71,6 +72,7 @@ Options
 -e | gen-ext                    : Generate external data (Default: true )
 -i | deploy-sap                 : Deploy SAP
 -j | deploy-sfdc                : Deploy SalesForce.com
+-k | deploy-cdc                 : Deploy CDC DAGs
 
 
 HELP_USAGE
@@ -105,6 +107,7 @@ validate_builds_parameters() {
   gen_ext = ${gen_ext}
   deploy_sap = ${deploy_sap}
   deploy_sfdc = ${deploy_sfdc}
+  deploy_cdc = ${deploy_cdc}
 EOF
 
   # Send --substitution parameters and config/config.json file for
@@ -123,7 +126,8 @@ EOF
     --TEST_DATA="${test_data}" \
     --GEN_EXT="${gen_ext}" \
     --DEPLOY_SAP="${deploy_sap}" \
-    --DEPLOY_SFDC="${deploy_sfdc}"
+    --DEPLOY_SFDC="${deploy_sfdc}" \
+    --DEPLOY_CDC="${deploy_cdc}"
 }
 
 #--------------------
@@ -131,7 +135,7 @@ EOF
 #--------------------
 
 set -o errexit -o noclobber -o nounset -o pipefail
-opts="$(getopt -o hs:t:c:r:p:a:l:m:f:d:e:g:b:i:j: -l help,source-project:,target-project:,cdc-processed-dataset:,raw-landing-dataset:,reporting-dataset:,models-dataset:,location:,mandt:,sql-flavour:,test-data:,gen-ext:,deploy-sap:,deploy-sfdc: --name "$0" -- "$@")"
+opts="$(getopt -o hs:t:c:r:p:a:l:m:f:d:e:g:b:i:j:k: -l help,source-project:,target-project:,cdc-processed-dataset:,raw-landing-dataset:,reporting-dataset:,models-dataset:,location:,mandt:,sql-flavour:,test-data:,gen-ext:,deploy-sap:,deploy-sfdc:,deploy-cdc: --name "$0" -- "$@")"
 
 eval set -- "$opts"
 
@@ -191,6 +195,10 @@ while true; do
       shift 2
       ;;
     -j | --deploy-sfdc)
+      deploy_sfdc=$2
+      shift 2
+      ;;
+    -k | --deploy-cdc)
       deploy_sfdc=$2
       shift 2
       ;;
