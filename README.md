@@ -295,8 +295,8 @@ If you do not need any DAGs for RAW data generation from API calls or CDC proces
 The following data sources are available through the Marketing workload:
 - Google Ads
   ![Google Ads](images/ads1.png)
-- Campaign manager 360 (CM360)
-  ![CM360](images/cm361.png)
+- Campaign Manager 360 (CM360)
+  ![CM360](images/cm3601.png)
 
 For both the data sources, we use Dataflow pipelines to obtain data from upstream systems.
 Cloud Composer is used to schedule and monitor these Dataflow pipelines.
@@ -311,14 +311,13 @@ Cortex Data Foundation integrates with Google Ads in the following way:
 
 ## Google Ads API
 
-The ingestion templates for Google Ads use the [Google Ads API](https://developers.google.com/google-ads/api/docs/start) to retrieve reporting attributes and metrics. The current templates use [version 13](https://developers.google.com/google-ads/api/reference/rpc/v13/overview).
+The ingestion templates for Google Ads use the [Google Ads API](https://developers.google.com/google-ads/api/docs/start) to retrieve reporting attributes and metrics. The current templates use [version 13](https://developers.google.com/google-ads/api/fields/v13/overview).
 
 ### API Limits:
 Relevant limits fo the API (as of this release):
 - Basic access operations/day: 15000 (paginated requests containing valid next_page_token are not counted).
 - Max page size: 10000 rows per page.
 - Recommended default parameters: Page size = 10000 rows per page.
-
 For more details on these API, please consult documents referred above.
 
 ## Configurations
@@ -332,10 +331,8 @@ Following configs are required to be in place for Cortex to successfully bring d
     Authorized redirect URIs: http://127.0.0.1
     ```
     For more information, see [Using OAuth 2.0 to Access Google APIs](https://developers.google.com/identity/protocols/oauth2/)
-2.  Once above credential is configure, download the OAuth Client file (it will be `.json` file).
-    Warning: This file contains sensitive information, and you are responsible for not exposing these details
-3.  Generate refresh token using information in the json file.
-    See [How to refresh token](https://developers.google.com/identity/protocols/oauth2#5.-refresh-the-access-token,-if-necessary. ) guide for more details.
+2.  Once above credential is configured, note the values for `Client ID` and `Client secret` - it will be used later. 
+3.  Generate refresh token using "[How to refresh token](https://developers.google.com/identity/protocols/oauth2#5.-refresh-the-access-token,-if-necessary.)".
 4.  Now create a secret using Google Cloud Secret Manager (Security -> Secret Manager) with name “`cortex-framework-google-ads-yaml`” using the following format:
     ```
     {"developer_token": "developer_token_value", "refresh_token": "refresh_token_value", "client_id": "client_id_value", "client_secret": "client_secret_value", "use_proto_plus": False, "login_customer_id": "ads_customer_id"}
@@ -343,9 +340,9 @@ Following configs are required to be in place for Cortex to successfully bring d
     For the values:
     * `developer_token` value : Available in Google Ads account
     * `refresh_token` value: From the step #3 above.
-    *  `login_customer_id` value: Available in Google Ads account (Please note that this value should not contain dashes or hyphens)
-    * `client_id` value: From the OAuth setup in step #1 above.
-    * `client_secret` value: From the json file downloaded in step #2 above.
+    * `login_customer_id` value: Available in Google Ads account (Please note that this value should not contain dashes or hyphens)
+    * `client_id` value: From the OAuth setup in step #2 above.
+    * `client_secret` value: From the configurations in step #2 above.
 
 ### Cloud Composer Connections
 Create following connections in Cloud Composer / Airflow:
@@ -354,6 +351,9 @@ Connection Name          | Purpose
 `googleads_raw_dataflow` | For Google Ads API -> Bigquery Raw Dataset
 `googleads_cdc`          | For Raw dataset -> CDC dataset transfer
 `googleads_reporting`    | For CDC dataset -> Reporting dataset transfer
+
+### Cloud Composer Service Account permissions
+The service account used in Cloud Composer (as configured in the `googleads_raw_dataflow` connection above) needs dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account).
 
 ### Ingestion settings
 File `src/GoogleAds/config/ingestion_settings.yaml` contains further settings that controls
@@ -365,9 +365,13 @@ run Dataflow pipelines to fetch data using Google Ads APIs.
 
 Parameters for each entry:
 * `load_frequency`:  How frequently a DAG for this entity will run to fetch data from Google Ads.
-* `api_name`: Name of API endpoint (e.g. `customer`)
+   (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
+
+* `api_name`: API Resource Name (e.g. `customer` for https://developers.google.com/google-ads/api/fields/v13/customer)
 * `table_name`: Table in Raw dataset where the fetched data will be stored (e.g. `customer`)
 * `schema_file`: Schema file in `src/table_schema` directory that maps API response fields to destination table's column names.
+* `key`: Columns (separated by comma) that forms a unique record for this table.
+* `is_metrics_table`: Indicates if a given entry is for a metric entity (in Google Ads API). System treats such tables a bit differently due to aggregated nature of such tables.
 
 #### `raw_to_cdc_tables`:
 This section has entries that control how data is moved from Raw tables to CDC tables. Each entry
@@ -378,14 +382,13 @@ Parameters for each entry:
 * `raw_table`: Raw table from where we will obtain the data.
 * `key`: Columns (separated by comma) that forms a unique record for this table.
 * `load_frequency`:  How frequently a DAG for this entity will run to populate CDC table.
-* `api_name`: Name of API endpoint (e.g. `customer`)
+  (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
 * `schema_file`: Schema file in `src/table_schema` directory that maps raw columns to CDC columns and data type of the CDC column. (NOTE: This is the same schema file that's referred in earlier section.)
-* `is_metrics_table`: Indicates if a given entry is for a metric entity (in Google Ads API). System treats such tables a bit differently due to aggregated nature of such tables.
 
 ### Reporting settings
 You can configure and control how Cortex generates data for the Google Ads final reporting layer using reporting settings file (`src/GoogleAds/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procs are generated.)
 
-For more details, please see "Customizing reporting_settings file configuration" section.
+For more details, please see [Customizing reporting_settings file configuration](#customizing-reporting_settings-file-configuration) section.
 
 [Return to top of Section](#establish-integration-for-marketing-workloads)
 </details>
@@ -406,26 +409,29 @@ set up Data Transfer process by following the documentation.
 Following configs are required to be in place for Cortex to successfully bring data from CM360 system into Cortex Reporting layer.
 
 ### DTv2 Fils GCS Bucket
-Once the Data Transfer V2 is setup,  obtain the GCS Bucket name, and make sure the GCS bucket and files under the buckets are readable by your Cloud Composer service account.
+Once the Data Transfer V2 is setup,  obtain the GCS Bucket name, and make sure the GCS bucket and files under the bucket are readable by the service account running DAGs in Cloud Composer.
 
 ### Set up Cloud Composer Connections
-Create following two connections in Cloud Composer / Airflow:
+Create following connections in Cloud Composer / Airflow:
 Connection Name       | Purpose
 ----------------------|------------------------------------------------------
 `cm360_raw_dataflow`  | For CM360 DTv2 files -> Bigquery Raw Dataset
 `cm360_cdc_bq`        | For Raw dataset -> CDC dataset transfer
 `cm360_reporting_bq`  | For CDC dataset -> Reporting dataset transfer
 
+### Cloud Composer Service Account permissions
+The service account used in Cloud Composer (as configured in the `cm360_raw_dataflow` connection above) needs dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account).
+
 ### Ingestion settings
 File `src/marketing/src/CM360/config/ingestion_settings.yaml` contains further settings that controls "Source to Raw" and "Raw to CDC" data pipelines.
 
 #### `source_to_raw_tables`:
-This section has entries that control which files from DTv2 is processed and how. Each entry corresponds with files associated one entity. Based on this config, Cortex creates Airflow DAGs that
+This section has entries that control which files from DTv2 are processed and how. Each entry corresponds with files associated one entity. Based on this config, Cortex creates Airflow DAGs that
 run Dataflow pipelines to process data from the DTv2 files.
 
 Parameters for each entry:
 * `base_table`: Table in Raw dataset where the data for an entity (like 'Clicks' data) will be stored.
-* `load_frequency`:  How frequently a DAG for this entity will run to process data from DTv2 files.
+* `load_frequency`:  How frequently a DAG for this entity will run to process data from DTv2 files. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
 * `file_pattern`: Regex based file name patterns that corresponds to an entity.
 * `schema_file`: Schema file in `src/table_schema` directory that maps DTv2 fields to destination table's column names and data types.
 
@@ -435,13 +441,13 @@ corresponds with a raw table (which in turn corresponds with DTv2 entity as ment
 
 Parameters for each entry:
 * `base_table`: Table in CDC dataset where the raw data after CDC transformation will be stored (e.g. `customer`)
-* `load_frequency`:  How frequently a DAG for this entity will run to populate CDC table.
+* `load_frequency`:  How frequently a DAG for this entity will run to populate CDC table. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
 * `row_identifiers`: List of columns (separated by comma) that forms a unique record for this table.
 
 ### Reporting settings
 You can configure and control how Cortex generates data for the CM360 final reporting layer using reporting settings file (`src/CM360/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procs are generated.)
 
-For more details, please see "Customizing reporting_settings file configuration" section.
+For more details, please see [Customizing reporting_settings file configuration](#customizing-reporting_settings-file-configuration) section.
 
 [Return to top of Section](#establish-integration-for-marketing-workloads)
 </details>
