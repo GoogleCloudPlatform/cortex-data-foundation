@@ -1,0 +1,4 @@
+bq_independent_objects:
+
+  - sql_file: src/k9/src/trends/reporting/Trends.sql
+    type: view

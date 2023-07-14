@@ -1,12 +1,12 @@
 {
     "testData": true,
-    "generateExtraData": true,
-    "deployCDC": true,
     "deploySAP": true,
     "deploySFDC": true,
+    "deployMarketing": true,
     "turboMode": true,
     "projectIdSource": "",
     "projectIdTarget": "",
+    "targetBucket": "",
     "location": "US",
     "languages": [
         "E",
@@ -15,28 +15,55 @@
     "currencies": [
         "USD"
     ],
+    "testDataProject": "kittycorn-public",
+    "k9": {
+        "datasets": {
+            "processing": "K9_PROCESSING",
+            "reporting": "K9_REPORTING"
+        }
+    },
     "SAP": {
+        "deployCDC": true,
         "datasets": {
             "cdc": "",
             "raw": "",
             "ml": "ML_MODELS",
-            "reporting": "REPORTING",
-            "cdcECC": "",
-            "rawECC": "",
-            "cdcS4": "",
-            "rawS4": ""
+            "reporting": "REPORTING"
         },
         "SQLFlavor": "ecc",
-        "mandt": "100",
-        "mandtECC": "100",
-        "mandtS4": "100"
+        "mandt": "100"
     },
     "SFDC": {
+        "deployCDC": true,
         "createMappingViews": true,
+        "createPlaceholders": true,
         "datasets": {
             "cdc": "",
             "raw": "",
             "reporting": "REPORTING_SFDC"
+        }
+    },
+    "marketing": {
+        "deployGoogleAds": true,
+        "deployCM360": true,
+        "dataflowRegion": "",
+        "GoogleAds": {
+            "deployCDC": true,
+            "lookbackDays": 180,
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_GoogleAds"
+            }
+        },
+        "CM360": {
+            "deployCDC": true,
+            "dataTransferBucket": "",
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_CM360"
+            }
         }
     }
 }

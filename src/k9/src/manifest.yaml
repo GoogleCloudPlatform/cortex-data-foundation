@@ -1,0 +1,55 @@
+dawgs:
+  # - id: # unique k9 id (required)
+  #
+  #   path: # k9 path, relative to k9/src directory (required)
+  #
+  #   entry_point: bash or python file, path relative to relative to k9/src directory,
+  #       The script should accept 2 parameters - config.json path and logs bucket name.
+  #       Current directory will be Data Foundation repo root.
+  #       If no entry_point specified:
+  #           1. All files will be processed with jinja.
+  #           2. All sql files will be executed in alphabetical order.
+  #           3. All files will be recursively copied to the target DAGs bucket "dag/{id}" folder.
+  #             (id is k9s id)
+  #         !!! "reporting" subfolder will be excluded !!!
+  #
+  #   test_data: # name(s) of test data table(s), multiple names must be comma-separated.
+  #
+  #   test_data_target: test data target dataset as dot-separated path to the config variable,
+  #       examples:
+  #       - k9.datasets.processing (default) - k9 processing dataset
+  #       - SAP.datasets.cdc - SAP CDC dataset
+  #       - SAP.datasets.reporting - SAP Reporting dataset
+  #       If last component is "reporting", then copying to the target project, otherwise - the source one.
+  #
+  #   workload_dependencies: workloads that must be deployed with this k9, separated with comma:
+  #                          SAP, SFDC, marketing, CM360, GoogleAds.
+  #                          If one or more of listed workloads are not deployed,
+  #                          this k9 will be skipped.
+  #
+  #   reporting_settings: reporting setting yaml file, path relative to `path` above.
+  #       if specified, "reporting" directory should exist in directory specified by `path`.
+  #       SQL files in that directory will be executed and deployed with the materializer using the reporting
+  #       setting file.
+
+
+  - id: trends
+    path: trends
+    reporting_settings: reporting/trends_reporting.yaml
+    test_data: trends
+  - id: date_dimension
+    path: date_dimension
+    test_data: calendar_date_dim
+  - id: holiday_calendar
+    path: holiday_calendar
+    reporting_settings: reporting/holidays_reporting.yaml
+    test_data: holiday_calendar
+  - id: weather
+    path: weather
+    reporting_settings: reporting/weather_reporting.yaml
+    test_data: postcode,weather_daily,weather_weekly
+    workload_dependencies: SAP
+  - id: catgap
+    path: catgap
+    entry_point: deploy_catgap.sh
+    workload_dependencies: SAP

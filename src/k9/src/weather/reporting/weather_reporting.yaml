@@ -1,0 +1,6 @@
+bq_independent_objects:
+
+  - sql_file: src/k9/src/weather/reporting/Weather.sql
+    type: view
+  - sql_file: src/k9/src/weather/reporting/WeatherDaily.sql
+    type: view

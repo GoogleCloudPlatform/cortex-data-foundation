@@ -1,0 +1,57 @@
+steps:
+
+{%- for build_file in build_files_list %}
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    {%- if not build_file.wait_for_prev_step %}
+    waitFor: ['-']
+    {%- endif %}
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |-
+        set -e
+        echo "Executing {{ build_file.sql_file }}"
+        {%- if module_name == "SAP" %}
+        common_base_path="."
+        {%- else %}
+        common_base_path="./src"
+        {% endif %}
+        export PYTHONPATH=$$PYTHONPATH:${common_base_path}
+        python ${common_base_path}/common/materializer/create_bq_object.py \
+            --module_name='{{ module_name }}' \
+            --target_dataset_type='{{ target_dataset_type }}' \
+            --target_dataset='{{ target_dataset_name }}' \
+            --jinja_data_file='generated_materializer_build_files/{{ module_name }}/bq_sql_jinja_data.json' \
+            {%- if load_test_data %}
+            --bq_object_setting='{{ build_file.bq_object_setting }}' --load_test_data
+            {%- else %}
+            --bq_object_setting='{{ build_file.bq_object_setting }}'
+            {%- endif %}
+
+{% endfor %}
+
+{% raw %}
+  - name: gcr.io/cloud-builders/gcloud
+    id: 'copy_dag_files_to_gcs'
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |-
+        # Copy files to GCS target bucket if we have anything to copy.
+        if [[ $(find generated_materializer_dag_files -type f 2> /dev/null | wc -l) -gt 0 ]]
+        then
+          echo "Copying DAG files to GCS bucket..."
+          echo "gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${_GCS_TGT_BUCKET}/dags/"
+          gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${_GCS_TGT_BUCKET}/dags/
+        else
+          echo "No files to copy to GCS bucket!"
+        fi
+{% endraw %}
+
+timeout: 15000s
+logsBucket: "gs://$_GCS_LOGS_BUCKET"
+substitutions:
+  _EXECUTE_SAMPLES: "false"
+options:
+  substitution_option: "ALLOW_LOOSE"
+  machineType: "E2_HIGHCPU_32"

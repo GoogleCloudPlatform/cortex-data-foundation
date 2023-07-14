@@ -1,0 +1,8 @@
+six==1.16.*
+requests==2.28.*
+gspread==5.7.*
+gspread-formatting==1.1.*
+google-api-python-client==2.80.*
+--index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+torch==1.13.*
+sentence-transformers==2.2.*

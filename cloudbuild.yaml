@@ -13,140 +13,213 @@
 # limitations under the License.
 
 steps:
-  # validate_deploy_config leaves the validated config.json file in workspace/config so it's available for other build steps
+  # init_deployment_config.py leaves the validated config.json file in workspace/config so it's available for other build steps
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
-    id: 'validate_deploy_config'
+    id: 'init_deploy_config'
     waitFor: ['-']
     args:
       - "-c"
       - |-
-         ./validate_deploy_config.sh --source-project '${_PJID_SRC}' --target-project '${_PJID_TGT}' --cdc-processed-dataset '${_DS_CDC}'  \
-           --raw-landing-dataset '${_DS_RAW}' --reporting-dataset '${_DS_REPORTING}' --models-dataset '${_DS_MODELS}' --location '${_LOCATION}'  \
-           --mandt '${_MANDT}' --sql-flavour '${_SQL_FLAVOUR}' --test-data '${_TEST_DATA}' --gen-ext '${_GEN_EXT}'  \
-           --deploy-sap '${_DEPLOY_SAP}' --deploy-sfdc '${_DEPLOY_SFDC}' --deploy-cdc '${_DEPLOY_CDC}'
+        set -e
+        echo "Initial configuration ${_CONFIG_FILE}:"
+        cat ${_CONFIG_FILE}
+
+        python3 src/common/init_deployment_config.py --config-file "${_CONFIG_FILE}" \
+              --sub-validator "src/SAP/SAP_REPORTING" \
+              --sub-validator "src/SFDC/src" \
+              --sub-validator "src/marketing/src"
+
+        echo "Processed configuration:"
+        cat ${_CONFIG_FILE}
+        echo -e "\n--------------------------------"
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: 'k9-pre'
+    waitFor: ['init_deploy_config']
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |-
+        export PYTHONPATH=$$PYTHONPATH:src/:.
+        python3 src/k9/src/deploy_k9.py \
+                --config-file "${_CONFIG_FILE}" \
+                --stage pre \
+                --logs-bucket "${_GCS_BUCKET}"
 
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
     id: 'sap-test-harness'
-    waitFor: ['validate_deploy_config']
+    waitFor: ['init_deploy_config']
     args:
       - "-c"
-      - |
-        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
-            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
-            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
-            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
-        if [ $$_TEST_DATA_ = "true" ] && [ $$_DEPLOY_SAP_ = "true" ]; then
-          ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_ $$_SQL_FLAVOUR_ $$_LOCATION_
+      - |-
+        _DEPLOY_SAP_=$(jq -r ."deploySAP" "${_CONFIG_FILE}")
+        _TEST_DATA_=$(jq -r ."testData" "${_CONFIG_FILE}")
+        _SQL_FLAVOUR_=$(jq -r ."SAP.SQLFlavor" "${_CONFIG_FILE}")
+        _SQL_FLAVOUR_UP_=$(echo "$${_SQL_FLAVOUR_}" | tr '[:lower:]' '[:upper:]')
+        if [[ "${_NO_TEST_DATA}" != "true" && "$${_TEST_DATA_}" == "true" && "$${_DEPLOY_SAP_}" == "true" && "$${_SQL_FLAVOUR_}" != "union" ]]; then
+          python3 src/common/create_test_harness.py --workload "SAP" --dataset "raw$${_SQL_FLAVOUR_UP_}"
         else
           echo "==Skipping Test Harness for SAP=="
         fi
+
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     entrypoint: "bash"
     id: 'sfdc-test-harness'
-    waitFor: ['validate_deploy_config']
+    waitFor: ['init_deploy_config']
     args:
       - "-c"
-      - |
-        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
-            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
-            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
-            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
-        if [ $$_TEST_DATA_ = "true" ] && [ $$_DEPLOY_SFDC_ = "true" ]; then
-          ./create_test_harness.sh $$_PJID_SRC_ $$_DS_RAW_SFDC_ "sfdc" $$_LOCATION_
+      - |-
+        _DEPLOY_SFDC_=$(jq -r ."deploySFDC" "${_CONFIG_FILE}")
+        _TEST_DATA_=$(jq -r ."testData" "${_CONFIG_FILE}")
+        if [[ "${_NO_TEST_DATA}" != "true" && "$${_TEST_DATA_}" == "true" && "$${_DEPLOY_SFDC_}" == "true" ]]; then
+          python3 src/common/create_test_harness.py --workload "SFDC" --dataset "raw"
         else
           echo "==Skipping Test Harness for SFDC=="
         fi
-  - name: gcr.io/cloud-builders/gcloud
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: 'sap-cdc'
-    waitFor: ['sap-test-harness']
-    entrypoint: /bin/bash
+    waitFor: ['sap-test-harness', 'k9-pre']
+    entrypoint: "bash"
     args:
       - "-c"
-      - |
-        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
-            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
-            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
-            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
-        if [ $$_DEPLOY_SAP_ = "true" ] && ( [  $$_DEPLOY_CDC_ = "true" ] || [ $$_GEN_EXT_ = "true" ] ); then
-          cp config/config.env src/SAP/SAP_CDC/config/sap_config.env
-          gcloud builds submit ./src/SAP/SAP_CDC  \
-          --config=./src/SAP/SAP_CDC/cloudbuild.cdc.yaml \
-          --substitutions=_PJID_SRC='${_PJID_SRC}',_DS_RAW='${_DS_RAW}',_PJID_TGT='${_PJID_SRC}',_DS_CDC='${_DS_CDC}',_GCS_BUCKET='${_TGT_BUCKET}',_GCS_LOG_BUCKET='${_GCS_BUCKET}',_TEST_DATA='${_TEST_DATA}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_GEN_EXT='${_GEN_EXT}',_LOCATION='${_LOCATION}',_DEPLOY_CDC='${_DEPLOY_CDC}'
+      - |-
+        _DEPLOY_SAP_=$(jq -r ."deploySAP" "${_CONFIG_FILE}")
+        _DEPLOY_CDC_=$(jq -r ."SAP.deployCDC" "${_CONFIG_FILE}")
+        _SQL_FLAVOUR_=$(jq -r ."SAP.SQLFlavor" "${_CONFIG_FILE}")
+
+        if [[ "$${_DEPLOY_SAP_}" == "true" && "$${_SQL_FLAVOUR_}" != "union"  && "$${_DEPLOY_CDC_}" == "true" ]]; then
+          cp -f "${_CONFIG_FILE}" src/SAP/SAP_CDC/config/sap_config.json
+          gcloud builds submit ./src/SAP/SAP_CDC \
+            --config=./src/SAP/SAP_CDC/cloudbuild.cdc.yaml \
+            --substitutions=_GCS_BUCKET='${_GCS_BUCKET}'
         else
           echo "==Skipping CDC for SAP=="
         fi
-  - name: gcr.io/cloud-builders/gcloud
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: 'sap-reporting'
     waitFor: ['sap-cdc']
     entrypoint: "bash"
     args:
       - "-c"
       - |-
-        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
-            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
-            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
-            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
-        if [ $$_DEPLOY_SAP_ = "true" ]; then
-          cp config/config.env src/SAP/SAP_REPORTING/sap_config.env
-          cp config/config.json src/SAP/SAP_REPORTING/sap_config.json
-          gcloud builds submit ./src/SAP/SAP_REPORTING  \
+        _DEPLOY_SAP_=$(jq -r ."deploySAP" "${_CONFIG_FILE}")
+        if [[ "$${_DEPLOY_SAP_}" == "true" ]]; then
+          cp -f "${_CONFIG_FILE}" src/SAP/SAP_REPORTING/config/sap_config.json
+          gcloud builds submit ./src/SAP/SAP_REPORTING \
             --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
-            --substitutions=_PJID_SRC='${_PJID_SRC}',_PJID_TGT='${_PJID_TGT}',_DS_RAW='${_DS_RAW}',_DS_CDC='${_DS_CDC}',_DS_REPORTING='${_DS_REPORTING}',_DS_MODELS='${_DS_MODELS}',_SQL_FLAVOUR='${_SQL_FLAVOUR}',_LOCATION='${_LOCATION}',_MANDT='${_MANDT}',_GCS_BUCKET='${_GCS_BUCKET}',_TGT_BUCKET='${_TGT_BUCKET}'
+            --substitutions=_GCS_BUCKET='${_GCS_BUCKET}'
         else
           echo "==Skipping Reporting for SAP=="
         fi
-  - name: gcr.io/cloud-builders/gcloud
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: 'sap-ml-models'
     waitFor: ['sap-reporting']
     entrypoint: "bash"
     args:
       - "-c"
       - |-
-        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
-            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
-            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
-            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
-        if [ $$_DEPLOY_SAP_ = "true" ] && [ $$_SQL_FLAVOUR_ != "union" ]; then
-          gcloud builds submit ./src/SAP/SAP_ML_MODELS  \
-          --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
-          --substitutions=_PJID_SRC=$$_PJID_SRC_,_PJID_TGT=$$_PJID_TGT_,_DS_RAW=$$_DS_RAW_,_DS_CDC=$$_DS_CDC_,_DS_REPORTING=$$_DS_REPORTING_,_DS_MODELS=$$_DS_MODELS_,_SQL_FLAVOUR=$$_SQL_FLAVOUR_,_LOCATION='${_LOCATION}',_MANDT=$$_MANDT_,_GCS_BUCKET='${_GCS_BUCKET}'
+        if [[ "${_DEPLOY_SAP_ML_MODELS}" == "true" ]]
+        then
+          _DEPLOY_SAP_=$(jq -r ."deploySAP" "${_CONFIG_FILE}")
+          _SQL_FLAVOUR_=$(jq -r ."SAP.SQLFlavor" "${_CONFIG_FILE}")
+          _PJID_SRC_=$(jq -r ."projectIdSource" "${_CONFIG_FILE}")
+          _PJID_TGT_=$(jq -r ."projectIdTarget" "${_CONFIG_FILE}")
+          _LOCATION_=$(jq -r ."location" "${_CONFIG_FILE}")
+          _MANDT_=$(jq -r ."SAP.mandt" "${_CONFIG_FILE}")
+          _DS_MODELS_=$(jq -r ."SAP.datasets.ml" "${_CONFIG_FILE}")
+          _DS_REPORTING_=$(jq -r ."SAP.datasets.reporting" "${_CONFIG_FILE}")
+          _DS_RAW_=$(jq -r ."SAP.datasets.raw" "${_CONFIG_FILE}")
+          _DS_CDC_=$(jq -r ."SAP.datasets.cdc" "${_CONFIG_FILE}")
+
+          if [[ "$${_DEPLOY_SAP_}" == "true" && "$${_SQL_FLAVOUR_}" != "union" ]]; then
+            gcloud builds submit ./src/SAP/SAP_ML_MODELS \
+              --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
+              --substitutions=_PJID_SRC=$$_PJID_SRC_,_PJID_TGT=$$_PJID_TGT_,_DS_RAW=$$_DS_RAW_,_DS_CDC=$$_DS_CDC_,_DS_REPORTING=$$_DS_REPORTING_,_DS_MODELS=$$_DS_MODELS_,_SQL_FLAVOUR=$$_SQL_FLAVOUR_,_LOCATION=$$_LOCATION_,_MANDT=$$_MANDT_,_GCS_BUCKET='${_GCS_BUCKET}'
+          else
+            echo "==Skipping ML for SAP=="
+          fi
         else
           echo "==Skipping ML for SAP=="
         fi
-  - name: gcr.io/cloud-builders/gcloud
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: 'sfdc-deploy'
-    waitFor: ['sfdc-test-harness']
+    waitFor: ['sfdc-test-harness', 'k9-pre']
     entrypoint: "bash"
     args:
       - "-c"
       - |-
-        source load_env_from_config.sh "${_PJID_SRC}" "${_PJID_TGT}" "${_DS_RAW}" "${_DS_CDC}" \
-            "${_MANDT}" "${_LOCATION}" "${_SQL_FLAVOUR}" "${_TEST_DATA}" "${_CURRENCY}" "${_LANGUAGE}" \
-            "${_GCS_LOG_BUCKET}" "${_GCS_BUCKET}" "${_DEPLOY_CDC}" "${_GEN_EXT}" "${_RUN_EXT_SQL}" \
-            "${_DS_REPORTING}" "${_DS_MODELS}" "${_DEPLOY_SFDC}"
-        if [ $$_DEPLOY_SFDC_ = "true" ]; then
-          cp config/config.json src/SFDC/config/sfdc_config.json
-          gcloud builds submit ./src/SFDC  \
-          --config=./src/SFDC/cloudbuild.sfdc.yaml  \
-          --substitutions=_TEST_DATA='${_TEST_DATA}',_DEPLOY_CDC='${_DEPLOY_CDC}',_GCS_LOGS_BUCKET='${_GCS_BUCKET}',_TGT_BUCKET='${_TGT_BUCKET}',_LOCATION='${_LOCATION}'
+        _DEPLOY_SFDC_=$(jq -r ."deploySFDC" "${_CONFIG_FILE}")
+        if [[ "$${_DEPLOY_SFDC_}" == "true" ]]; then
+          cp -f "${_CONFIG_FILE}" src/SFDC/config/sfdc_config.json
+          gcloud builds submit ./src/SFDC \
+            --config=./src/SFDC/cloudbuild.sfdc.yaml \
+            --substitutions=_GCS_BUCKET="${_GCS_BUCKET}"
         else
           echo "==Skipping SFDC=="
         fi
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    entrypoint: "bash"
+    id: 'marketing-test-harness'
+    waitFor: ['init_deploy_config']
+    args:
+      - "-c"
+      - |-
+        _DEPLOY_MARKETING_=$(jq -r ."deployMarketing" "${_CONFIG_FILE}")
+        _TEST_DATA_=$(jq -r ."testData" "${_CONFIG_FILE}")
+        if [[ "${_NO_TEST_DATA}" != "true" && "$${_TEST_DATA_}" == "true" && "$${_DEPLOY_MARKETING_}" == "true" ]]; then
+          _DEPLOY_ADS_=$(jq -r ."marketing.deployGoogleAds" "${_CONFIG_FILE}")
+          _DEPLOY_CM360_=$(jq -r ."marketing.deployCM360" "${_CONFIG_FILE}")
+          if [[ "$${_DEPLOY_ADS_}" == "true" ]]; then
+            echo "Deploying Google Ads Test Harness."
+            python3 src/common/create_test_harness.py --workload "marketing.GoogleAds" --dataset "raw"
+          fi
+          if [[ "$${_DEPLOY_CM360_}" == "true" ]]; then
+            echo "Deploying CM360 Test Harness."
+            python3 src/common/create_test_harness.py --workload "marketing.CM360" --dataset "raw"
+          fi
+        else
+          echo "==Skipping Test Harness for Marketing=="
+        fi
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: 'marketing-deploy'
+    waitFor: ['init_deploy_config', 'k9-pre', 'marketing-test-harness']
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |-
+        _DEPLOY_MARKETING_=$(jq -r ."deployMarketing" "${_CONFIG_FILE}")
+        if [[ "$${_DEPLOY_MARKETING_}" == "true" ]]; then
+          _TGT_BUCKET_=$(jq -r ."targetBucket" "${_CONFIG_FILE}")
+          cp -f "${_CONFIG_FILE}" src/marketing/config/marketing_config.json
+          gcloud builds submit ./src/marketing \
+            --config=./src/marketing/cloudbuild.marketing.yaml \
+            --substitutions=_GCS_LOGS_BUCKET="${_GCS_BUCKET}"
+        else
+          echo "==Skipping Marketing=="
+        fi
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: 'k9-post'
+    waitFor: ['k9-pre', 'sap-reporting', 'sfdc-deploy', 'marketing-deploy']
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |-
+        export PYTHONPATH=$$PYTHONPATH:src/:.
+        python3 src/k9/src/deploy_k9.py \
+                --config-file "${_CONFIG_FILE}" \
+                --stage post \
+                --logs-bucket "${_GCS_BUCKET}"
+
 
 logsBucket: "gs://$_GCS_BUCKET"
 timeout: 10200s
 substitutions:
-  _TEST_DATA: "true"
-  _DEPLOY_CDC: "true"
-  _DEPLOY_SAP: "true"
-  _DEPLOY_SFDC: "true"
-  # _LOCATION: "US"
-  # _DS_REPORTING: "REPORTING"
-  # _DS_MODELS: "ML_MODELS"
-  # _SQL_FLAVOUR: "ecc"
-  # _MANDT: ""
-  # _GEN_EXT: ""
+  _CONFIG_FILE: "config/config.json"
+  _DEPLOY_SAP_ML_MODELS: "false"
+  _NO_TEST_DATA: "false"
 options:
   substitution_option: "ALLOW_LOOSE"

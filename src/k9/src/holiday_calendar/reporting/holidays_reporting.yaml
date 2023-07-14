@@ -1,0 +1,4 @@
+bq_independent_objects:
+
+  - sql_file: src/k9/src/holiday_calendar/reporting/HolidayCalendar.sql
+    type: view

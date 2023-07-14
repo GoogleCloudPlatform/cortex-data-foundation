@@ -1,0 +1,69 @@
+{
+    "testData": true,
+    "deploySAP": true,
+    "deploySFDC": true,
+    "deployMarketing": true,
+    "turboMode": true,
+    "projectIdSource": "",
+    "projectIdTarget": "",
+    "targetBucket": "",
+    "location": "US",
+    "languages": [
+        "E",
+        "S"
+    ],
+    "currencies": [
+        "USD"
+    ],
+    "testDataProject": "kittycorn-public",
+    "k9": {
+        "datasets": {
+            "processing": "CORTEX_K9_PROCESSING",
+            "reporting": "CORTEX_K9_REPORTING"
+        }
+    },
+    "SAP": {
+        "deployCDC": true,
+        "datasets": {
+            "cdc": "CORTEX_SAP_CDC",
+            "raw": "CORTEX_SAP_RAW",
+            "ml": "CORTEX_SAP_ML_MODELS",
+            "reporting": "CORTEX_SAP_REPORTING"
+        },
+        "SQLFlavor": "ecc",
+        "mandt": "100"
+    },
+    "SFDC": {
+        "deployCDC": true,
+        "createMappingViews": true,
+        "createPlaceholders": true,
+        "datasets": {
+            "cdc": "CORTEX_SFDC_CDC",
+            "raw": "CORTEX_SFDC_RAW",
+            "reporting": "CORTEX_SFDC_REPORTING"
+        }
+    },
+    "marketing": {
+        "deployGoogleAds": true,
+        "deployCM360": true,
+        "dataflowRegion": "",
+        "GoogleAds": {
+            "deployCDC": true,
+            "lookbackDays": 180,
+            "datasets": {
+                "cdc": "CORTEX_IMS_GADS_CDC",
+                "raw": "CORTEX_IMS_GADS_RAW",
+                "reporting": "CORTEX_IMS_GADS_REPORTING"
+            }
+        },
+        "CM360": {
+            "deployCDC": true,
+            "dataTransferBucket": "",
+            "datasets": {
+                "cdc": "CORTEX_IMS_CM360_CDC",
+                "raw": "CORTEX_IMS_CM360_RAW",
+                "reporting": "CORTEX_IMS_CM360_REPORTING"
+            }
+        }
+    }
+}

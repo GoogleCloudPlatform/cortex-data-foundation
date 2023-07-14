@@ -1,0 +1,9 @@
+graphlib==0.9.5
+pathlib==1.0.1
+regex==2021.10.23
+jinja-cli==1.2.*
+MarkupSafe==2.0.1
+pytest==6.2.*
+pytest-cov==3.0.*
+pytest-env==0.6.*
+pylint==2.12.*

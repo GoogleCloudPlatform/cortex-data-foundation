@@ -1,0 +1,9 @@
+# Pre- and Post- K9s are deployed in the order specified in this file.
+pre:
+  - date_dimension
+  - holiday_calendar
+  #- trends
+# post:
+  #- weather
+  ## NOTE: Before enabling CATGAP, configure it in src/k9/src/catgap/config/settings.yaml
+  #- catgap

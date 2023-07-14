@@ -1,0 +1,45 @@
+#-- Copyright 2023 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--     https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+
+# This build file generates all the necessary objects (DAG files, Bigquery
+# tables and views etc) for a Cortex deployment for a Salesforce system.
+
+# Input parameters:
+#   _GCS_BUCKET : An existing GCS bucket where build logs will be written.
+#   _TGT_BUCKET : An existing GCS bucket where generated files related to
+#                 Airflow DAGs(DAG py file, dependencies, DAG sql file etc)
+#                 will be copied over to.
+
+steps:
+  - name: 'gcr.io/kittycorn-public/deploy-kittycorn:v2.0'
+    entrypoint: /bin/bash
+    args:
+    - -c
+    - |
+      set -e
+      echo "Deploying CATGAP."
+      export PYTHONPATH=$$PYTHONPATH:./
+      python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./requirements.txt" 1>/dev/null
+      python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./catgap_pipeline/requirements.txt" 1>/dev/null
+      python3 ./catgap_dag_generator.py --beam-sdk-version "2.48.0"
+      bash generated_dag/run_pipeline.sh DeployTemplate
+      echo "CATGAP pipeline template has been deployed."
+      # Copy generated DAG python to the Target GCS bucket
+      echo "Copying DAG files to gs://${_TGT_BUCKET}/dags."
+      gsutil -m cp './generated_dag/catgap_dag.py' gs://'${_TGT_BUCKET}'/dags/CATGAP/
+      echo "✅ DAG files have been copied."
+
+logsBucket: "gs://$_GCS_BUCKET"
+options:
+  substitution_option: "ALLOW_LOOSE"

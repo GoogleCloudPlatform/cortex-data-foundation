@@ -1,0 +1,15 @@
+# CATGAP configuration file.
+# It complements Data Foundation's SAP configuration.
+
+catgap:
+  user_email: "" # [Optional] Mapping spreadsheet will be shared with this user.
+  ads:
+    dts_dataset: "" # Target dataset of BigQuery DTS for Google Ads
+    customer_id: "" # Google Ads Customer Id
+  sap:
+    max_prod_hierarchy_level: 6 # Maximum level of Product Hierarchy to match to (3 to 9)
+  dataflow:
+    use_container: false # Build and push custom Dataflow SDK container for faster startup (requires Artifact Registry)
+    service_account: "" # Dataflow Service Account
+    gcs_bucket: "" # GSC bucket for Dataflow assets (must be in the same multi-region as `region` below)
+    region: "" # Dataflow compute region (must be in the same multi-region as Data Foundation datasets)

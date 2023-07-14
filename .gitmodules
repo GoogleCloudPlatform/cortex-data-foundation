@@ -14,3 +14,7 @@
 	path = src/SFDC
 	url = ../cortex-salesforce
 	branch = main
+[submodule "src/marketing"]
+	path = src/marketing
+	url = ../cortex-marketing
+	branch = main
