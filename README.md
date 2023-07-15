@@ -2,14 +2,14 @@
 
 
 ## About the Data Foundation for Google Cloud Cortex Framework
-The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts, that can be automatically deployed together with reference architectures.
+The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts that can be automatically deployed together with reference architectures.
 
 ![Cortex framework](images/cortex_framework.png)
 
 The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. Here is the list of entity-relationship diagrams:
--  [SAP ECC](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf)),
--  [SAP S/4 here](images/erd_s4.png)([PDF](docs/erd_s4.pdf)),
--  [Salesforce.com here](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf))
+-  [SAP ECC](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf))
+-  [SAP S/4](images/erd_s4.png)([PDF](docs/erd_s4.pdf))
+-  [Salesforce.com](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf))
 -  [Google Ads](images/erd_gads.png) ([PDF](docs/erd_gads.pdf))
 -  [CM360](images/erd_cm360.png) ([PDF](docs/erd_cm360.pdf))
 
@@ -19,9 +19,9 @@ If you want to create a **demo** instance, with automatic generation of BigQuery
 
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/?terminal=true&show=terminal&cloudshell_git_repo=https%3A%2F%2Fgithub.com%2FGoogleCloudPlatform%2Fcortex-data-foundation&cloudshell_tutorial=docs%2Ftutorial.md)
 
-🗈 **Note:**
-- This demo deployment is ⚠️**not suitable for productive environments**⚠️.
-- When prompted, we recommend you **click Trust repo** to avoid errors from using Ephemeral Cloud Shell.
+> **Warning** This demo deployment is **not suitable for productive environments**.
+
+> **Note** When prompted, we recommend you **click Trust repo** to avoid errors from using Ephemeral Cloud Shell.
 
 
 # Deployment for Development or Productive environments
@@ -30,20 +30,18 @@ If you want to create a **demo** instance, with automatic generation of BigQuery
 
 We recommend using the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal).
 
-_These steps will require the `gcloud sdk` (already installed in Cloud Shell)._
+> **Note** These steps will require the `gcloud sdk` (already installed in Cloud Shell).
 
-Clone this repository with submodules (`--recurse-submodules`):
+1. Clone this repository with submodules (`--recurse-submodules`):
+   ```bash
+   git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-data-foundation
+   ```
 
-```
-git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-data-foundation
-```
-
-Navigate into the previously downloaded folder.
-
-```
-cd cortex-data-foundation
-```
-If this is not the first time you clone the repository, execute `git pull --recurse-submodules` to pull the latest changes. If you are already an expert in configuration and requirements, you can skip to the build command in section [Execute deployment](#execute-deployment).
+2. Navigate into the previously downloaded folder.
+   ```bash
+   cd cortex-data-foundation
+   ```
+   If this is not the first time you clone the repository, execute `git pull --recurse-submodules` to pull the latest changes. If you are already an expert in configuration and requirements, you can skip to the build command in section [Execute deployment](#execute-deployment).
 
 ## **Deployment steps**
 
@@ -66,36 +64,32 @@ These are the steps for deployment:
 A successful deployment depends on good understanding of:
 - Your company's business rules and requirements
 - Functional understanding of the workload (e.g., SAP, Salesforce)
-- Fundamentals of Google Cloud foundations and products
+- Google Cloud fundamentals and products
 
 To help with the last point, before continuing with this guide, make sure you are familiar with:
-
 -   Google Cloud Platform [fundamentals](https://www.cloudskillsboost.google/course_templates/60)
--   How to navigate the Cloud Console, [Cloud Shell](https://cloud.google.com/shell/docs/using-cloud-shell) and [Cloud Shell Editor](https://cloud.google.com/shell/docs/editor-overview)
+-   How to navigate the [Cloud Console](https://cloud.google.com/cloud-console), [Cloud Shell](https://cloud.google.com/shell/docs/using-cloud-shell) and [Cloud Shell Editor](https://cloud.google.com/shell/docs/editor-overview)
 -   Fundamentals of [BigQuery](https://cloud.google.com/bigquery/docs/introduction)
--   Fundamental concepts of [Change Data Capture and dataset structures](#understanding-change-data-capture).
+-   Fundamental concepts of [Change Data Capture and dataset structures](#understanding-change-data-capture)
 -   General navigation of [Cloud Build](https://cloud.google.com/build/docs/overview)
 -   Fundamentals of [Identity and Access Management](https://cloud.google.com/iam/docs/)
 -   Fundamentals of [Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) or [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html)
 -   Fundamentals of [Cloud Dataflow](https://cloud.google.com/dataflow)
 
-
 ## Establish project and dataset structure
-
 You will require at least one GCP project to host the BigQuery datasets and execute the deployment process.
 
-This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure). Each workload should have at least one CDC and one reporting datasets (i.e., one CDC and one reporting dataset for SAP, one CDC and one Reporting dataset for SFDC).
+This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure). Each workload should have at least one CDC and one Reporting dataset (i.e., one CDC and one Reporting dataset for SAP, one CDC and one Reporting dataset for SFDC).
 
 ![structure for parameters](images/10.png "image_tooltip")
 
-**ℹ️ Note**: If you want to have separate sets of projects and datasets for each workload (e.g., one set of source and target projects for SAP and a different set of target and source projects for Salesforce), run separate deployments for each workload.
+> **Note** If you want to have separate sets of projects and datasets for each workload (e.g., one set of source and target projects for SAP and a different set of target and source projects for Salesforce), run separate deployments for each workload.
 
 You will need to identify:
-
 *   **Deploy SAP, Salesforce.com, marketing?:** Decide whether you want to deploy models for all workloads at the same time or only one set of models.
 *   **Source Google Cloud Project:** Project where the source data is located, from which the data models will consume. This project is normally accessed by technical practitioners.
 *   **Target Google Cloud Project:** Project where the Data Foundation predefined data models will be deployed and accessed by end-users. This may or may not be different from the source project depending on your needs.
-*   **Source BigQuery Dataset (RAW):** BigQuery dataset where the source data is replicated to or where the test data will be created. The recommendation is to have separate datasets, one for each data source (e.g., one raw dataset for SAP and one raw dataset for Google Ads).
+*   **Source BigQuery Dataset (Raw):** BigQuery dataset where the source data is replicated to or where the test data will be created. The recommendation is to have separate datasets, one for each data source (e.g., one raw dataset for SAP and one raw dataset for Google Ads).
 *   **CDC BigQuery Dataset:** BigQuery dataset where the CDC processed data lands the latest available records. This may or may not be the same as the source dataset if the tool landing the data performs the CDC merge operation. Some workloads allow for field name mapping here. The recommendation is to have two separate CDC datasets, one for each source (i.e., one cdc dataset for SAP and one CDC dataset for Salesforce).
 *   **Target BigQuery reporting dataset:** BigQuery dataset where the Data Foundation predefined data models will be deployed. The recommendation is to have two separate reporting datasets, one for each source (i.e., one reporting dataset for SAP and one reporting dataset for Salesforce). This dataset is automatically created by the deployer if it does not exist.
 *   **Target BigQuery machine learning dataset:** BigQuery dataset where the BQML predefined models will be deployed. This dataset is automatically created by the deployer if it does not exist.
@@ -111,7 +105,7 @@ These parameters will be different for each workload depending on the integratio
 
 Each workload has different ways to integrate with BigQuery. This section explains the options for each source.
 
-ℹ️ **Using test data?**: You can skip this section.
+> **Note**: **Using test data?** You can skip this section.
 
 <details>
   <summary>Integration options for SAP ECC or SAP S/4HANA</summary>
@@ -125,17 +119,17 @@ Each workload has different ways to integrate with BigQuery. This section explai
 - Table names need to be created in BigQuery in lowercase.
 - The list of tables used by SAP models are available and configurable in the CDC [setting.yaml](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/setting.yaml). If a table is not present during deployment, the models depending on it will fail. Other models will deploy successfully.
 - If in doubt about a conversion option, we recommend following the [default table mapping](https://cloud.google.com/solutions/sap/docs/bq-connector/latest/planning#default_data_type_mapping).
-- **DD03L for SAP metadata**:
-  If you are not planning on deploying test data, and if you are planning on generating CDC DAG scripts during deployment, make sure table DD03L is replicated from SAP in the source project.
-  This table contains metadata about tables, like the list of keys, and is needed for the CDC generator and dependency resolver to work. This table will also allow you to add tables not currently covered by the model to generated CDC scripts, like custom or Z tables.
+- **`DD03L` for SAP metadata**: If you are not planning on deploying test data, and if you are planning on generating CDC DAG scripts during deployment, make sure table `DD03L` is replicated from SAP in the source project.
+  This table contains metadata about tables, like the list of keys, and is needed for the CDC generator and dependency resolver to work.
+  This table will also allow you to add tables not currently covered by the model to generated CDC scripts, like custom or Z tables.
 
- ℹ️ **What happens if I have minor differences in a table name?** Because SAP systems may have minor variations due to versions or add-on and append structures into tables, or because some replication tools may have slighty different handling of special characters, some views may fail not finding a field. We recommend executing the deployment with `turboMode : false` to spot most failures in one go. Examples of this are:
-- Fields starting with `_` (e.g., `_DATAAGING`) have their `_` removed
-- Fields cannot start with `/` in BigQuery
+> **Note**: **What happens if I have minor differences in a table name?** Because SAP systems may have minor variations due to versions or add-on and append structures into tables, or because some replication tools may have slighty different handling of special characters, some views may fail not finding a field. We recommend executing the deployment with `turboMode : false` to spot most failures in one go. Examples of this are:
+>  - Fields starting with `_` (e.g., `_DATAAGING`) have their `_` removed
+>  - Fields cannot start with `/` in BigQuery
+> 
+>  In this case, you can adapt the failing view to select the field as it is landed by your replication tool of choice.
 
-In this case, you can adapt the failing view to select the field as it is landed by your replication tool of choice.
-
-### **Change data capture processing**
+### **Change Data Capture (CDC) processing**
 
 There are two ways for replication tools to load records from SAP:
 - Append-always: Insert every change in a record with a timestamp and an operation flag (Insert, Update, Delete), so the last version can be identified.
@@ -145,7 +139,7 @@ There are two ways for replication tools to load records from SAP:
 
 Cortex Data Foundation supports both modes (append-always or update when landing). For append-always, we provide CDC processing templates.
 
-🗈 **Note**: Some functionality will need to be commented out for Update on landing. For example, [OneTouchOrder.sql](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/OneTouchOrder.sql) and all its dependant queries. The functionality can be replaced with tables like CDPOS.
+> **Note** Some functionality will need to be commented out for Update on landing. For example, [OneTouchOrder.sql](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/OneTouchOrder.sql) and all its dependant queries. The functionality can be replaced with tables like CDPOS.
 
 [Return to top of Section](#establish-integration-mechanism)
 <details>
@@ -154,8 +148,7 @@ Cortex Data Foundation supports both modes (append-always or update when landing
 
 ### **Configure CDC for SAP**
 
-
-⚠️**We strongly recommend configuring this file according to your needs.** Some default frequencies may be unnecessarily costly if the business does not require such level of data freshness.
+> **Note**: **We strongly recommend configuring this file according to your needs.** Some default frequencies may be unnecessarily costly if the business does not require such level of data freshness.
 
 If using a tool that runs in append-always mode, Cortex Data Foundation provides CDC templates to automate the updates and created a _latest version of the truth_ or digital twin in the CDC processed dataset.
 
@@ -168,52 +161,13 @@ This module is optional. If you want to add/process tables individually after de
 ### Performance optimization for CDC Tables
 For certain CDC datasets, you may want to take advantages of BigQuery [table partitioning](https://cloud.google.com/bigquery/docs/partitioned-tables), [table clustering](https://cloud.google.com/bigquery/docs/clustered-tables) or both. This choice depends on many factors - the size and data of the table, columns available in the table, and your need of real time data with views vs data materialized as tables. By default, CDC settings do not apply table partitioning or table clustering - the choice is yours to configure it based on what works best for you.
 
+To crate tables with partitions and/or clusters, update the CDC `settings.yaml` file with relevant configurations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
+
+> **NOTE**:
+> 1. This feature only applies when a dataset in `setting.yaml` is configured for replication as a table (e.g. `load_frequency = "@daily"`) and not defined as a view (`load_frequency = "RUNTIME"`).
+> 2. A table can be both - a partitioned table as well as a clustered table.
+
 You can read more about partitioning and clustering for SAP [here](https://cloud.google.com/blog/products/sap-google-cloud/design-considerations-for-sap-data-modeling-in-bigquery).
-
-**NOTE**:
-1. This feature only applies when a dataset in `setting.yaml` is configured for replication as a table (e.g. `load_frequency = "@daily"`) and not defined as a view (`load_frequency = "RUNTIME"`).
-2. A table can be both - a partitioned table as well as a clustered table.
-
-#### Table Partitioning
-
-Partition can be enabled by specifying `partition_details` property in `setting.yaml` for any base table.
-
-Example:
-
-```yaml
-   - base_table: vbap
-     load_frequency: "@daily"
-     partition_details: {
-       column: "erdat", partition_type: "time", time_grain: "day"
-     }
-```
-
-| Property               | Description                                                            | Value           |
-| ---------------------  | ---------------------------------------------------------------------- | --------------- |
-| `column`               | Column by which the CDC table will be partitioned                      | Column name     |
-| `partition_type`       | Type of Partition                                                      | `"time"` for time based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#date_timestamp_partitioned_tables))<br>`"integer_range"` for integer based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#integer_range)) |
-| `time_grain`           | Time part to partition with <br>Required when `partition_type = "time"`| `"hour"`, `"day"`, `"month"` OR `"year"` |
-| `integer_range_bucket` | Bucket range <br>Required when `partition_type = "integer_range"`      | `"start"` = Start value<br> `"end"` = End value<br>`"interval`" = Interval of range |
-
-**NOTE**: See BigQuery Table Partition [documentation](https://cloud.google.com/bigquery/docs/partitioned-tables) details to understand these options and related limitations.
-
-#### Table Clustering
-
-Clustering can be by specifying `cluster_details` property in `setting.yaml` for any base table.
-
-Example:
-
-```yaml
-   - base_table: vbak
-     load_frequency: "@daily"
-     cluster_details: {columns: ["vkorg"]}
-```
-| Property               | Description                                | Value                                             |
-| ---------------------  | -------------------------------------------| ------------------------------------------------- |
-| `columns`              | Columns by which a table will be clustered | List of column names<br>e.g. `["mjahr", "matnr"]` |
-
-
-**NOTE**: See BigQuery Table Cluster [documentation](https://cloud.google.com/bigquery/docs/clustered-tables) details to understand these options and related limitations.
 
 </details>
 
@@ -228,20 +182,20 @@ Example:
 We provide a replication solution based on Python scripts scheduled in [Apache Airflow](https://airflow.apache.org/) and [Salesforce Bulk API 2.0](https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/bulk_api_2_0.htm). These Python scripts can be adapted and scheduled in the tool of choice.
 
 There are three sets of processing options for data integration:
-- API call and load into RAW, updating existing records if needed
+- API call and load into Raw datasets, updating existing records if needed
 - Source-to-target structure mapping views
 - CDC processing scripts
 
 If you have datasets already loaded through a different tool in append-always mode, the CDC processing scripts contain mapping files to map the schema of the tables as generated by your tool into the names and data types of the structure required by the reporting views in Cortex Data Foundation. You can also add custom fields in the schema definition so they are incorporated in the CDC processing.
 
- ❗For CDC scripts to work, the **Id** for each API (e.g., `Account Id`) and the [**SystemModStamp**](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/system_fields.htm) need to be present in the source table. These fields should either have their original name (Id, SystemModstamp) or being mapped respectively to the {object_name}Id and SystemModstamp.
-
-For example, the source table with data of Account object should have original Id and SystemModstamp fields. If these fields have different names, then src/SFDC/src/table_schema/accounts.csv file must be updated with id field's name mapped to AccountId and whatever system modification timestamp field mapped to SystemModstamp.
+> **Note**: For CDC scripts to work, the **Id** for each API (e.g., `Account Id`) and the [**SystemModStamp**](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/system_fields.htm) need to be present in the source table. These fields should either have their original name (`Id`, `SystemModstamp`) or being mapped respectively to the `{object_name}` `Id` and `SystemModstamp`.
+>
+> For example, the source table with data of Account object should have original `Id` and `SystemModstamp` fields. If these fields have different names, then `src/SFDC/src/table_schema/accounts.csv` file must be updated with id field's name mapped to `AccountId` and whatever system modification timestamp field mapped to `SystemModstamp`.
 
 If you already have the replication and CDC working for Salesforce APIs and only need the mapping, you can edit the [mapping files](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/table_schema) to generate views that translate the structure generated by the integration tool to the structure expected by Cortex Data Foundation reporting views.
 
 ### Salesforce data requirements
-*   The structure of the source tables follows *snake_case* naming in plural, i.e. `some_objects`. The columns have the same data types as how Salesforce represents them internally. Some fields have been renamed for better readability in the reporting layer.
+*   The structure of the source tables follows *snake_case* naming in plural, i.e., `some_objects`. The columns have the same data types as how Salesforce represents them internally. Some fields have been renamed for better readability in the reporting layer.
 *   Any required tables that did not exist within the raw dataset will be created as empty tables during deployment. This is to ensure the CDC deployment step runs correctly.
 *  If required, for CDC scripts to work, the **Id** for each API (e.g., `Account Id`) and the [**SystemModStamp**](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/system_fields.htm) need to be present in the source table. The provided RAW processing scripts fetch these fields automatically from the APIs and update the target replication table.
 *  The provided RAW processing scripts do not require additional change data capture processing. This behavior is set during deployment by default.
@@ -372,6 +326,8 @@ Parameters for each entry:
 * `schema_file`: Schema file in `src/table_schema` directory that maps API response fields to destination table's column names.
 * `key`: Columns (separated by comma) that forms a unique record for this table.
 * `is_metrics_table`: Indicates if a given entry is for a metric entity (in Google Ads API). System treats such tables a bit differently due to aggregated nature of such tables.
+* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
+* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
 
 #### `raw_to_cdc_tables`:
 This section has entries that control how data is moved from Raw tables to CDC tables. Each entry
@@ -384,6 +340,8 @@ Parameters for each entry:
 * `load_frequency`:  How frequently a DAG for this entity will run to populate CDC table.
   (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
 * `schema_file`: Schema file in `src/table_schema` directory that maps raw columns to CDC columns and data type of the CDC column. (NOTE: This is the same schema file that's referred in earlier section.)
+* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
+* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
 
 ### Reporting settings
 You can configure and control how Cortex generates data for the Google Ads final reporting layer using reporting settings file (`src/GoogleAds/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procs are generated.)
@@ -434,6 +392,8 @@ Parameters for each entry:
 * `load_frequency`:  How frequently a DAG for this entity will run to process data from DTv2 files. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
 * `file_pattern`: Regex based file name patterns that corresponds to an entity.
 * `schema_file`: Schema file in `src/table_schema` directory that maps DTv2 fields to destination table's column names and data types.
+* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
+* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
 
 #### `raw_to_cdc_tables`:
 This section has entries that control how data is moved from Raw tables to CDC tables. Each entry
@@ -443,6 +403,8 @@ Parameters for each entry:
 * `base_table`: Table in CDC dataset where the raw data after CDC transformation will be stored (e.g. `customer`)
 * `load_frequency`:  How frequently a DAG for this entity will run to populate CDC table. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
 * `row_identifiers`: List of columns (separated by comma) that forms a unique record for this table.
+* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
+* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
 
 ### Reporting settings
 You can configure and control how Cortex generates data for the CM360 final reporting layer using reporting settings file (`src/CM360/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procs are generated.)
@@ -451,8 +413,6 @@ For more details, please see [Customizing reporting_settings file configuration]
 
 [Return to top of Section](#establish-integration-for-marketing-workloads)
 </details>
-
-
 
 [Return to top of Section](#establish-integration-mechanism)
 </details>
@@ -467,7 +427,7 @@ External data sources that can be combined across different workloads to gain en
 
 The pre-processing K9 step executes before all workloads start their deployment, so the reusable models are available during their deployment. Conversely, the post-processing K9 executes after all modules have deployed their reporting models so the cross-workload reporting or augmenting models find their dependencies within each reporting dataset.
 
-ℹ️ Fun fact: The K9 receives its name because it's where the `DAGs /dɑɡz/` live.
+> ℹ️ **Fun Fact**: The K9 receives its name because it's where the `DAGs` (`/dɑɡz/`) live.
 
 The DAGs and models to be generated can be configured in [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml).
 
@@ -592,9 +552,9 @@ gcloud iam service-accounts add-iam-policy-binding <SERVICE ACCOUNT>\
 
 </details>
 
-### Create a Storage bucket for DAGs
+### Create a Storage bucket for storing DAG related files
 
-A storage bucket will be required to leave any processing scripts that are generated. These scripts will be manually moved into a Cloud Composer or Apache Airflow instance after deployment.
+A storage bucket will be required to store any processing scripts that are generated. These scripts will have to be manually moved into a Cloud Composer or Apache Airflow instance after deployment.
 
 Navigate to [Cloud Storage](https://console.cloud.google.com/storage/create-bucket) and create a bucket **in the same region** as your BigQuery datasets.
 
@@ -628,7 +588,7 @@ The file contains global configuration and configuration specific to each worklo
 
 Open the file in `config/config.json`. From the Cloud Shell:
 
-```sh
+```bash
 edit config/config.json
 ```
 
@@ -638,22 +598,22 @@ Consider your target deployment:
 
 ![structure for parameters](images/10.png "image_tooltip")
 
-|Parameter    | Parameter Name   | Description      |
-|-------------|------------------|------------------|
-|Deploy Test Data        |testData    | Project where the source dataset is and the build will run.                                 |
-| Deploy SAP   | deploySAP |  Execute the deployment for SAP workload (ECC or S/4HANA)  - Default: True      |
-| Deploy Salesforce  | deploySFDC |   Execute the deployment for Salesforce workload - Default: True     |
-| Deploy Marketing  | deployMarketing | Execute the deployment for Marketing  sources (Google Ads and/or CM360) - Default: True    |
-| Deploy in Turbo mode   | turboMode |  Execute all views builds as a step in the same Cloud Build process, in parallel for a faster deployment. If set to `false`, each reporting views is generated in its own sequential build step. We recommend only setting it to `true` when using test data or after any mismatch between reporting columns and the source data have been resolved.       |
-| Source Project ID   | projectIdSource |  Project where the source dataset is and the build will run.       |
-| Target Project ID   | projectIdTarget |  Target project for user-facing datasets (reporting and ML datasets).        |
-| Target Bucket for template generation  | targetBucket | Bucket where DAGs and Dataflow templates will be generated as [created previously](#create-a-storage-bucket). Avoid using the actual Airflow bucket.        |
-| Location or Region   | location |  Location where the BigQuery dataset and GCS buckets are. <br><br>Default is `US`. <br><br>**Note:** Restrictions listed under [BigQuery dataset locations](https://cloud.google.com/bigquery/docs/locations).       |
-| Filtering languages | languages | If not using test data, enter a single language (e.g., `[ "E" ]`) or multiple languages (e.g., `[ "E", "S" ]`) as relevant to your business. These values are used to replace placeholders in SQL in analytics models where available (SAP only for now - see the ERD).        |
-| Filtering currencies | currencies | If not using test data, enter a single currency (e.g., `[ "USD" ]`) or multiple languages (e.g., `[ "USD", "CAD" ]`) as relevant to your business. These values are used to replace placeholders in SQL in analytics models where available (SAP only for now - see the ERD).        |
-| Source for test harness | testDataProject | Default: kittycorn-public. Source of the test data for demo deployments. **Unless you have your own test harness, do not change this value**.|
-| K9 datasets - Processing | K9.datasets.processing | Execute cross-workload templates (e.g., date dimension) as defined in the [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml). These templates are normally required by the downstream workloads. |
-| K9 datasets - Reporting | K9.datasets.reporting | Execute cross-workload templates and external data sources (e.g., Weather) as defined in the [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml). Commented out by default. |
+| Parameter                 | Meaning                 | Default Value      | Description                                                              |
+| ------------------------- | ----------------------- | -------------------| ------------------------------------------------------------------------ |
+| `testData`                | Deploy Test Data        | `true`             | Project where the source dataset is and the build will run.              |
+| `deploySAP`               | Deploy SAP              | `true`             | Execute the deployment for SAP workload (ECC or S/4HANA).                |
+| `deploySFDC`              | Deploy Salesforce       | `true`             | Execute the deployment for Salesforce workload.                          |
+| `deployMarketing`         | Deploy Marketing        | `true`             | Execute the deployment for Marketing  sources (Google Ads and/or CM360). |
+| `turboMode`               | Deploy in Turbo mode    | `true`             | Execute all views builds as a step in the same Cloud Build process, in parallel for a faster deployment. If set to `false`, each reporting views is generated in its own sequential build step. We recommend only setting it to `true` when using test data or after any mismatch between reporting columns and the source data have been resolved. |
+| `projectIdSource`         | Source Project ID       | -                  | Project where the source dataset is and the build will run.              |
+| `projectIdTarget`         | Target Project ID       | -                  | Target project for user-facing datasets (reporting and ML datasets).     |
+| `targetBucket`            | Target Bucket for templa| -                  | Bucket [created previously](#create-a-storage-bucket) where DAGs (and Dataflow temp files) will be generated. Avoid using the actual Airflow bucket. |
+| `location`                | Location or Region      | `"US"`             | Location where the BigQuery dataset and GCS buckets are. <br><br> > **Note**: See restrictions listed under [BigQuery dataset locations](https://cloud.google.com/bigquery/docs/locations). |
+| `languages`               | Filtering languages     | `[ "E", "S" ]`     | If not using test data, enter a single language (e.g., `[ "E" ]`) or multiple languages (e.g., `[ "E", "S" ]`) as relevant to your business. These values are used to replace placeholders in SQL in analytics models where available (SAP only for now - see the ERD). |
+| `currencies`              | Filtering currencies    | `[ "USD" ]`        | If not using test data, enter a single currency (e.g., `[ "USD" ]`) or multiple languages (e.g., `[ "USD", "CAD" ]`) as relevant to your business. These values are used to replace placeholders in SQL in analytics models where available (SAP only for now - see the ERD). |
+| `testDataProject`         | Source for test harness | `kittycorn-public` | Source of the test data for demo deployments. Applies when `testData` is `true`. <br><br> > **Note**: Unless you have your own test harness, do not change this value. |
+| `k9.datasets.processing`  | K9 datasets - Processing| `"K9_PROCESSING"`  | Execute cross-workload templates (e.g., date dimension) as defined in the [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml). These templates are normally required by the downstream workloads. |
+| `k9.datasets.reporting`   | K9 datasets - Reporting | `"K9_REPORTING"`   | Execute cross-workload templates and external data sources (e.g., Weather) as defined in the [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml). Commented out by default. |
 
 ### Workload-specific configuration
 
@@ -662,15 +622,17 @@ The following sections are specific to each workload. You do not need to configu
 <details>
   <summary>Deployment Configuration for SAP</summary>
 
-|Parameter    | Parameter Name   | Description      |
-|-------------|------------------|------------------|
-|Deploy CDC        |`SAP.deployCDC`    | Generate CDC processing scripts to run as DAGs in Cloud Composer.     |
-|Raw landing dataset    | `SAP.datasets.raw`    | Used by the CDC process, this is where the replication tool lands the data from SAP.  If using test data, create an empty dataset.|
-|CDC Processed Dataset  | `SAP.datasets.cdc`    | Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset.|
-|Reporting Dataset SAP     |`SAP.datasets.reporting`     | Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed. Default: `REPORTING`. |
-|ML dataset             |`SAP.datasets.ml`    | Name of the dataset that stages results of Machine Learning algorithms or BQML models. Default: `ML_MODELS`.|
-|SQL flavor for source system| `SAP.SQLFlavor` |`s4` or `ecc`. For test data, keep the default value (`ecc`). For Demand Sensing, only `ecc` test data is provided at this time. |
-|Mandant or Client|`SAP.mandt` |Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`.|
+
+| Parameter                | Meaning                      | Default Value  | Description                                                              |
+| ------------------------ | -----------------------      | -------------- | ------------------------------------------------------------------------ |
+| `SAP.deployCDC`          | Deploy CDC                   | `true`         | Generate CDC processing scripts to run as DAGs in Cloud Composer.        |
+| `SAP.datasets.raw`       | Raw landing dataset          | -              | Used by the CDC process, this is where the replication tool lands the data from SAP. If using test data, create an empty dataset. |
+| `SAP.datasets.cdc`       | CDC Processed Dataset        | -              | Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset. |
+| `SAP.datasets.reporting` | Reporting Dataset SAP        | `"REPORTING"`  | Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed. |
+| `SAP.datasets.ml`        | ML dataset                   | `"ML_MODELS"`  | Name of the dataset that stages results of Machine Learning algorithms or BQML models. |
+| `SAP.SQLFlavor`          | SQL flavor for source system | `"ecc"`        | `s4` or `ecc`. For test data, keep the default value (`ecc`). For Demand Sensing, only `ecc` test data is provided at this time. |
+| `SAP.mandt`              | Mandant or Client            | `"100"`        | Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`. |
+
 
 [Return to top of section](#workload-specific-configuration)
 </details>
@@ -678,11 +640,14 @@ The following sections are specific to each workload. You do not need to configu
 <details>
   <summary>Deployment Configuration for Salesforce</summary>
 
-|Parameter    | Parameter Name   | Description      |
-|-------------|------------------|------------------|
-| Deploy CDC        |`SFDC.deployCDC`    | Generate CDC processing scripts to run as DAGs in Cloud Composer.  See the documentation for different ingestion options for Salesforce.    |
-|Create mapping views | `SFDC.createMappingViews` | The provided DAGs to fetch new records from the Salesforce APIs update records on landing. This value set to **true** will generate views in the CDC processed dataset to surface tables with the "latest version of the truth" from the RAW dataset. If **false** and `SFDC.deployCDC: true`, DAGs will be generated with change data capture processing based on SystemModstamp. See details on [CDC processing for Salesforce](#configure-api-integration-and-cdc-for-salesforce). Default: `true` |
-|Create Placeholders | `SFDC.createPlaceholders` | Create empty placeholder tables in case they are not generated by the ingestion process to allow the downstream reporting deployment to execute without failure. Default: `true` |
+| Parameter                 | Meaning               | Default Value          | Description       |
+| ------------------        | -------------         | ---------------------- | ------------------|
+| `SFDC.deployCDC`          | Deploy CDC            | `true`                 | Generate CDC processing scripts to run as DAGs in Cloud Composer. See the documentation for different ingestion options for Salesforce. |
+| `SFDC.createMappingViews` | Create mapping views  | `true`                 | The provided DAGs to fetch new records from the Salesforce APIs update records on landing. This value set to **true** will generate views in the CDC processed dataset to surface tables with the "latest version of the truth" from the RAW dataset. If **false** and `SFDC.deployCDC` is `true`, DAGs will be generated with change data capture processing based on SystemModstamp. See details on [CDC processing for Salesforce](#configure-api-integration-and-cdc-for-salesforce). |
+| `SFDC.createPlaceholders` | Create Placeholders   | `true`                 | Create empty placeholder tables in case they are not generated by the ingestion process to allow the downstream reporting deployment to execute without failure. |
+| `SFDC.datasets.raw`       | Raw landing dataset   | -                      | Used by the CDC process, this is where the replication tool lands the data from SFDC. If using test data, create an empty dataset. |
+| `SFDC.datasets.cdc`       | CDC Processed Dataset | -                      | Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset. |
+| `SFDC.datasets.reporting` | Reporting Dataset SFDC| `"REPORTING_SFDC"`     | Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed. |
 
 [Return to top of section](#workload-specific-configuration)
 </details>
@@ -690,21 +655,22 @@ The following sections are specific to each workload. You do not need to configu
 <details>
   <summary>Deployment Configuration for Marketing</summary>
 
-|Parameter    | Parameter Name   | Description      |
-|-------------|------------------|------------------|
-|Deploy Google Ads|`marketing.deployGoogleAds`    | Generate CDC processing scripts to run as DAGs in Cloud Composer.     |
-|Deploy CM360 |`marketing.deployCM360`    | Deploy CM360 data source and models  |
-|Dataflow region |`marketing.dataflowRegion`    | Region for Dataflow pipelines to replace in DAGs (as available [here](https://cloud.google.com/dataflow/docs/resources/locations)).  |
-| Deploy CDC for Google Ads |`marketing.GoogleAds.deployCDC`| Generate CDC processing scripts to run as DAGs in Cloud Composer.|
-|Lookback days for Google Ads|`marketing.GoogleAds.lookbackDays`| Number of days backwards to start fetching Ads from Google Ads API. |
-|CDC dataset for Google Ads|`marketing.GoogleAds.datasets.cdc` | CDC dataset for Google Ads |
-| RAW dataset for Google Ads|`marketing.GoogleAds.datasets.raw`| RAW dataset for Google Ads |
-|Reporting dataset for Google Ads|`marketing.GoogleAds.datasets.reporting` | Reporting dataset for Google Ads. Default: REPORTING_GoogleAds. |
-|Deploy CDC scripts for CM360|`marketing.CM360.deployCDC`    | Generate CDC processing scripts to run as DAGs in Cloud Composer for Data Transfer Service ingestion. |
-|Bucket with Data Transfer Service results |`marketing.CM360.dataTransferBucket` | Bucket with results from DTSv2 for CM360. Make sure the Service Account for Composer |
-| CDC dataset for CM360 |`marketing.CM360.datasets.cdc` | CDC dataset for CM360.  |
-| RAW dataset for CM360 |`marketing.CM360.datasets.raw`| RAW DC dataset for CM360. |
-| Reporting dataset for CM360 |`marketing.CM360.datasets.reporting`| Reporting dataset for CM360. Default: REPORTING_CM360. |
+| Parameter                                 | Meaning                                   | Default Value           | Description                                                            |
+| ------------------                        | -------------                             | ---------------------   | --------------------------------------------------                     |
+| `marketing.deployGoogleAds`               | Deploy Google Ads                         | `true`                  | Execute the deployment for Google Ads data source.                     |
+| `marketing.deployCM360`                   | Deploy CM360                              | `true`                  | Execute the deployment for CM360 data source.                          |
+| `marketing.dataflowRegion`                | Dataflow region                           | -                       | Region for Dataflow pipelines (See [availble values](https://cloud.google.com/dataflow/docs/resources/locations)). |
+| `marketing.GoogleAds.deployCDC`           | Deploy CDC for Google Ads                 | `true`                  | Generate Google Ads CDC processing scripts to run as DAGs in Cloud Composer.
+| `marketing.GoogleAds.lookbackDays`        | Lookback days for Google Ads              | `180`                   | Number of days to start fetching data from Google Ads API.              |
+| `marketing.GoogleAds.datasets.cdc`        | CDC dataset for Google Ads                |                         | CDC dataset for Google Ads.                                             |
+| `marketing.GoogleAds.datasets.raw`        | RAW dataset for Google Ads                |                         | Raw dataset for Google Ads.                                             |
+| `marketing.GoogleAds.datasets.reporting`  | Reporting dataset for Google Ads          | `"REPORTING_GoogleAds"` | Reporting dataset for Google Ads.                                       |
+| `marketing.CM360.deployCDC`               | Deploy CDC scripts for CM360              | `true`                  | Generate CM360 CDC processing scripts to run as DAGs in Cloud Composer. |
+| `marketing.CM360.dataTransferBucket`      | Bucket with Data Transfer Service results | -                       | Bucket where DTv2 files are stored.                                     |
+| `marketing.CM360.datasets.cdc`            | CDC dataset for CM360                     |                         | CDC dataset for CM360.                                                  |
+| `marketing.CM360.datasets.raw`            | RAW dataset for CM360                     |                         | Raw dataset for CM360.                                                  |
+| `marketing.CM360.datasets.reporting`      | Reporting dataset for CM360               | `"REPORTING_CM360"`     | Reporting dataset for CM360.                                            |
+
 
 [Return to top of section](#workload-specific-configuration)
 </details>
@@ -729,7 +695,7 @@ Some advanced use cases may require external datasets to complement an enterpris
 
 **You can skip this configuration if using test data.**
 
-*  Navigate to [BigQuery > Analytics Hub](https://console.cloud.google.com/bigquery/analytics-hub)
+* Navigate to [BigQuery > Analytics Hub](https://console.cloud.google.com/bigquery/analytics-hub)
 * Click **Search Listings**. Search for "`NOAA Global Forecast System`"
 * Click **Add dataset to project**. When prompted, keep "`noaa_global_forecast_system`" as the name of the dataset. If needed, adjust the name of the dataset and table in the FROM clauses in `weather_daily.sql`.
 * Repeat the listing search for Dataset "`OpenStreetMap Public Dataset`".
@@ -751,7 +717,7 @@ Many SAP and Salesforce customers will have specific customizations of their sys
 grep -R CORTEX-CUSTOMER
 ```
 
-⚠️ **Note**: There may be additional customizations depending on the source systems. We recommend getting the business users or analysts involved early in the process to help spot these.
+> **Note**: There may be additional customizations depending on the source systems. We recommend getting the business users or analysts involved early in the process to help spot these.
 
 ## Performance optimization for Reporting views
 
@@ -760,9 +726,12 @@ Reporting artifacts can be created as views or as tables refreshed regularly thr
 Materialized results are updated into a table. These tables can be further fine-tuned by adding Partitioning and Clustering properties to these tables.
 
 The configuration files for each workload are:
-- SAP: `src/SAP/SAP_REPORTING/reporting_settings_ecc.yaml`
-- Salesforce: `src/SFDC/config/reporting_settings.yaml`
-- Marketing: `src/marketing/src/GoogleAds/config/reporting_settings.yaml` and `src/marketing/src/CM360/config/reporting_settings.yaml`
+| Data Source             | Settings files                                               |
+| ------------------------| ------------------------------------------------------------ |
+| SAP                     | `src/SAP/SAP_REPORTING/reporting_settings_ecc.yaml`          |
+| Salesforce              | `src/SFDC/config/reporting_settings.yaml`                    |
+| Marketing - Google Ads  | `src/marketing/src/GoogleAds/config/reporting_settings.yaml` |
+| Marketing - CM360       | `src/marketing/src/CM360/config/reporting_settings.yaml`     |
 
 
 ###  Customizing `reporting_settings` file configuration
@@ -773,13 +742,11 @@ There are two sections:
 
  1. `bq_independent_objects`:
     All BiqQuery objects that can be created in independently, without any other dependencies.
-
-    **NOTE**: When Turbo mode is enabled, these BQ objects are created in parallel during the deployment time, speeding up the deployment process.
+    > **Note**: When Turbo mode is enabled, these BQ objects are created in parallel during the deployment time, speeding up the deployment process.
 
  2. `bq_dependent_objects`:
      All BiqQuery objects that need to be created in a specific order due to dependencies on other BQ object.
-
-     **NOTE**: Turbo mode does not apply to this section - i.e. each object will be created one after another.
+     > **Note**: Turbo mode does not apply to this section - i.e., each object will be created one after another.
 
 The deployer will first create all the BQ Objects listed in `bq_independent_objects` first, and then all the objects
 listed in `bq_dependent_objects`.
@@ -788,34 +755,16 @@ Following properties need to be defined for each object:
 1. `sql_file`:  Name of the sql file that will create a given objet.
 
 2. `type`: Type of BQ Object.
-
     Possible values:
-
     * `view` : If we want the object to be a BQ view.
-
     * `table`: If we want the object to be a BQ table.
-
     * `script`: This is to create other types of objects (BQ Functions, Stored Procs etc)
 
-3. If "type = table", then following optional properties can be defined:
-
+3. If `type` is `'table'`, then following optional properties can be defined:
      * `load_frequency`: Frequency at which a Composer DAG will be executed to refresh this table. Mandatory. See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.
-
-     * `partition_details`: How the table should be partitioned. Optional.
-
-        | Property               | Description                                                            | Value           |
-        | ---------------------  | ---------------------------------------------------------------------- | --------------- |
-        | `column`               | Column by which the CDC table will be partitioned                      | Column name     |
-        | `partition_type`       | Type of Partition                                                      | `"time"` for time based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#date_timestamp_partitioned_tables))<br>`"integer_range"` for integer based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#integer_range)) |
-        | `time_grain`           | Time part to partition with <br>Required when `partition_type = "time"`| `"hour"`, `"day"`, `"month"` OR `"year"` |
-        | `integer_range_bucket` | Bucket range <br>Required when `partition_type = "integer_range"`      | `"start"` = Start value<br> `"end"` = End value<br>`"interval`" = Interval of range |
-
-      * `cluster_details`: How the table should clustered. Optional.
-
-        | Property               | Description                                | Value                                             |
-        | ---------------------  | -------------------------------------------| ------------------------------------------------- |
-        | `columns`              | Columns by which a table will be clustered | List of column names<br>e.g. `["CompanyCode_BUKRS", "FiscalYear"]` |
-
+     * `partition_details`: How the table should be partitioned. **Optional.** See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
+     * `cluster_details`: How the table should clustered. **Optional.** See Appendix section [Table Ppartition and Cluster Settings](#table-parition-and-cluster-settings) for details on how to configure this.
+   
 ## Execute Deployment
 
 This step requires `config.json` to be configured as described in the section [Configure Deployment](#configure-deployment).
@@ -824,7 +773,7 @@ Run the Build command with the target log bucket.
 
 ```bash
 gcloud builds submit --project <execution project, likely the source> \
---substitutions=_GCS_BUCKET=<Bucket for logs - Cloud Build Service Account needs access to write here>
+    --substitutions=_GCS_BUCKET=<Bucket for logs - Cloud Build Service Account needs access to write here>
 ```
 You can follow the main Build process from the first link of logs:
 
@@ -859,7 +808,7 @@ gsutil -m cp -r  gs://<output bucket>/data/ gs://<composer sql bucket>/
 
 ## Test, customize and prepare for upgrade
 
-In addition to the CORTEX-CUSTOMER tags, you may need to further customize the content to add business rules, add other datasets and join them with existing views or tables, reuse the provided templates to call additional APIs, modify deployment scripts, apply further data mesh concepts, etc.  You may also need to slightly adapt some tables or landed APIs to include additional fields not included in our standard. We recommend committing all of these changes with a clear tag in the code to your own fork or clone of our git repositories.
+In addition to the `CORTEX-CUSTOMER` tags, you may need to further customize the content to add business rules, add other datasets and join them with existing views or tables, reuse the provided templates to call additional APIs, modify deployment scripts, apply further data mesh concepts, etc.  You may also need to slightly adapt some tables or landed APIs to include additional fields not included in our standard. We recommend committing all of these changes with a clear tag in the code to your own fork or clone of our git repositories.
 
 We recommend adopting a CICD pipeline that works for your organization, to keep these enhancements tested and your overall solution in a reliable, robust state. A simple pipeline can reuse our `cloudbuild*.yaml` scripts to trigger end to end deployment periodically, or based on git operations depending on your repository of choice by [automating builds](https://cloud.google.com/build/docs/automating-builds/create-manage-triggers). Using automated testing with your own sample data will help ensure the models always produce what you expect every time someone commits a change. The `config.json` file plays an important role in defining different sets of projects and datasets for development, staging and production environments.
 
@@ -977,9 +926,9 @@ This configuration will:
 
 
 
-1. Create a copy from **source\_project\_id.REPLICATED\_DATASET.adrc**  into **target\_project\_id.DATASET\_WITH\_LATEST\_RECORDS.adrc** if the latter does not exist
+1. Create a copy from **`source\_project\_id.REPLICATED\_DATASET.adrc`** into **`target\_project\_id.DATASET\_WITH\_LATEST\_RECORDS.adrc`** if the latter does not exist
 2. Create a CDC script in the specified bucket
-3. Create a copy from source\_project\_id.REPLICATED\_DATASET.adr6  into target\_project\_id.DATASET\_WITH\_LATEST\_RECORDS.adr6\_cdc if the latter does not exist
+3. Create a copy from `source\_project\_id.REPLICATED\_DATASET.adr6` into `target\_project\_id.DATASET\_WITH\_LATEST\_RECORDS.adr6\_cdc` if the latter does not exist
 4. Create a CDC script in the specified bucket
 
 **SAP only:** If you want to create DAGs or runtime views to process changes for tables that exist in SAP and are not listed in the file, add them to this file before deployment. For example, the following configuration creates a CDC script for custom table “_zztable\_customer”_ and a runtime view to scan changes in real time for another custom table called “_zzspecial\_table”_:
@@ -992,7 +941,7 @@ This configuration will:
     load_frequency: "RUNTIME"
 ```
 
-This will work as long as the table DD03L is replicated in the source dataset and the schema of the custom table is present in that table.
+This will work as long as the table `DD03L` is replicated in the source dataset and the schema of the custom table is present in that table.
 
 ### Sample generated template
 The following template generates the processing of changes. Modifications, such as the name of the timestamp field, or additional operations, can be done at this point:
@@ -1198,6 +1147,47 @@ Enable Google Secret Manager as the security backend. See details [here](https:/
 
 ### Allow the Composer service account to access secrets
 Make sure your Composer service account (default: GCE service account) has `Secret Manager Secret Accessor` permission. See details [in the access control documentation](https://cloud.google.com/composer/docs/secret-manager#configure_access_control).
+
+## Table Parition and Cluster Settings
+For certain settings files (e.g. SAP CDC settings file `cdc_settings.yaml` or all Reporting settings yaml file `reporting_settings.yaml`) provide a way to create materialized tables with clusters or partitions of your choice. This is controlled by the following properties in the settings file:
+
+#### Table Partitioning
+Partition can be enabled by specifying `partition_details`:
+
+Example:
+```yaml
+   - base_table: vbap
+     load_frequency: "@daily"
+     partition_details: {
+       column: "erdat", partition_type: "time", time_grain: "day"
+     }
+```
+Use following parameters to control partitioning details for a given table:
+
+| Property               | Description                                                            | Value           |
+| ---------------------  | ---------------------------------------------------------------------- | --------------- |
+| `column`               | Column by which the CDC table will be partitioned                      | Column name     |
+| `partition_type`       | Type of Partition                                                      | `"time"` for time based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#date_timestamp_partitioned_tables))<br>`"integer_range"` for integer based partition ([More details](https://cloud.google.com/bigquery/docs/partitioned-tables#integer_range)) |
+| `time_grain`           | Time part to partition with <br>Required when `partition_type = "time"`| `"hour"`, `"day"`, `"month"` OR `"year"` |
+| `integer_range_bucket` | Bucket range <br>Required when `partition_type = "integer_range"`      | `"start"` = Start value<br> `"end"` = End value<br>`"interval`" = Interval of range |
+
+> **NOTE** See BigQuery Table Partition [documentation](https://cloud.google.com/bigquery/docs/partitioned-tables) details to understand these options and related limitations.
+
+#### Table Clustering
+Similarly, clustering can be by specifying `cluster_details`:
+
+Example:
+```yaml
+   - base_table: vbak
+     load_frequency: "@daily"
+     cluster_details: {columns: ["vkorg"]}
+```
+| Property               | Description                                | Value                                             |
+| ---------------------  | -------------------------------------------| ------------------------------------------------- |
+| `columns`              | Columns by which a table will be clustered | List of column names<br>e.g. `["mjahr", "matnr"]` |
+
+> **NOTE**: See BigQuery Table Cluster [documentation](https://cloud.google.com/bigquery/docs/clustered-tables) details to understand these options and related limitations.
+
 
 # License
 This source code is licensed under Apache 2.0. Full license text is available in [LICENSE](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/LICENSE).
