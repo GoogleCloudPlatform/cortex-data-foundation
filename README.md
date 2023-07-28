@@ -11,7 +11,7 @@ The current repository contains the analytical views and models that serve as a 
 -  [SAP S/4](images/erd_s4.png)([PDF](docs/erd_s4.pdf))
 -  [Salesforce.com](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf))
 -  [Google Ads](images/erd_gads.png) ([PDF](docs/erd_gads.pdf))
--  [CM360](images/erd_cm360.png) ([PDF](docs/erd_cm360.pdf))
+-  [CM360 enriched with DV360](images/erd_cm360.png) ([PDF](docs/erd_cm360.pdf))
 
 
 # Quick demo setup
@@ -20,8 +20,6 @@ If you want to create a **demo** instance, with automatic generation of BigQuery
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/?terminal=true&show=terminal&cloudshell_git_repo=https%3A%2F%2Fgithub.com%2FGoogleCloudPlatform%2Fcortex-data-foundation&cloudshell_tutorial=docs%2Ftutorial.md)
 
 > **Warning** This demo deployment is **not suitable for productive environments**.
-
-> **Note** When prompted, we recommend you **click Trust repo** to avoid errors from using Ephemeral Cloud Shell.
 
 
 # Deployment for Development or Productive environments
