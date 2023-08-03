@@ -91,7 +91,7 @@ def get_trends():
             frames = [iot, interest_over_timedf]
             iot = pd.concat(frames)
 
-            ##CORTEX-CUSTOMER: Uncomment for more results in additional tables
+            ## CORTEX-CUSTOMER: Uncomment for more results in additional tables
             # related_queries_output = pytrend.related_queries()
             # df = related_queries_output.values()
             # top_df = list(df)[0]['top']

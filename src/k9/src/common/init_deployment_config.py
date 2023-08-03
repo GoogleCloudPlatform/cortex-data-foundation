@@ -19,38 +19,27 @@ import argparse
 from importlib.util import spec_from_file_location, module_from_spec
 import json
 import logging
-import re
 import sys
 from pathlib import Path
 import typing
+import uuid
+
+from google.cloud.exceptions import (BadRequest,
+                                     Forbidden,
+                                     Unauthorized,
+                                     ServerError)
+from google.cloud import bigquery
+
+# Make sure common modules are in Python path
+sys.path.append(str(Path(__file__).parent.parent))
+
+# pylint:disable=wrong-import-position
+from common.py_libs import bq_helper, resource_validation_helper
 
 _DEFAULT_CONFIG_ = "config/config.json"
 _VALIDATOR_FILE_NAME_ = "config_validator"
 _VALIDATE_FUNC_NAME_ = "validate"
 _DEFAULT_TEST_HARNESS_PROJECT = "kittycorn-public"
-
-def _load_jsonc(file_obj):
-    """Load JSONC file by removing comments and calling json.loads.
-
-    Args:
-        file_obj (fileobj): opened text file object
-
-    Returns:
-        dict: json dictionary
-    """
-    regex = re.compile(r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)",
-                       re.MULTILINE | re.DOTALL)
-
-    def _re_sub(match):
-        if match.group(2) is not None:
-            return ""
-        else:
-            return match.group(1)
-
-    data_raw = file_obj.read()
-    data = regex.sub(_re_sub, data_raw)
-    stripped = regex.sub(_re_sub, data)
-    return json.loads(stripped)
 
 
 def _load_config(config_file):
@@ -67,12 +56,13 @@ def _load_config(config_file):
         typing.Dict[str, any]: configuration dictionary
     """
     if not Path(config_file).is_file():
-        raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
+        raise FileNotFoundError(f"🛑 Config file '{config_file}' "
+                                "does not exist. 🛑")
     with open(config_file, mode="r", encoding="utf-8") as cf:
         try:
-            config = _load_jsonc(cf)
+            config = json.load(cf)
         except json.JSONDecodeError:
-            e_msg = f"🛑🔪 Config file '{config_file}' is malformed or empty. 🛑🔪"
+            e_msg = f"🛑 Config file '{config_file}' is malformed or empty. 🛑"
             raise RuntimeError(e_msg) from None
     return config
 
@@ -97,7 +87,8 @@ def _validate_workload(
     and calls {_VALIDATE_FUNC_NAME_} (validate) function in it.
 
     Args:
-        config (dict): Configuration dictionary
+        config (dict): Configuration dictionary to be passed to
+                                   the workload's `validate` function
         workload_path (str): Sub-directory path
 
     Returns:
@@ -113,7 +104,7 @@ def _validate_workload(
     full_file_path = repo_root.joinpath(
         validator_dir, f"{_VALIDATOR_FILE_NAME_}.py").absolute()
     if not full_file_path.exists():
-        logging.error("ERROR: 🛑🔪 No config validator for %s. Missing %s 🔪🛑",
+        logging.error("🛑 No config validator for `%s`. Missing `%s` 🛑.",
                       workload_path, str(full_file_path))
         return None
     logging.info("Found %s.py in %s. Running 'validate'.",
@@ -124,7 +115,7 @@ def _validate_workload(
     spec.loader.exec_module(module)  # type: ignore
 
     if not hasattr(module, _VALIDATE_FUNC_NAME_):
-        logging.error("ERROR: 🛑🔪 %s doesn't have %s function. 🔪🛑",
+        logging.error("🛑 %s doesn't have %s function. 🛑",
                       str(full_file_path), _VALIDATE_FUNC_NAME_)
         return None
 
@@ -132,10 +123,63 @@ def _validate_workload(
     return validate_func(config)
 
 
+def _validate_config_resources(config: typing.Dict[str, typing.Any])-> bool:
+    source = config["projectIdSource"]
+    target = config["projectIdTarget"]
+    location = config["location"]
+
+    # Checking if we can create datasets in source and target projects.
+    projects = [source]
+    if source != target:
+        projects.append(target)
+    for project in projects:
+        bq_client = bigquery.Client(project=project, location=location)
+        temp_dataset_name = f"tmp_cortex_{uuid.uuid4().hex}"
+        full_temp_dataset_name = f"{project}.{temp_dataset_name}"
+        try:
+            bq_helper.create_dataset(bq_client,
+                                     full_temp_dataset_name,
+                                     location,
+                                     True)
+            logging.info("✅ BigQuery in project `%s` is available "
+                         "for writing.", project)
+        except (Forbidden, Unauthorized):
+            logging.error("🛑 Insufficient permissions to create datasets "
+                          "in project `%s`. 🛑", project)
+            return False
+        except (BadRequest, ServerError):
+            logging.error("🛑 Error when trying to create a BigQuery dataset "
+                          "in project `%s`. 🛑", project, exc_info=True)
+            return False
+        finally:
+            try:
+                bq_client.delete_dataset(full_temp_dataset_name,
+                                         not_found_ok=True)
+            except BadRequest:
+                logging.warning("⚠️ Couldn't delete temporary dataset `%s`. "
+                                "Please delete it manually. ⚠️",
+                                full_temp_dataset_name)
+
+    # targetBucket must exist and be writable
+    buckets = [resource_validation_helper.BucketConstraints(
+                    str(config["targetBucket"]), True, location)]
+    # K9 dataset must be writable, if exist.
+    # If it doesn't exist, it will be created later.
+    datasets = [
+            resource_validation_helper.DatasetConstraints(
+                f'{source}.{config["k9"]["datasets"]["processing"]}',
+                False, True, location),
+            resource_validation_helper.DatasetConstraints(
+                f'{target}.{config["k9"]["datasets"]["reporting"]}',
+                False, True, location)
+            ]
+    return resource_validation_helper.validate_resources(buckets, datasets)
+
+
 def validate_config(
     config: typing.Dict[str, any],  # type: ignore
     sub_validators: typing.List[str]  # type: ignore
-) -> typing.Optional[typing.Dict[str, any]]:  # type: ignore
+) -> typing.Optional[typing.Dict[str, typing.Any]]:  # type: ignore
     """Performs common config validation. Discovers and calls
     workload-specific validators.
 
@@ -151,18 +195,18 @@ def validate_config(
 
     if not config.get("projectIdSource", None):
         logging.error(
-            "ERROR: 🛑🔪 Missing 'projectIdSource' configuration value. 🔪🛑")
+            "🛑 Missing 'projectIdSource' configuration value. 🛑")
         return None
 
     if not config.get("targetBucket", None):
         logging.error(
-            "ERROR: 🛑🔪 Missing 'targetBucket' configuration value. 🔪🛑")
+            "🛑 Missing 'targetBucket' configuration value. 🛑")
         return None
 
     config["projectIdTarget"] = config.get("projectIdTarget", "")
     if not config["projectIdTarget"]:
-        logging.warning(("projectIdTarget is not specified."
-                         "Using projectIdSource (%s)"),
+        logging.warning(("⚠️ projectIdTarget is not specified."
+                         "Using projectIdSource (%s) ⚠️"),
                         config["projectIdSource"])
         config["projectIdTarget"] = config["projectIdSource"]
 
@@ -174,7 +218,8 @@ def validate_config(
 
     config["location"] = config.get("location", None)
     if not config["location"]:
-        config["location"] = "US"
+        logging.warning("⚠️ No location specified. Using `US`. ⚠️")
+        config["location"] = "us"
     config["currencies"] = config.get("currencies", ["USD"])
     config["languages"] = config.get("languages", ["E", "S"])
 
@@ -187,25 +232,38 @@ def validate_config(
         logging.warning("No K9 configuration. Using defaults.")
         config["k9"] = {}
     if "datasets" not in config["k9"]:
-        logging.warning(("No K9 datasets configuration. "
-                         "Defaulting to K9_PROCESSING and K9_REPORTING."))
+        logging.warning(("⚠️ No K9 datasets configuration. "
+                         "Using defaults. ⚠️"))
         config["k9"]["datasets"] = {}
-    config["k9"]["datasets"]["processing"] = config["k9"]["datasets"].get(
-        "processing", "K9_PROCESSING")
-    config["k9"]["datasets"]["reporting"] = config["k9"]["datasets"].get(
-        "reporting", "K9_REPORTING")
+    if not config["k9"]["datasets"].get("processing", None):
+        logging.warning(("⚠️ No K9 processing dataset specified. "
+                         "Defaulting to K9_PROCESSING. ⚠️"))
+        config["k9"]["datasets"]["processing"] = "K9_PROCESSING"
+    if not config["k9"]["datasets"].get("reporting", None):
+        logging.warning(("⚠️ No K9 reporting dataset specified. "
+                         "Defaulting to K9_REPORTING. ⚠️"))
+        config["k9"]["datasets"]["reporting"] = "K9_REPORTING"
+
+    logging.info("Validating common configuration resources.")
+    if not _validate_config_resources(config):
+        logging.error(
+            "🛑 Resource validation failed. 🛑")
+        return None
+
+    logging.info("✅ Common configuration is valid.")
 
     # Go over all sub-validator directories,
     # and call validate() in config_validator.py in every directory.
     for validator in sub_validators:
         validator_text = validator if validator else "current repository"
         logging.info("Running config validator in `%s`.", validator_text)
-        config = _validate_workload(config, validator)  # type: ignore
+        config = _validate_workload(config,
+                                    validator)  # type: ignore
         if not config:
-            logging.error("ERROR: 🛑🔪 Validation in `%s` failed. 🔪🛑",
+            logging.error("🛑 Validation in `%s` failed. 🛑",
                           validator_text)
             return None
-        logging.info("Validation succeeded in `%s`.", validator_text)
+        logging.info("✅ Validation succeeded in `%s`.", validator_text)
 
     return config
 
@@ -236,14 +294,21 @@ def main(args: typing.Sequence[str]) -> int:
         logging.exception(ex, exc_info=True)
         return 1
 
-    config = validate_config(config, list(params.sub_validator))
-    if not config:
-        logging.error("ERROR: 🛑🔪 Configuration in `%s` is invalid. 🔪🛑",
-                      params.config_file)
-        return 1
+    if config.get("validated", False):
+        logging.info("✅ Configuration in `%s` "
+                     "was previously validated.",
+                     params.config_file)
+    else:
+        config = validate_config(config,
+                                list(params.sub_validator))
+        if not config:
+            logging.error("🛑🔪 Configuration in `%s` is invalid. 🔪🛑\n\n",
+                        params.config_file)
+            return 1
+        config["validated"] = True
+        _save_config(params.config_file, config)
 
-    _save_config(params.config_file, config)
-    logging.info(("🦄 Configuration in `%s` has been "
+    logging.info(("🦄 Configuration in `%s` was "
                   "successfully validated and processed. Let's roll! 🦄\n\n"),
                  params.config_file)
     return 0

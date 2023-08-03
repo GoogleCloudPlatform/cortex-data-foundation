@@ -51,7 +51,7 @@ _CLOUDBUILD_TEMPLATE_FILE = "cloudbuild_create_bq_objects.yaml.jinja"
 _CORTEX_MODULES = ["SAP", "SFDC", "GoogleAds", "CM360", "k9"]
 
 # All supported Marketing modules
-_MARKETING_MODULES = ["GoogleAds", "CM360"]
+_MARKETING_MODULES = ["GoogleAds", "CM360", ]
 
 # All supported target datasource types
 _CORTEX_DATASOURCE_TYPES_LOWER = ["cdc", "reporting"]
@@ -133,9 +133,12 @@ def _create_build_files(module_name: str, config_dict: dict,
     # have some extra steps too.
     # Each of these lists will be used to generate one "big" build
     # file that will create target BQ objects one object at a time.
+    # We limit it to a single step per file when turboMode is false.
+    # This emulates the original pre-Turbo behavior.
+    max_build_steps = 95 if config_dict.get("turboMode", True) else 1
     build_files_lists = [
-        build_files_master_list[x:x + 95]
-        for x in range(0, len(build_files_master_list), 95)
+        build_files_master_list[x:x + max_build_steps]
+        for x in range(0, len(build_files_master_list), max_build_steps)
     ]
 
     # Generate one build file for each list, using Jinja.

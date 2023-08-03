@@ -140,5 +140,5 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 "marketing_cm360_datasets_reporting":
                     config_dict["marketing"]["CM360"]["datasets"]["reporting"]
             })
-
+            
     return jinja_data_file_dict

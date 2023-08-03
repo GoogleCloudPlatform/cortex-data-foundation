@@ -51,18 +51,18 @@
             "deployCDC": true,
             "lookbackDays": 180,
             "datasets": {
-                "cdc": "CORTEX_IMS_GADS_CDC",
-                "raw": "CORTEX_IMS_GADS_RAW",
-                "reporting": "CORTEX_IMS_GADS_REPORTING"
+                "cdc": "CORTEX_GADS_CDC",
+                "raw": "CORTEX_GADS_RAW",
+                "reporting": "CORTEX_GADS_REPORTING"
             }
         },
         "CM360": {
             "deployCDC": true,
             "dataTransferBucket": "",
             "datasets": {
-                "cdc": "CORTEX_IMS_CM360_CDC",
-                "raw": "CORTEX_IMS_CM360_RAW",
-                "reporting": "CORTEX_IMS_CM360_REPORTING"
+                "cdc": "CORTEX_CM360_CDC",
+                "raw": "CORTEX_CM360_RAW",
+                "reporting": "CORTEX_CM360_REPORTING"
             }
         }
     }

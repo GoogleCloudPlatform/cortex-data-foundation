@@ -141,12 +141,11 @@ def main(args: typing.Sequence[str]) -> int:
     processing_dataset = config["k9"]["datasets"]["processing"]
     reporting_dataset = config["k9"]["datasets"]["reporting"]
 
-    stage = params.stage
-    if stage not in settings:
-        logging.warning(("No dag to deploy as nothing is listed in settings "
-                         "file for stage %s."), stage)
+    stage = params.stage.lower()
+    if "k9s" not in settings:
+        logging.warning("No k9s listed to deploy.")
         return 0
-    stage_dawgs_settings = settings[stage]
+    k9s_settings = settings["k9s"]
 
     bq_client = bigquery.Client(source_project, location=location)
     _create_dataset(f"{source_project}.{processing_dataset}", location,
@@ -154,7 +153,7 @@ def main(args: typing.Sequence[str]) -> int:
     _create_dataset(f"{target_project}.{reporting_dataset}", location,
                     bq_client)
 
-    for k9 in stage_dawgs_settings:
+    for k9 in k9s_settings:
         # Some of the K9s may not have their own settings file,
         # but use the k9 settings file instead.
         # Example with a customizable Weather:
@@ -174,6 +173,9 @@ def main(args: typing.Sequence[str]) -> int:
             logging.error("%s is not a valid k9 id.", k9_id)
             return 1
         k9_manifest = manifest[k9_id]
+
+        if k9_manifest["stage"] != stage:
+            continue
 
         skip_this = False
         deps = k9_manifest.get("workload_dependencies", "").split(",")
@@ -221,18 +223,19 @@ def main(args: typing.Sequence[str]) -> int:
                 ds_cfg = ds_cfg[comp]
             target_dataset = ds_cfg
             test_data_dataset = test_harness.get_test_harness_dataset(
-                                            "k9",
-                                            "processing",
-                                            location)
+                "k9", "processing", location)
             sources = [
                 f"{config['testDataProject']}.{test_data_dataset}.{table}"
-                    for table in tables]
-            targets = [f"{project}.{target_dataset}.{table}"
-                        for table in tables]
+                for table in tables
+            ]
+            targets = [
+                f"{project}.{target_dataset}.{table}" for table in tables
+            ]
             bq_helper.load_tables(bq_client,
                                   sources,
                                   targets,
-                                  location=location)
+                                  location=location,
+                                  skip_existing_tables=True)
 
         k9_path = this_folder.joinpath(k9_manifest["path"])
         if "entry_point" in k9_manifest:

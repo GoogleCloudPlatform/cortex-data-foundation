@@ -1,9 +1,16 @@
-# Pre- and Post- K9s are deployed in the order specified in this file.
-pre:
+# Pre- and Post- K9s are deployed in the order specified in this file under k9s node.
+k9s:
   - date_dimension
   - holiday_calendar
+
+  ## Trends and Weather are disabled by default.
+
+  ## NOTE: Before enabling Trends, configure it in src/k9/src/trends/trends.ini
   #- trends
-# post:
+
+  ## NOTE: Before enabling Weather, make sure you have OpenStreetMaps and noaa_global_forecast_system
+  ## datasets configured as described in "Configure External Datasets for K9" section of README.
   #- weather
+
   ## NOTE: Before enabling CATGAP, configure it in src/k9/src/catgap/config/settings.yaml
   #- catgap

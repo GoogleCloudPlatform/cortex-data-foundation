@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 """Library for BigQuery related functions."""
 
 from collections import abc
+from enum import Enum
 import logging
 import typing
 import pathlib
@@ -52,6 +53,33 @@ def table_exists(bq_client: bigquery.Client, full_table_name: str) -> bool:
         return False
 
 
+def dataset_exists(bq_client: bigquery.Client, full_dataset_name: str) -> bool:
+    """Checks if a given dataset exists in BigQuery."""
+    try:
+        bq_client.get_dataset(full_dataset_name)
+        return True
+    except NotFound:
+        return False
+
+
+DatasetExistence = Enum("DatasetExistence",
+                        ["NOT_EXISTS",
+                         "EXISTS_IN_LOCATION",
+                         "EXISTS_IN_ANOTHER_LOCATION"])
+
+def dataset_exists_in_location(bq_client: bigquery.Client,
+                               full_dataset_name: str,
+                               location: str) -> DatasetExistence:
+    """Checks if a given dataset exists in BigQuery in a location."""
+    try:
+        dataset = bq_client.get_dataset(full_dataset_name)
+        return (DatasetExistence.EXISTS_IN_LOCATION
+                  if dataset.location.lower() == location.lower() # type: ignore
+                  else DatasetExistence.EXISTS_IN_ANOTHER_LOCATION)
+    except NotFound:
+        return DatasetExistence.NOT_EXISTS
+
+
 def _wait_for_bq_jobs(jobs: typing.List[typing.Union[bigquery.CopyJob,
                                                   bigquery.LoadJob]],
                       continue_if_failed: bool):
@@ -80,9 +108,10 @@ def load_tables(bq_client: bigquery.Client,
                target_tables: typing.Union[str, typing.List[str]],
                location: str,
                continue_if_failed: bool = False,
+               skip_existing_tables: bool = False,
                write_disposition: str = bigquery.WriteDisposition.WRITE_EMPTY,
                parallel_jobs: int = 5):
-    """Loads data to a BigQuery table.
+    """Loads data to multiple BigQuery tables.
 
     Args:
         bq_client (bigquery.Client): BigQuery client to use.
@@ -95,6 +124,8 @@ def load_tables(bq_client: bigquery.Client,
                                       "project.dataset.table".
         location (str): BigQuery location.
         continue_if_failed (bool): continue loading tables if some jobs fail.
+        skip_existing_tables (bool): Skip tables that already exist.
+                                    Defaults to False.
         write_disposition (bigquery.WriteDisposition): write disposition,
                           Defaults to WRITE_EMPTY (skip if has data).
         parallel_jobs (int): maximum number of parallel jobs. Defaults to 5.
@@ -112,6 +143,11 @@ def load_tables(bq_client: bigquery.Client,
     for index, source in enumerate(sources):
         target = target_tables[index]
         logging.info("Loading table %s from %s.", target, source)
+
+        if skip_existing_tables and table_exists(bq_client, target):
+            logging.warning("⚠️ Table %s already exists. Skipping it.", target)
+            continue
+
         if "://" in source:
             ext = source.split(".")[-1].lower()
             if ext == "avro":
@@ -143,6 +179,7 @@ def load_tables(bq_client: bigquery.Client,
             load_job = bq_client.copy_table(source,
                                             target,
                                             location=location,
+                                            job_config=job_config,
                                             retry=retry.Retry(deadline=60))
         jobs.append(load_job)
         # If reached parallel_jobs number, wait for them to finish.
@@ -152,6 +189,30 @@ def load_tables(bq_client: bigquery.Client,
 
     # Wait for the rest of jobs to finish.
     _wait_for_bq_jobs(jobs, continue_if_failed)
+
+
+def create_dataset(bq_client: bigquery.Client,
+                   dataset_name: str,
+                   location: str,
+                   suppress_success_logging: bool = False) -> None:
+    """Creates a BigQuery dataset."""
+    dataset_ref = bigquery.Dataset(dataset_name)
+    dataset_ref.location = location
+    try:
+        bq_client.create_dataset(dataset_ref, timeout=30)
+        if not suppress_success_logging:
+            logging.info("✅ Dataset %s has been created in %s.",
+                        dataset_name,
+                        location)
+    except Conflict:
+        logging.warning("⚠️ Dataset %s already exists in %s. Skipping it.",
+                        dataset_name,
+                        location)
+    except Exception:
+        logging.error("⛔️ Failed to create dataset %s in %s.", dataset_name,
+                      location,
+                      exc_info=True)
+        raise
 
 
 def create_table(bq_client: bigquery.Client,
@@ -178,14 +239,36 @@ def get_table_list(bq_client: bigquery.Client,
     return [t.table_id for t in bq_client.list_tables(ds_ref)]
 
 
+def delete_table(bq_client: bigquery.Client, full_table_name: str) -> None:
+    """ Calls the BQ API to delete the table, returns nothing """
+    logger.info("Deleting table `%s`.", full_table_name)
+    bq_client.delete_table(full_table_name, not_found_ok=True)
+
+
 def copy_dataset(bq_client: bigquery.Client,
                  source_project: str,
                  source_dataset: str,
                  target_project: str,
                  target_dataset: str,
                  location: str,
+                 skip_existing_tables: bool = False,
                  write_disposition: str = (
                     bigquery.WriteDisposition.WRITE_EMPTY)):
+    """Copies all tables from source dataset to target.
+
+    Args:
+        bq_client (bigquery.Client): BigQuery client to use.
+        source_project (str): Source project.
+        source_dataset (str): Source dataset. Must exist in specified location.
+        target_project (str): Target project.
+        target_dataset (str): Target dataset. Must exist in specified location.
+        location (str): BigQuery location.
+        continue_if_failed (bool): Continue loading tables if some jobs fail.
+        skip_existing_tables (bool): Skip tables that already exist.
+                                    Defaults to False.
+        write_disposition (bigquery.WriteDisposition): Write disposition,
+                          Defaults to WRITE_EMPTY (skip if has data).
+    """
     logging.info("Copying tables from `%s.%s` to `%s.%s`.",
                  source_project, source_dataset,
                  target_project, target_dataset)
@@ -193,5 +276,6 @@ def copy_dataset(bq_client: bigquery.Client,
     source_tables = [f"{source_project}.{source_dataset}.{t}" for t in tables]
     target_tables = [f"{target_project}.{target_dataset}.{t}" for t in tables]
     load_tables(bq_client,
-                source_tables, target_tables,
-                location, write_disposition=write_disposition)
+                source_tables, target_tables, location,
+                skip_existing_tables=skip_existing_tables,
+                write_disposition=write_disposition)

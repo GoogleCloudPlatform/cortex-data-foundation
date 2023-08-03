@@ -58,7 +58,7 @@ def load_dataset_test_data(bq_client: bigquery.Client,
                            target_project: str,
                            location: str):
     """Loads workload dataset test data by copying dataset from
-       the test harness.
+       the test harness. Skips existing tables in target dataset.
 
     Args:
         bq_client (bigquery.Client): BigQuery client.
@@ -81,4 +81,5 @@ def load_dataset_test_data(bq_client: bigquery.Client,
                                                      location),
                            target_project,
                            target_dataset_name,
-                           location)
+                           location,
+                           skip_existing_tables=True)

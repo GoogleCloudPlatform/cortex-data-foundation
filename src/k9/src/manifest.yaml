@@ -22,10 +22,13 @@ dawgs:
   #       - SAP.datasets.reporting - SAP Reporting dataset
   #       If last component is "reporting", then copying to the target project, otherwise - the source one.
   #
-  #   workload_dependencies: workloads that must be deployed with this k9, separated with comma:
-  #                          SAP, SFDC, marketing, CM360, GoogleAds.
-  #                          If one or more of listed workloads are not deployed,
-  #                          this k9 will be skipped.
+  #   stage: pre or post, whether to deploy this k9 before (pre) or after (post) all workloads.
+  #
+  #   workload_dependencies: (only if stage is "post") workloads that must be deployed with this k9,
+  #                          separated with comma:
+  #                           SAP, SFDC, marketing, CM360, GoogleAds.
+  #                           If one or more of listed workloads are not deployed,
+  #                           this k9 will be skipped.
   #
   #   reporting_settings: reporting setting yaml file, path relative to `path` above.
   #       if specified, "reporting" directory should exist in directory specified by `path`.
@@ -37,19 +40,24 @@ dawgs:
     path: trends
     reporting_settings: reporting/trends_reporting.yaml
     test_data: trends
+    stage: pre
   - id: date_dimension
     path: date_dimension
     test_data: calendar_date_dim
+    stage: pre
   - id: holiday_calendar
     path: holiday_calendar
     reporting_settings: reporting/holidays_reporting.yaml
     test_data: holiday_calendar
+    stage: pre
   - id: weather
     path: weather
     reporting_settings: reporting/weather_reporting.yaml
     test_data: postcode,weather_daily,weather_weekly
+    stage: post
     workload_dependencies: SAP
   - id: catgap
     path: catgap
     entry_point: deploy_catgap.sh
+    stage: post
     workload_dependencies: SAP
