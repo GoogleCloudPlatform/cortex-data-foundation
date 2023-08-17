@@ -11,9 +11,9 @@ cachetools==5.3.1 \
     --hash=sha256:95ef631eeaea14ba2e36f06437f36463aac3a096799e876ee55e5cdccb102590 \
     --hash=sha256:dce83f2d9b4e1f732a8cd44af8e8fab2dbe46201467fc98b3ef8f269092bf62b
     # via google-auth
-certifi==2023.5.7 \
-    --hash=sha256:0f0d56dc5a6ad56fd4ba36484d6cc34451e1c6548c61daad8c320169f91eddc7 \
-    --hash=sha256:c6c2e98f5c7869efca1f8916fed228dd91539f9f1b444c314c06eef02980c716
+certifi==2023.7.22 \
+    --hash=sha256:539cc1d13202e33ca466e88b2807e29f4c13049d6d87031a3c110744495cb082 \
+    --hash=sha256:92d6037539857d8206b8f6ae472e8b77db8058fec5937a1ef3f54304089edbb9
     # via requests
 charset-normalizer==3.2.0 \
     --hash=sha256:04e57ab9fbf9607b77f7d057974694b4f6b142da9ed4a199859d9d4d5c63fe96 \
@@ -113,7 +113,7 @@ google-api-core==2.11.1 \
 google-api-python-client==2.80.0 \
     --hash=sha256:51dd62d467da7ad3df63c3f0e6fca84266ce50c2218691204b2e8cd651a0719a \
     --hash=sha256:b9cd2550c2cdfeb78c3150d8c52208841082dabe597063a116476937170907ab
-    # via -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    # via -r catgap_pipeline/requirements.in
 google-auth==2.22.0 \
     --hash=sha256:164cba9af4e6e4e40c3a4f90a1a6c12ee56f14c0b4868d1ca91b32826ab334ce \
     --hash=sha256:d61d1b40897407b574da67da1a833bdc10d5a11642566e506565d1b1a46ba873
@@ -139,12 +139,12 @@ gspread==5.7.2 \
     --hash=sha256:ce76f9c16b88ccb792350142224a59afa8e69f7463f3d3417148cbe892efc7cb \
     --hash=sha256:dbeedd08c6a7f7b0bfc1a54e17c29205362250c77bf98e11125c5d99fd7f4ba7
     # via
-    #   -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    #   -r catgap_pipeline/requirements.in
     #   gspread-formatting
 gspread-formatting==1.1.2 \
     --hash=sha256:4d954d8c283880c4189f5684652b114c3889ffa4b442f339b80e2371782cb4c0 \
     --hash=sha256:e5d14477f18ec2f08db0a00d22470d1c621d53b0633412c4873d86712c9a7bca
-    # via -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    # via -r catgap_pipeline/requirements.in
 httplib2==0.22.0 \
     --hash=sha256:14ae0a53c1ba8f3d37e9e27cf37eabb0fb9980f435ba405d546948b009dd64dc \
     --hash=sha256:d7a10bc5ef5ab08322488bde8c726eeee5c8618723fdb399597ec58f3d82df81
@@ -442,7 +442,7 @@ requests==2.28.2 \
     --hash=sha256:64299f4909223da747622c030b781c0d7811e359c37124b4bd368fb8c6518baa \
     --hash=sha256:98b1b2782e3c6c4904938b84c0eb932721069dfdb9134313beff7c83c2df24bf
     # via
-    #   -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    #   -r catgap_pipeline/requirements.in
     #   google-api-core
     #   huggingface-hub
     #   requests-oauthlib
@@ -545,7 +545,7 @@ scipy==1.11.1 \
     #   sentence-transformers
 sentence-transformers==2.2.2 \
     --hash=sha256:dbc60163b27de21076c9a30d24b5b7b6fa05141d68cf2553fa9a77bf79a29136
-    # via -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    # via -r catgap_pipeline/requirements.in
 sentencepiece==0.1.99 \
     --hash=sha256:004e6a621d4bc88978eecb6ea7959264239a17b70f2cbc348033d8195c9808ec \
     --hash=sha256:019e7535108e309dae2b253a75834fc3128240aa87c00eb80732078cdc182588 \
@@ -597,7 +597,7 @@ six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
     # via
-    #   -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    #   -r catgap_pipeline/requirements.in
     #   google-auth
     #   google-auth-httplib2
     #   torchvision
@@ -658,7 +658,7 @@ torch==1.13.1+cpu \
     --hash=sha256:988ee77c0975b4c3f570dfc62277b1e300bbbe7cc000ce2720e2e8c730fb9ce5 \
     --hash=sha256:dc185f2fdbb1f84855929d3ba7b36c74f218789d26a0e0268cb0586d466c8c24
     # via
-    #   -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    #   -r catgap_pipeline/requirements.in
     #   sentence-transformers
     #   torchvision
 torchvision==0.2.0 \
