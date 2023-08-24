@@ -61,6 +61,15 @@ DATASETS = [
         (["deployMarketing", "marketing.deployCM360"],
             "marketing.CM360.datasets.reporting", "CM360 Reporting",
             True),
+        (["deployMarketing", "marketing.deployTikTok"],
+            "marketing.TikTok.datasets.raw", "TikTok Raw",
+            False),
+        (["deployMarketing", "marketing.deployTikTok"],
+            "marketing.TikTok.datasets.cdc",
+            "TikTok CDC Processed", False),
+        (["deployMarketing", "marketing.deployTikTok"],
+            "marketing.TikTok.datasets.reporting", "TikTok Reporting",
+            True),
     ]
 
 

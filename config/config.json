@@ -46,6 +46,7 @@
     "marketing": {
         "deployGoogleAds": true,
         "deployCM360": true,
+        "deployTikTok": true,
         "dataflowRegion": "",
         "GoogleAds": {
             "deployCDC": true,
@@ -63,6 +64,14 @@
                 "cdc": "",
                 "raw": "",
                 "reporting": "REPORTING_CM360"
+            }
+        },
+        "TikTok": {
+            "deployCDC": true,
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_TikTok"
             }
         }
     }

@@ -337,6 +337,8 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
                                      ["datasets"])
             if config["marketing"].get("deployCM360"):
                 dataset_dicts.append(config["marketing"]["CM360"]["datasets"])
+            if config["marketing"].get("deployTikTok"):
+                dataset_dicts.append(config["marketing"]["TikTok"]["datasets"])
         for dataset_dict in dataset_dicts:
             for ds in dataset_dict.items():
                 add_to = (reporting_datasets
@@ -372,7 +374,7 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
     except (HttpError, Forbidden, Unauthorized) as ex:
         if isinstance(ex, HttpError):
             message = ex.reason
-            if ex.status_code != 403 and ex.status_code != 401:
+            if ex.status_code not in (401, 403):
                 raise
         else:
             message = ex.message

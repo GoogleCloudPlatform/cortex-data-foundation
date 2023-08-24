@@ -1,3 +1,10 @@
+## August 2023 - Release 5.1
+*   **TikTok for Marketing - NEW!🎉:** New integration templates and data models for TikTok to measure paid media campaign performance insights, through impressions and reach. See the [ERD](images/erd_tiktok.png) (or [PDF](docs/erd_tiktok.pdf))
+*   Placeholders for [K9 views](https://github.com/GoogleCloudPlatform/cortex-data-foundation#configure-k9-deployments) are now created for each workload: Reusable models like time dimension are required for the deployment of individual workloads, like SAP and Salesforce.com. If the submodules are executed independently (e.g., only SAP reporting), these dependencies will not be deployed. The placeholders create these dependencies so the submodules remain autonomous.
+*   **Ask for support**: New experimental feature to help gather necessary data to request support after a failed deployment. This feature will gather the logs and the configuration so it can be sent to cortex-support@google.com more easily.
+*   Added option to calculate doubtful receivables and days in arrear as positive amount in AccountingDocuments. This is commented out and will be the default behavior in the next release.
+*   Pull [request #9](https://github.com/GoogleCloudPlatform/cortex-reporting/pull/9) from SAP Reporting, adding safe divide for Fill rate Percent.
+
 ## August 2023 - Release 5.0.1 (bug fix)
 *   Enhanced validation of permissions and assets existence as first step in deployment. The former `Mando Checker` is now executed at the beginning of the validation process. The deployer will attempt to create, write and delete temporary files and datasets in the targets to validate permissions.
 *   README: minor tweaks and some image refreshes.

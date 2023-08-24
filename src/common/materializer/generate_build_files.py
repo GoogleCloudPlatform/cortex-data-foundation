@@ -48,13 +48,13 @@ _CLOUDBUILD_TEMPLATE_DIR = Path(_THIS_DIR, "templates")
 _CLOUDBUILD_TEMPLATE_FILE = "cloudbuild_create_bq_objects.yaml.jinja"
 
 # All supported Cortex modules
-_CORTEX_MODULES = ["SAP", "SFDC", "GoogleAds", "CM360", "k9"]
+_CORTEX_MODULES = ["SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "k9"]
 
 # All supported Marketing modules
-_MARKETING_MODULES = ["GoogleAds", "CM360", ]
+_MARKETING_MODULES = ["GoogleAds", "CM360", "TikTok"]
 
-# All supported target datasource types
-_CORTEX_DATASOURCE_TYPES_LOWER = ["cdc", "reporting"]
+# All supported target dataset types
+_CORTEX_DATASET_TYPES_LOWER = ["cdc", "reporting", "processing"]
 
 
 def _create_tgt_dataset(full_dataset_name: str, location: str) -> None:
@@ -259,15 +259,25 @@ def _parse_args() -> tuple[str, str, str, str]:
     if module_name not in _CORTEX_MODULES:
         raise ValueError(
             f"🛑 Invalid module name '{module_name}'. Supported modules are : "
-            f"'{_CORTEX_MODULES}'.")
+            f"'{_CORTEX_MODULES}' (case sensitive).")
 
     # Target Dataset Type
-    if target_dataset_type.lower().replace(
-            " ", "_") not in _CORTEX_DATASOURCE_TYPES_LOWER:
+    lower_tgt_dataset_type = target_dataset_type.lower().replace(" ", "_")
+
+    if lower_tgt_dataset_type not in _CORTEX_DATASET_TYPES_LOWER:
         raise ValueError(
-            f"🛑 Invalid target dataset type '{target_dataset_type}'. Supported "
-            f"types are : '{_CORTEX_DATASOURCE_TYPES_LOWER}' (case "
+            f"🛑 Invalid target dataset type '{target_dataset_type}'. "
+            f"Supported types are : '{_CORTEX_DATASET_TYPES_LOWER}' (case "
             "insensitive).")
+
+    if module_name == "k9" and lower_tgt_dataset_type == "cdc":
+        raise ValueError(
+            "🛑 Module k9 does not support target dataset type 'cdc'.")
+
+    if lower_tgt_dataset_type == "processing" and module_name != "k9":
+        raise ValueError(
+            f"🛑 Module '{module_name}' does not support target dataset type "
+            "'processing'.")
 
     # Config file
     if not Path(config_file).is_file():

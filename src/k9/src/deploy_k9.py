@@ -197,6 +197,10 @@ def main(args: typing.Sequence[str]) -> int:
                 skip_this = skip_this or (
                     not config["deployMarketing"] or
                     not config["marketing"]["deployCM360"])
+            elif dep == "tiktok":
+                skip_this = skip_this or (
+                    not config["deployMarketing"] or
+                    not config["marketing"]["deployTikTok"])
             else:
                 logging.error("Invalid workload dependency %s", dep)
                 return 1

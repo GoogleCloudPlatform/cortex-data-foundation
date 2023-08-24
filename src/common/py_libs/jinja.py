@@ -14,9 +14,13 @@
 #
 """Library for Jinja related functions."""
 
-from jinja2 import Environment, FileSystemLoader
 import json
 import logging
+from pathlib import Path
+from typing import Any, Dict
+
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +46,31 @@ def apply_jinja_params_to_file(input_file: str, jinja_data_file: str) -> str:
 
     env = Environment(loader=FileSystemLoader("."))
     input_template = env.get_template(input_file)
+    output_text = input_template.render(jinja_data_dict)
+    logger.debug("Rendered text = \n%s", output_text)
+
+    return output_text
+
+
+def apply_jinja_params_dict_to_file(input_file: Path,
+                                    jinja_data_dict: Dict[str, Any]) -> str:
+    """Applies Jinja data dict to the given file and returns rendered text.
+
+    Args:
+        input_file (Path): File to be resolved with jinja parameters.
+        jinja_data_dict (Dict[str, Any]): Dictionary containing
+            jinja parameters.
+
+    Returns:
+        Text from the input file after applying jinja parameters from the
+        dictionary.
+    """
+
+    logger.debug("Rendering Jinja template file: '%s'", input_file)
+
+    env = Environment(
+        loader=FileSystemLoader(input_file.parent.absolute().as_posix()))
+    input_template = env.get_template(input_file.name)
     output_text = input_template.render(jinja_data_dict)
     logger.debug("Rendered text = \n%s", output_text)
 
@@ -140,6 +169,15 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 "marketing_cm360_datasets_reporting":
                     config_dict["marketing"]["CM360"]["datasets"]["reporting"]
             })
-
+        # TikTok
+        if config_dict["marketing"].get("deployTikTok"):
+            jinja_data_file_dict.update({
+                "marketing_tiktok_datasets_raw":
+                    config_dict["marketing"]["TikTok"]["datasets"]["raw"],
+                "marketing_tiktok_datasets_cdc":
+                    config_dict["marketing"]["TikTok"]["datasets"]["cdc"],
+                "marketing_tiktok_datasets_reporting":
+                    config_dict["marketing"]["TikTok"]["datasets"]["reporting"]
+            })
 
     return jinja_data_file_dict

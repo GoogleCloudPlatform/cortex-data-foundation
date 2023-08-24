@@ -116,6 +116,9 @@ def configure(in_cloud_shell: bool,
     if (config.get("deployMarketing") and
         config["marketing"].get("deployCM360")):
         defaults.append("deployCM360")
+    if (config.get("deployMarketing") and
+        config["marketing"].get("deployTikTok")):
+        defaults.append("deployTikTok")
 
     while True:
         dialog = checkboxlist_dialog(
@@ -131,6 +134,8 @@ def configure(in_cloud_shell: bool,
                  "Marketing with Google Ads"),
                 ("deployCM360",
                  "Marketing with Campaign Manager 360 (CM360)"),
+                 ("deployTikTok",
+                 "Marketing with Tiktok"),
             ],
             default_values=defaults,
             style=Style.from_dict({
@@ -147,9 +152,11 @@ def configure(in_cloud_shell: bool,
         config["deploySAP"] = "deploySAP" in results
         config["deploySFDC"] = "deploySFDC" in results
         config["deployMarketing"] = ("deployGoogleAds" in results or
-                                     "deployCM360" in results)
+                                     "deployCM360" in results or
+                                     "deployTikTok" in results)
         config["marketing"]["deployGoogleAds"] = "deployGoogleAds" in results
         config["marketing"]["deployCM360"] = "deployCM360" in results
+        config["marketing"]["deployTikTok"] = "deployTikTok" in results
 
         if (config["deploySAP"] is False and config["deploySFDC"] is False
             and config["deployMarketing"] is False):

@@ -11,11 +11,19 @@ steps:
       - |-
         set -e
         echo "Executing {{ build_file.sql_file }}"
-        {%- if module_name == "SAP" %}
-        common_base_path="."
-        {%- else %}
-        common_base_path="./src"
-        {% endif %}
+
+        # There are 2 possible locations for create_bq_object.py depending on which
+        # repo we are working with, and we need to know which one it is in.
+
+        if [[ -f "./common/materializer/create_bq_object.py" ]]; then
+          common_base_path="."
+        elif [[ -f "./src/common/materializer/create_bq_object.py" ]]; then
+          common_base_path="./src"
+        else
+          echo "🛑 Required files for Materializer not found. Source files may be corrupt."
+          exit 1
+        fi
+
         export PYTHONPATH=$$PYTHONPATH:${common_base_path}
         python ${common_base_path}/common/materializer/create_bq_object.py \
             --module_name='{{ module_name }}' \

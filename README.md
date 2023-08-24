@@ -12,6 +12,7 @@ The current repository contains the analytical views and models that serve as a 
 -  [Salesforce.com](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf))
 -  [Google Ads](images/erd_gads.png) ([PDF](docs/erd_gads.pdf))
 -  [CM360 enriched with DV360](images/erd_cm360.png) ([PDF](docs/erd_cm360.pdf))
+-  [TikTok](images/erd_tiktok.png) ([PDF](docs/erd_tiktok.pdf))
 
 
 # Quick demo setup
@@ -19,7 +20,8 @@ If you want to create a **demo** instance, with automatic generation of BigQuery
 
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/?terminal=true&show=terminal&cloudshell_git_repo=https%3A%2F%2Fgithub.com%2FGoogleCloudPlatform%2Fcortex-data-foundation&cloudshell_tutorial=docs%2Ftutorial.md)
 
-> **Warning**⚠️ This demo deployment is **not suitable for production environments**.
+> **Warning** This demo deployment is **not suitable for productiion environments**.
+
 
 # Deployment for Development or Production environments
 
@@ -172,7 +174,7 @@ You can read more about partitioning and clustering for SAP [here](https://cloud
 </details>
 
 <details>
-  <summary>Integration options for Salesforce.com</summary>
+  <summary>Integration options for Salesforce</summary>
 
 ### Loading Salesforce data into BigQuery
 
@@ -248,8 +250,10 @@ The following data sources are available through the Marketing workload:
   ![Google Ads](images/ads1.png)
 - Campaign Manager 360 (CM360)
   ![CM360](images/cm3601.png)
+- TikTok
+  ![TikTok](images/tiktok1.png)
 
-For both the data sources, we use Dataflow pipelines to obtain data from upstream systems.
+For all three data sources, we use Dataflow pipelines to obtain data from upstream systems.
 Cloud Composer is used to schedule and monitor these Dataflow pipelines.
 
 <details>
@@ -314,30 +318,32 @@ File `src/GoogleAds/config/ingestion_settings.yaml` contains further settings th
 This section has entries that control which entities are fetched by APIs and how. Each entry corresponds with one Google Ads entity. Based on this config, Cortex creates Airflow DAGs that run Dataflow pipelines to fetch data using Google Ads APIs.
 
 Parameters for each entry:
-* `load_frequency`: How frequently a DAG for this entity will run to fetch data from Google Ads.
-   (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
 
-* `api_name`: API Resource Name (e.g. `customer` for https://developers.google.com/google-ads/api/fields/v13/customer)
-* `table_name`: Table in Raw dataset where the fetched data will be stored (e.g. `customer`)
-* `schema_file`: Schema file in `src/table_schema` directory that maps API response fields to destination table's column names.
-* `key`: Columns (separated by comma) that form a unique record for this table.
-* `is_metrics_table`: Indicates if a given entry is for a metric entity (in Google Ads API). System treats such tables a bit differently due to aggregated nature of such tables.
-* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
-* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+Parameter           | Description
+------------------- | ------------
+`load_frequency`    | How frequently a DAG for this entity will run to fetch data from Google Ads. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
+`api_name`          | API Resource Name (e.g. `customer` for https://developers.google.com/google-ads/api/fields/v13/customer)
+`table_name`        | Table in Raw dataset where the fetched data will be stored (e.g. `customer`)
+`schema_file`       | Schema file in `src/table_schema` directory that maps API response fields to destination table's column names.
+`key`               | Columns (separated by comma) that form a unique record for this table.
+`is_metrics_table`  | Indicates if a given entry is for a metric entity (in Google Ads API). System treats such tables a bit differently due to aggregated nature of such tables.
+`partition_details` | (Optional) If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+`cluster_details`   | (Optional) If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
 
 #### `raw_to_cdc_tables`:
 This section has entries that control how data is moved from Raw tables to CDC tables. Each entry
 corresponds with a raw table (which in turn corresponds with Google Ads API entity as mentioned above.)
 
 Parameters for each entry:
-* `table_name`: Table in CDC dataset where the raw data after CDC transformation will be stored (e.g. `customer`)
-* `raw_table`: Table on which raw data has been replicated
-* `key`: Columns (separated by comma) that form a unique record for this table.
-* `load_frequency`: How frequently a DAG for this entity will run to populate CDC table.
-  (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
-* `schema_file`: Schema file in `src/table_schema` directory that maps raw columns to CDC columns and data type of the CDC column. (NOTE: This is the same schema file that's referred to in earlier section.)
-* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
-* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+Parameter           | Description
+------------------- | ------------
+`table_name`        | Table in CDC dataset where the raw data after CDC transformation will be stored (e.g. `customer`)
+`raw_table`         | Table on which raw data has been replicated
+`key`               | Columns (separated by comma) that form a unique record for this table.
+`load_frequency`    | How frequently a DAG for this entity will run to populate CDC table. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
+`schema_file`       | Schema file in `src/table_schema` directory that maps raw columns to CDC columns and data type of the CDC column. (NOTE: This is the same schema file that's referred to in earlier section.)
+`partition_details` | (Optional) If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+`cluster_details`   | (Optional) If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
 
 ### Reporting settings
 You can configure and control how Cortex generates data for the Google Ads final reporting layer using reporting settings file (`src/GoogleAds/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procs are generated.)
@@ -377,33 +383,113 @@ Connection Name       | Purpose
 The service account used in Cloud Composer (as configured in the `cm360_raw_dataflow` connection above) needs Dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account).
 
 ### Ingestion settings
-File `src/marketing/src/CM360/config/ingestion_settings.yaml` contains further settings that control "Source to Raw" and "Raw to CDC" data pipelines.
+File `src/CM360/config/ingestion_settings.yaml` contains further settings that control "Source to Raw" and "Raw to CDC" data pipelines.
 
 #### `source_to_raw_tables`:
 This section has entries that control which files from DTv2 are processed and how. Each entry corresponds with files associated with one entity. Based on this config, Cortex creates Airflow DAGs that
 run Dataflow pipelines to process data from the DTv2 files.
 
 Parameters for each entry:
-* `base_table`: Table in Raw dataset where the data for an entity (like 'Clicks' data) will be stored.
-* `load_frequency`:  How frequently a DAG for this entity will run to process data from DTv2 files. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
-* `file_pattern`: Regex based file name patterns that corresponds to an entity.
-* `schema_file`: Schema file in `src/table_schema` directory that maps DTv2 fields to destination table's column names and data types.
-* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
-* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+Parameter           | Description
+------------------- | ------------
+`base_table`        | Table in Raw dataset where the data for an entity (like 'Clicks' data) will be stored.
+`load_frequency`    |  How frequently a DAG for this entity will run to process data from DTv2 files. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
+`file_pattern`      | Regex based file name patterns that corresponds to an entity.
+`schema_file`       | Schema file in `src/table_schema` directory that maps DTv2 fields to destination table's column names and data types.
+`partition_details` | (Optional) If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+`cluster_details`   | (Optional) If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
 
 #### `raw_to_cdc_tables`:
 This section has entries that control how data is moved from Raw tables to CDC tables. Each entry
 corresponds with a raw table (which in turn corresponds with DTv2 entity as mentioned above.)
 
 Parameters for each entry:
-* `base_table`: Table in CDC dataset where the raw data after CDC transformation will be stored (e.g. `customer`)
-* `load_frequency`:  How frequently a DAG for this entity will run to populate CDC table. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
-* `row_identifiers`: List of columns (separated by comma) that forms a unique record for this table.
-* (Optional) `partition_details`: If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
-* (Optional) `cluster_details`: If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+Parameter           | Description
+------------------- | ------------
+`base_table`        | Table in CDC dataset where the raw data after CDC transformation will be stored (e.g. `customer`)
+`load_frequency`    |  How frequently a DAG for this entity will run to populate CDC table. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
+`row_identifiers`   | List of columns (separated by comma) that forms a unique record for this table.
+`partition_details` | (Optional) If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+`cluster_details`   | (Optional) If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
 
 ### Reporting settings
 You can configure and control how Cortex generates data for the CM360 final reporting layer using the reporting settings file (`src/CM360/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procedures are generated.)
+
+For more details, please see [Customizing reporting_settings file configuration](#customizing-reporting_settings-file-configuration) section.
+
+[Return to top of Section](#establish-integration-for-marketing-workloads)
+</details>
+
+<details>
+<summary>Configure integration for TikTok </summary>
+
+Cortex Data Foundation integrates with TikTok in the following way:
+1. **Source to Raw layer**: Ingest data from TikTok to raw dataset using [TikTok Reporting APIs](https://business-api.tiktok.com/portal/docs?id=1751087777884161). This is achieved by using Dataflow pipelines running in Cloud Composer DAGs.
+2. **Raw layer to CDC layer**: Apply CDC process on raw dataset and store the output in CDC dataset. This is accomplished by Cloud Composer DAGs running BigQuery sqls.
+3. **CDC layer to Reporting layer**: Create final reporting tables from CDC tables in the Reporting dataset. This is accomplished by either creating runtime views on top of CDC tables or running Cloud Composer DAGs for materialized data in BigQuery tables - depending on how it's configured.
+
+## TikTok Reporting APIs
+
+For TikTok, Cortex uses [TikTok Reporting APIs](https://business-api.tiktok.com/portal/docs?id=1751087777884161) as source of truth. The current version is [v1.3](https://business-api.tiktok.com/portal/docs?id=1740579480076290).
+
+ Cortex uses [Synchronous](https://business-api.tiktok.com/portal/docs?id=1738864778664961) mode, and calls [Basic Reporting](https://business-api.tiktok.com/portal/docs?id=1738864915188737) APIs to obtain Ad and Ad Group performance data.
+
+## Configurations
+Following configs are required to for Cortex to successfully bring data from TikTok into Cortex Reporting layer.
+
+### Configure TikTok Account and Account Authentication
+1.  Set up a [TikTok Developer Account](https://business-api.tiktok.com/portal/docs?id=1738855176671234), if you don't have it already.
+2. Create an app for Cortex integration if you need to, as guided [here](https://business-api.tiktok.com/portal/docs?id=1738855242728450). Make sure you have selected the following two in the scopes for the app:
+    * `Ad Account Management/Ad Account Information`
+    * `Reporting/All`
+
+3.  Get app id, secret and long term access token as described in the [TikTok guide](https://business-api.tiktok.com/portal/docs?id=1738373141733378), and store them respectively in Google Cloud Secret Manager with the following names:
+    `cortex_tiktok_app_id`
+    `cortex_tiktok_app_secret`
+    `cortex_tiktok_access_token`
+
+### Set up Cloud Composer Connections
+Create following connections in Cloud Composer / Airflow:
+Connection Name       | Purpose
+----------------------|------------------------------------------------------
+`tiktok_raw_dataflow` | For TikTok API  -> Bigquery Raw Dataset
+`tiktok_cdc_bq`       | For Raw dataset -> CDC dataset transfer
+`tiktok_reporting_bq` | For CDC dataset -> Reporting dataset transfer
+
+### Cloud Composer Service Account permissions
+The service account used in Cloud Composer (as configured in the `tiktok_raw_dataflow` connection above) needs Dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account). Also, the same service account should also have Secret Manager Accessor access.
+
+### Ingestion settings
+File `src/TikTok/config/ingestion_settings.yaml` contains further settings that control "Source to Raw" and "Raw to CDC" data pipelines.
+
+#### `source_to_raw_tables`:
+This section has entries that control how data from TikTok is fetched and where they end up in raw dataset. Each entry corresponds with one raw table that will have data fetched from TikTok API for that entity. Based on this config, Cortex creates Airflow DAGs that run Dataflow pipelines to process data from TikTok APIs.
+
+Parameters for each entry:
+
+Parameter           | Description
+------------------- | ------------
+`base_table`        | Table in Raw dataset where the data for an entity (like 'Ad' data) will be stored.
+`load_frequency`    | How frequently a DAG for this entity will run to process data from DTv2 files. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
+`schema_file`       | Schema file in `src/table_schema` directory that maps API response fields to destination table's column names.
+`partition_details` | (Optional) If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+`cluster_details`   | (Optional) If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+
+
+#### `raw_to_cdc_tables`:
+This section has entries that control how data moves from raw tables to CDC tables. Each entry corresponds with a CDC table (which in turn corresponds with an entity mentioned above for the `source_to_raw_tables`.)
+
+Parameters for each entry:
+Parameter           | Description
+------------------- | ------------
+`base_table`        | Table in CDC dataset where the raw data after CDC transformation will be stored (e.g. `auction_ad_performance`)
+`load_frequency`    | How frequently a DAG for this entity will run to populate CDC table. (See [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs) for details on possible values.)
+`row_identifiers`   | List of columns (separated by comma) that forms a unique record for this table.
+`partition_details` | (Optional) If you want this table to be partitioned for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+`cluster_details`   | (Optional) If you want this table to be clustered for performance considerations. See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
+
+### Reporting settings
+You can configure and control how Cortex generates data for the TikTok final reporting layer using the reporting settings file (`src/TikTok/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procedures are generated.)
 
 For more details, please see [Customizing reporting_settings file configuration](#customizing-reporting_settings-file-configuration) section.
 
@@ -550,7 +636,7 @@ gcloud iam service-accounts add-iam-policy-binding <SERVICE ACCOUNT>\
 
 ### Create a Storage bucket for storing DAG related files
 
-A storage bucket will be required to store any processing scripts that are generated. These scripts will have to be manually moved into a Cloud Composer or Apache Airflow instance after deployment.
+A storage bucket will be required to store processing DAG scripts and other temporary files generated during deployment. These scripts will have to be manually moved into a Cloud Composer or Apache Airflow instance after deployment.
 
 Navigate to [Cloud Storage](https://console.cloud.google.com/storage/create-bucket) and create a bucket **in the same region** as your BigQuery datasets.
 
@@ -594,16 +680,16 @@ Consider your target deployment:
 
 ![structure for parameters](images/10.png "image_tooltip")
 
-| Parameter                 | Meaning                 | Default Value      | Description                                                              |
-| ------------------------- | ----------------------- | -------------------| ------------------------------------------------------------------------ |
-| `testData`                | Deploy Test Data        | `true`             | Project where the source dataset is and the build will run.              |
-| `deploySAP`               | Deploy SAP              | `true`             | Execute the deployment for SAP workload (ECC or S/4HANA).                |
-| `deploySFDC`              | Deploy Salesforce       | `true`             | Execute the deployment for Salesforce workload.                          |
-| `deployMarketing`         | Deploy Marketing        | `true`             | Execute the deployment for Marketing  sources (Google Ads and/or CM360). |
+| Parameter                 | Meaning                 | Default Value      | Description                                                                      |
+| ------------------------- | ----------------------- | -------------------| ------------------------------------------------------------------------         |
+| `testData`                | Deploy Test Data        | `true`             | Project where the source dataset is and the build will run.                      |
+| `deploySAP`               | Deploy SAP              | `true`             | Execute the deployment for SAP workload (ECC or S/4HANA).                        |
+| `deploySFDC`              | Deploy Salesforce       | `true`             | Execute the deployment for Salesforce workload.                                  |
+| `deployMarketing`         | Deploy Marketing        | `true`             | Execute the deployment for Marketing  sources (Google Ads, CM360 and/or TikTok). |
 | `turboMode`               | Deploy in Turbo mode    | `true`             | Execute all views builds as a step in the same Cloud Build process, in parallel for a faster deployment. If set to `false`, each reporting view is generated in its own sequential build step. We recommend only setting it to `true` when using test data or after any mismatch between reporting columns and the source data have been resolved. |
-| `projectIdSource`         | Source Project ID       | -                  | Project where the source dataset is and the build will run.              |
-| `projectIdTarget`         | Target Project ID       | -                  | Target project for user-facing datasets (reporting and ML datasets).     |
-| `targetBucket`            | Target Bucket for templa| -                  | Bucket [created previously](#create-a-storage-bucket) where DAGs (and Dataflow temp files) will be generated. Avoid using the actual Airflow bucket. |
+| `projectIdSource`         | Source Project ID       | -                  | Project where the source dataset is and the build will run.                      |
+| `projectIdTarget`         | Target Project ID       | -                  | Target project for user-facing datasets (reporting and ML datasets).             |
+| `targetBucket`            | Target Bucket to storage generated DAG scripts | - | Bucket [created previously](#create-a-storage-bucket-for-storing-dag-related-files) where DAGs (and Dataflow temp files) will be generated. Avoid using the actual Airflow bucket. |
 | `location`                | Location or Region      | `"US"`             | Location where the BigQuery dataset and GCS buckets are. <br><br> > **Note**: See restrictions listed under [BigQuery dataset locations](https://cloud.google.com/bigquery/docs/locations). |
 | `languages`               | Filtering languages     | `[ "E", "S" ]`     | If not using test data, enter a single language (e.g., `[ "E" ]`) or multiple languages (e.g., `[ "E", "S" ]`) as relevant to your business. These values are used to replace placeholders in SQL in analytics models where available (SAP only for now - see the ERD). |
 | `currencies`              | Filtering currencies    | `[ "USD" ]`        | If not using test data, enter a single currency (e.g., `[ "USD" ]`) or multiple currencies (e.g., `[ "USD", "CAD" ]`) as relevant to your business. These values are used to replace placeholders in SQL in analytics models where available (SAP only for now - see the ERD). |
@@ -626,7 +712,7 @@ The following sections are specific to each workload. You do not need to configu
 | `SAP.datasets.cdc`       | CDC Processed Dataset        | -              | Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset. |
 | `SAP.datasets.reporting` | Reporting Dataset SAP        | `"REPORTING"`  | Name of the dataset that is accessible to end users for reporting, where views and user-facing tables are deployed. |
 | `SAP.datasets.ml`        | ML dataset                   | `"ML_MODELS"`  | Name of the dataset that stages results of Machine Learning algorithms or BQML models. |
-| `SAP.SQLFlavor`          | SQL flavor for source system | `"ecc"`        | `s4` or `ecc`. For Demand Sensing, only `ecc` test data is provided at this time. |
+| `SAP.SQLFlavor`          | SQL flavor for source system | `"ecc"`        | `s4` or `ecc`. For test data, keep the default value (`ecc`). For Demand Sensing, only `ecc` test data is provided at this time. |
 | `SAP.mandt`              | Mandant or Client            | `"100"`        | Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`. |
 
 
@@ -651,21 +737,26 @@ The following sections are specific to each workload. You do not need to configu
 <details>
   <summary>Deployment Configuration for Marketing</summary>
 
-| Parameter                                 | Meaning                                   | Default Value           | Description                                                            |
-| ------------------                        | -------------                             | ---------------------   | --------------------------------------------------                     |
-| `marketing.deployGoogleAds`               | Deploy Google Ads                         | `true`                  | Execute the deployment for Google Ads data source.                     |
-| `marketing.deployCM360`                   | Deploy CM360                              | `true`                  | Execute the deployment for CM360 data source.                          |
-| `marketing.dataflowRegion`                | Dataflow region                           | -                       | Region for Dataflow pipelines (See [available values](https://cloud.google.com/dataflow/docs/resources/locations)). |
-| `marketing.GoogleAds.deployCDC`           | Deploy CDC for Google Ads                 | `true`                  | Generate Google Ads CDC processing scripts to run as DAGs in Cloud Composer.
-| `marketing.GoogleAds.lookbackDays`        | Lookback days for Google Ads              | `180`                   | Number of days to start fetching data from Google Ads API.              |
-| `marketing.GoogleAds.datasets.cdc`        | CDC dataset for Google Ads                |                         | CDC dataset for Google Ads.                                             |
-| `marketing.GoogleAds.datasets.raw`        | RAW dataset for Google Ads                |                         | Raw dataset for Google Ads.                                             |
-| `marketing.GoogleAds.datasets.reporting`  | Reporting dataset for Google Ads          | `"REPORTING_GoogleAds"` | Reporting dataset for Google Ads.                                       |
-| `marketing.CM360.deployCDC`               | Deploy CDC scripts for CM360              | `true`                  | Generate CM360 CDC processing scripts to run as DAGs in Cloud Composer. |
-| `marketing.CM360.dataTransferBucket`      | Bucket with Data Transfer Service results | -                       | Bucket where DTv2 files are stored.                                     |
-| `marketing.CM360.datasets.cdc`            | CDC dataset for CM360                     |                         | CDC dataset for CM360.                                                  |
-| `marketing.CM360.datasets.raw`            | RAW dataset for CM360                     |                         | Raw dataset for CM360.                                                  |
-| `marketing.CM360.datasets.reporting`      | Reporting dataset for CM360               | `"REPORTING_CM360"`     | Reporting dataset for CM360.                                            |
+| Parameter                                | Meaning                                   | Default Value           | Description                                                             |
+| ------------------                       | -------------                             | ---------------------   | --------------------------------------------------                      |
+| `marketing.deployGoogleAds`              | Deploy Google Ads                         | `true`                  | Execute the deployment for Google Ads data source.                      |
+| `marketing.deployCM360`                  | Deploy CM360                              | `true`                  | Execute the deployment for CM360 data source.                           |
+| `marketing.deployTikTok`                 | Deploy TikTok                             | `true`                  | Execute the deployment for TikTok data source.                          |
+| `marketing.dataflowRegion`               | Dataflow region                           | -                       | Region for Dataflow pipelines (See [available values](https://cloud.google.com/dataflow/docs/resources/locations)). |
+| `marketing.GoogleAds.deployCDC`          | Deploy CDC for Google Ads                 | `true`                  | Generate Google Ads CDC processing scripts to run as DAGs in Cloud Composer.
+| `marketing.GoogleAds.lookbackDays`       | Lookback days for Google Ads              | `180`                   | Number of days to start fetching data from Google Ads API.              |
+| `marketing.GoogleAds.datasets.cdc`       | CDC dataset for Google Ads                |                         | CDC dataset for Google Ads.                                             |
+| `marketing.GoogleAds.datasets.raw`       | RAW dataset for Google Ads                |                         | Raw dataset for Google Ads.                                             |
+| `marketing.GoogleAds.datasets.reporting` | Reporting dataset for Google Ads          | `"REPORTING_GoogleAds"` | Reporting dataset for Google Ads.                                       |
+| `marketing.CM360.deployCDC`              | Deploy CDC scripts for CM360              | `true`                  | Generate CM360 CDC processing scripts to run as DAGs in Cloud Composer. |
+| `marketing.CM360.dataTransferBucket`     | Bucket with Data Transfer Service results | -                       | Bucket where DTv2 files are stored.                                     |
+| `marketing.CM360.datasets.cdc`           | CDC dataset for CM360                     |                         | CDC dataset for CM360.                                                  |
+| `marketing.CM360.datasets.raw`           | RAW dataset for CM360                     |                         | Raw dataset for CM360.                                                  |
+| `marketing.CM360.datasets.reporting`     | Reporting dataset for CM360               | `"REPORTING_CM360"`     | Reporting dataset for CM360.                                            |
+| `marketing.TikTok.deployCDC`             | Deploy CDC scripts for TikTok             | `true`                  | Generate TikTok CDC processing scripts to run as DAGs in Cloud Composer.|
+| `marketing.TikTok.datasets.cdc`          | CDC dataset for TikTok                    |                         | CDC dataset for TikTok.                                                 |
+| `marketing.TikTok.datasets.raw`          | RAW dataset for TikTok                    |                         | Raw dataset for TikTok.                                                 |
+| `marketing.TikTok.datasets.reporting`    | Reporting dataset for TikTok              | `"REPORTING_TikTok"`    | Reporting dataset for TikTok.                                           |
 
 
 [Return to top of section](#workload-specific-configuration)
@@ -676,7 +767,7 @@ The following sections are specific to each workload. You do not need to configu
 
 ## Configure SAP Hierarchies
 
-You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-dag-generator/blob/main/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to `true`.
+You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/external_dag/hier_reader/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to `true`.
 
 ## Configure External Datasets for K9
 
@@ -835,7 +926,7 @@ For your own customizations and a faster deployment in your own development pipe
 
 # Support
 
-To file issues and feature requests against these models or deployers, create an issue in this repo.
+To file issues and feature requests against these models or deployers, create an issue in this repo. For help gathering the information required to help troubleshoot, execute `support.sh` from the cloned directory and follow instructions.
 
 # Appendix
 

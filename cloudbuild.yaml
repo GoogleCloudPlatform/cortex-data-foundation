@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -171,6 +171,7 @@ steps:
         if [[ "${_NO_TEST_DATA}" != "true" && "$${_TEST_DATA_}" == "true" && "$${_DEPLOY_MARKETING_}" == "true" ]]; then
           _DEPLOY_ADS_=$(jq -r ."marketing.deployGoogleAds" "${_CONFIG_FILE}")
           _DEPLOY_CM360_=$(jq -r ."marketing.deployCM360" "${_CONFIG_FILE}")
+          _DEPLOY_TIKTOK_=$(jq -r ."marketing.deployTikTok" "${_CONFIG_FILE}")
           if [[ "$${_DEPLOY_ADS_}" == "true" ]]; then
             echo "Deploying Google Ads Test Harness."
             python3 src/common/create_test_harness.py --workload "marketing.GoogleAds" --dataset "raw"
@@ -178,6 +179,10 @@ steps:
           if [[ "$${_DEPLOY_CM360_}" == "true" ]]; then
             echo "Deploying CM360 Test Harness."
             python3 src/common/create_test_harness.py --workload "marketing.CM360" --dataset "raw"
+          fi
+          if [[ "$${_DEPLOY_TIKTOK_}" == "true" ]]; then
+            echo "Deploying TikTok Test Harness."
+            python3 src/common/create_test_harness.py --workload "marketing.TikTok" --dataset "raw"
           fi
         else
           echo "==Skipping Test Harness for Marketing=="
@@ -223,3 +228,4 @@ substitutions:
   _NO_TEST_DATA: "false"
 options:
   substitution_option: "ALLOW_LOOSE"
+tags: ["cortex"]

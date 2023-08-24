@@ -19,12 +19,13 @@ from google.cloud import bigquery
 from common.py_libs import bq_helper
 
 
-TEST_HARNESS_VERSION="5_0"
+TEST_HARNESS_VERSION="5_1"
 
 
 def get_test_harness_dataset(workload_path: str,
                             target_dataset_type: str,
-                            location: str) -> str:
+                            location: str,
+                            version: str = TEST_HARNESS_VERSION) -> str:
 
     """Generates test harness dataset name.
 
@@ -45,7 +46,7 @@ def get_test_harness_dataset(workload_path: str,
     workload_prefix = workload_path.replace(".", "__")
     location = location.replace("-", "_")
     dataset_name = (f"{workload_prefix}__{target_dataset_type}__"
-                    f"{TEST_HARNESS_VERSION}__{location}")
+                    f"{version}__{location}")
 
     return dataset_name.lower()
 
@@ -56,7 +57,8 @@ def load_dataset_test_data(bq_client: bigquery.Client,
                            target_dataset_type: str,
                            target_dataset_name: str,
                            target_project: str,
-                           location: str):
+                           location: str,
+                           source_version: str = TEST_HARNESS_VERSION):
     """Loads workload dataset test data by copying dataset from
        the test harness. Skips existing tables in target dataset.
 
@@ -73,12 +75,15 @@ def load_dataset_test_data(bq_client: bigquery.Client,
         target_project (str): Test data destination project (not to confuse with
                               target project from config.json).
         location (str): BigQuery location.
+        source_version (str): [Optional] Version of the source dataset. Default
+                              to what is defined in TEST_HARNESS_VERSION.
     """
     bq_helper.copy_dataset(bq_client,
                            test_harness_project_id,
                            get_test_harness_dataset(workload_path,
                                                      target_dataset_type,
-                                                     location),
+                                                     location,
+                                                     version=source_version),
                            target_project,
                            target_dataset_name,
                            location,
