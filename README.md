@@ -22,7 +22,6 @@ If you want to create a **demo** instance, with automatic generation of BigQuery
 
 > **Warning** This demo deployment is **not suitable for productiion environments**.
 
-
 # Deployment for Development or Production environments
 
 ### Clone the Data Foundation repository
