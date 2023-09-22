@@ -20,7 +20,8 @@ If you want to create a **demo** instance, with automatic generation of BigQuery
 
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/?terminal=true&show=terminal&cloudshell_git_repo=https%3A%2F%2Fgithub.com%2FGoogleCloudPlatform%2Fcortex-data-foundation&cloudshell_tutorial=docs%2Ftutorial.md)
 
-> **Warning** This demo deployment is **not suitable for productiion environments**.
+> **Warning** This demo deployment is **not suitable for production environments**.
+
 
 # Deployment for Development or Production environments
 
@@ -95,7 +96,7 @@ You will need to identify:
 *   **Post-processing K9 dataset:** BigQuery dataset where cross-workload reporting (e.g., SAP + Google Ads Reporting (CATGAP)) and additional external source DAGs, (e.g., Weather or Google Trends ingestion) can be deployed. This dataset is automatically created by the deployer if it does not exist.
 
 
-**Alternatively**, if you do not have a replication tool set up or do not wish to use the replicated data, the deployment process can generate test tables and fake data for you. You will still need to [create](https://cloud.google.com/bigquery/docs/datasets) and identify the CDC and RAW datasets ahead of time.
+**Alternatively**, if you do not have a replication tool set up or do not wish to use the replicated data, the deployment process can generate test tables and fake data for you. You will still need to [create](https://cloud.google.com/bigquery/docs/datasets) and identify the CDC and Raw datasets ahead of time.
 
 These parameters will be different for each workload depending on the integration mechanism.
 
@@ -165,6 +166,9 @@ To create tables with partitions and/or clusters, update the CDC `setting.yaml` 
 > 1. This feature only applies when a dataset in `setting.yaml` is configured for replication as a table (e.g. `load_frequency = "@daily"`) and not defined as a view (`load_frequency = "RUNTIME"`).
 > 2. A table can be both - a partitioned table as well as a clustered table.
 
+
+> **Important ⚠️**: If you are using a replication tool that allows partitions in the raw dataset, like the BigQuery Connector for SAP, we recommend [setting time-based partitions](https://cloud.google.com/solutions/sap/docs/bq-connector/latest/planning#table_partitioning) in the raw tables. The type of partition will work better if it matches the frequency for CDC DAGs in the `setting.yaml` configuration.
+
 You can read more about partitioning and clustering for SAP [here](https://cloud.google.com/blog/products/sap-google-cloud/design-considerations-for-sap-data-modeling-in-bigquery).
 
 </details>
@@ -195,8 +199,8 @@ If you already have the replication and CDC working for Salesforce APIs and only
 ### Salesforce data requirements
 *   The structure of the source tables follows *snake_case* naming in plural, i.e., `some_objects`. The columns have the same data types as how Salesforce represents them internally. Some fields have been renamed for better readability in the reporting layer.
 *   Any required tables that did not exist within the raw dataset will be created as empty tables during deployment. This is to ensure the CDC deployment step runs correctly.
-*  If required, for CDC scripts to work, the **Id** for each API (e.g., `Account Id`) and the [**SystemModStamp**](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/system_fields.htm) need to be present in the source table. The provided RAW processing scripts fetch these fields automatically from the APIs and update the target replication table.
-*  The provided RAW processing scripts do not require additional change data capture processing. This behavior is set during deployment by default.
+*  If required, for CDC scripts to work, the **Id** for each API (e.g., `Account Id`) and the [**SystemModStamp**](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/system_fields.htm) need to be present in the source table. The provided Raw processing scripts fetch these fields automatically from the APIs and update the target replication table.
+*  The provided Raw processing scripts do not require additional change data capture processing. This behavior is set during deployment by default.
 
 
 #### **Source tables for Currency Conversion in Salesforce**
@@ -210,15 +214,15 @@ If these tables are not available, we will automatically create empty placeholde
 
 ## Configure API integration and CDC for Salesforce
 
-Following a principle of openness, customers are free to use the provided replication scripts for Salesforce or a data replication tool of their choice as long as data meets the same structure and level of aggregation as provided by the Salesforce APIs. If you are using another tool for replication, this tool can either append updates as new records (_[append always](https://cloud.google.com/bigquery/docs/migration/database-replication-to-bigquery-using-change-data-capture#overview_of_cdc_data_replication)_ pattern) or update existing records with changes when landing the data in BigQuery. If the tool does not update the records and replicates any changes as new records into a target (RAW) table, Cortex Data Foundation provides the option to create change-data-capture processing scripts.
+Following a principle of openness, customers are free to use the provided replication scripts for Salesforce or a data replication tool of their choice as long as data meets the same structure and level of aggregation as provided by the Salesforce APIs. If you are using another tool for replication, this tool can either append updates as new records (_[append always](https://cloud.google.com/bigquery/docs/migration/database-replication-to-bigquery-using-change-data-capture#overview_of_cdc_data_replication)_ pattern) or update existing records with changes when landing the data in BigQuery. If the tool does not update the records and replicates any changes as new records into a target (Raw) table, Cortex Data Foundation provides the option to create change-data-capture processing scripts.
 
 To ensure the names of tables, names of fields, and data types are consistent with the structures expected by Cortex regardless of the replication tool, you can modify the mapping configuration to map your replication tool or existing schemata. This will generate mapping views compatible with the structure expected by Cortex Data Foundation.
 
 ![Three options depending on replication tool](images/dataflows.png)
 
-You can use the configuration in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-salesforce/blob/main/config/setting.yaml) to configure the generation of scripts to call the salesforce APIs and replicate the data into the RAW dataset (section `salesforce_to_raw_tables`) and the generation of scripts to process changes incoming into the RAW dataset and into the CDC processed dataset (section `raw_to_cdc_tables`).
+You can use the configuration in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-salesforce/blob/main/config/setting.yaml) to configure the generation of scripts to call the salesforce APIs and replicate the data into the Raw dataset (section `salesforce_to_raw_tables`) and the generation of scripts to process changes incoming into the Raw dataset and into the CDC processed dataset (section `raw_to_cdc_tables`).
 
-By default, the scripts provided to read from APIs update changes into the RAW dataset, so CDC processing scripts are not required, and mapping views to align the source schema to the expected schema are created instead.
+By default, the scripts provided to read from APIs update changes into the Raw dataset, so CDC processing scripts are not required, and mapping views to align the source schema to the expected schema are created instead.
 
 The generation of CDC processing scripts is not executed if `SFDC.createMappingViews` in the [config.json](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/config/config.json#L29) file remains true (default behavior). If CDC scripts are required, set `SFDC.createMappingViews` to false.  This second step also allows for mapping between the source schemata into the required schemata as required by Cortex Data Foundation.
 
@@ -232,9 +236,9 @@ The following example illustrates the mapping of the field `unicornId` as landed
 
 ![Only remap](images/remap.png)
 
-Make any changes to the [DAG templates for CDC](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/cdc_dag_generator/templates) or for [RAW](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/raw_dag_generator/templates) as required by your instance of Airflow or Cloud Composer. You will find more information in the [Appendix - Gathering Cloud Composer settings](#gathering-cloud-composer-settings).
+Make any changes to the [DAG templates for CDC](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/cdc_dag_generator/templates) or for [Raw](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/main/src/raw_dag_generator/templates) as required by your instance of Airflow or Cloud Composer. You will find more information in the [Appendix - Gathering Cloud Composer settings](#gathering-cloud-composer-settings).
 
-If you do not need any DAGs for RAW data generation from API calls or CDC processing, set [parameter](#gather-the-parameters-for-deployment) `deployCDC` to `false`. Alternatively, you can remove the contents of the sections in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-salesforce/blob/main/config/setting.yaml). If data structures are known to be consistent with those expected by Cortex Data Foundation, you can skip the generation of mapping views with [parameter](#gather-the-parameters-for-deployment) `SFDC.createMappingViews` set to `false`.
+If you do not need any DAGs for Raw data generation from API calls or CDC processing, set [parameter](#gather-the-parameters-for-deployment) `deployCDC` to `false`. Alternatively, you can remove the contents of the sections in [`setting.yaml`](https://github.com/GoogleCloudPlatform/cortex-salesforce/blob/main/config/setting.yaml). If data structures are known to be consistent with those expected by Cortex Data Foundation, you can skip the generation of mapping views with [parameter](#gather-the-parameters-for-deployment) `SFDC.createMappingViews` set to `false`.
 
 </details>
 
@@ -251,6 +255,8 @@ The following data sources are available through the Marketing workload:
   ![CM360](images/cm3601.png)
 - TikTok
   ![TikTok](images/tiktok1.png)
+- LiveRamp
+  ![LiveRamp](images/liveramp1.png)
 
 For all three data sources, we use Dataflow pipelines to obtain data from upstream systems.
 Cloud Composer is used to schedule and monitor these Dataflow pipelines.
@@ -431,18 +437,18 @@ Cortex Data Foundation integrates with TikTok in the following way:
 
 For TikTok, Cortex uses [TikTok Reporting APIs](https://business-api.tiktok.com/portal/docs?id=1751087777884161) as source of truth. The current version is [v1.3](https://business-api.tiktok.com/portal/docs?id=1740579480076290).
 
- Cortex uses [Synchronous](https://business-api.tiktok.com/portal/docs?id=1738864778664961) mode, and calls [Basic Reporting](https://business-api.tiktok.com/portal/docs?id=1738864915188737) APIs to obtain Ad and Ad Group performance data.
+Cortex uses [Synchronous](https://business-api.tiktok.com/portal/docs?id=1738864778664961) mode, and calls [Basic Reporting](https://business-api.tiktok.com/portal/docs?id=1738864915188737) APIs to obtain Ad and Ad Group performance data.
 
 ## Configurations
 Following configs are required to for Cortex to successfully bring data from TikTok into Cortex Reporting layer.
 
 ### Configure TikTok Account and Account Authentication
-1.  Set up a [TikTok Developer Account](https://business-api.tiktok.com/portal/docs?id=1738855176671234), if you don't have it already.
+1. Set up a [TikTok Developer Account](https://business-api.tiktok.com/portal/docs?id=1738855176671234), if you don't have it already.
 2. Create an app for Cortex integration if you need to, as guided [here](https://business-api.tiktok.com/portal/docs?id=1738855242728450). Make sure you have selected the following two in the scopes for the app:
     * `Ad Account Management/Ad Account Information`
     * `Reporting/All`
 
-3.  Get app id, secret and long term access token as described in the [TikTok guide](https://business-api.tiktok.com/portal/docs?id=1738373141733378), and store them respectively in Google Cloud Secret Manager with the following names:
+3. Get app id, secret and long term access token as described in the [TikTok guide](https://business-api.tiktok.com/portal/docs?id=1738373141733378), and store them respectively in Google Cloud Secret Manager with the following names:
     `cortex_tiktok_app_id`
     `cortex_tiktok_app_secret`
     `cortex_tiktok_access_token`
@@ -491,6 +497,88 @@ Parameter           | Description
 You can configure and control how Cortex generates data for the TikTok final reporting layer using the reporting settings file (`src/TikTok/config/reporting_settings.yaml`). This file controls how reporting layer BQ objects (tables, views, functions or stored procedures are generated.)
 
 For more details, please see [Customizing reporting_settings file configuration](#customizing-reporting_settings-file-configuration) section.
+</details>
+
+<details>
+<summary>Configure integration for LiveRamp</summary>
+
+Cortex Data Foundation enables Identity Resolution by [integrating with LiveRamp](https://docs.liveramp.com/identity/en/identity-resolution.html).
+
+Cortex frameworks can perform [RampId](https://docs.liveramp.com/connect/en/rampid-methodology.html) lookup for a known audience / customer segment (e.g. ‘high-value customers’, ‘cat lovers’) from CRM (or other) systems.
+
+Using PII information (Email, Phone, Name, Phone number etc), the LiveRamp API returns a RampID, which is an identifier that allows businesses to identify and consolidate records across multiple systems - such as the audience of different campaigns.
+
+## LiveRamp APIs
+[LiveRamp Identity Resolution Retrieval API](https://developers.liveramp.com/rampid-api/reference/getting-started) allows businesses to programmatically resolve PII data to individuals. Cortex uses LiveRamp's [Lookup Endpoint](https://developers.liveramp.com/rampid-api/docs/the-lookup-endpoint-1) by sending hashed PII data over the API call.
+
+## Input and Output tables
+After deploying Cortex, system will create two BQ tables in relevant dataset provided in `config.json`:
+
+1. `rampid_lookup_input` table
+
+    This table is input for the RampId Lookup process.
+
+    | Column              | Data Type | Description                               | Example               | Is Primary Key? |
+    | -------             |-----      | -------------------------                 | --------              | --------------  |
+    | id                  | STRING    | Unique Id of this record.                 | "123"                 | Yes             |
+    | segment_name        | STRING    | Name of audience/CRM/Customer segment.    | "High Value"          | No              |
+    | source_system_name  | STRING    | Source system where the record came from. | "Salesforce"          | No              |
+    | name                | STRING    | Customer Name                             | "John Doe"            | No              |
+    | email               | STRING    | Customer Email                            | "example@example.com" | No              |
+    | phone_number        | STRING    | Customer Phone                            | "1234567890"          | No              |
+    | postal_code         | STRING    | Customer postal code                      | "12345"               | No              |
+    | is_processed        | BOOL      | Indicates if a record is already processed. <br> For new records, populate this with FALSE. <br> System will update this to TRUE once it's processed.| FALSE | No|
+    | load_timestamp      | TIMESTAMP | Timestamp when the record was inserted in the system. This is purely for audit purpose. | "2020-01-01 00:00:00 UTC" | No |
+    | processed_timestamp | TIMESTAMP | Timestamp when system performed API Lookup for this record. This is always populated by system. | "2020-01-01 00:00:00 UTC" | No |
+
+    Note that `id` needs to be unique.
+
+2. `rampid_lookup` table
+
+This is output table containing RampIds for each segment in the input record.  Please note that LiveRamp by design does not allow to map RampId to an individual record.
+
+| Column       | Data Type | Description                                      |
+| -------      | ------    | -------------------------------------------------|
+| segment_name | STRING    | Segment name from input table.                   |
+| ramp_id      | STRING    | LiveRamp RampId                                  |
+| recordstamp  | TIMESTAMP | Timestamp when this rampid lookup was performed. |
+
+###  Notes on the lookup tables
+
+1. `rampid_lookup_input` table needs to be populated on periodic basis (based on your business needs) with your customer's PII details like Name, Email etc. Cortex does not provide an automated way to do so. But Cortex provides a sample script `ddls/samples/populate_rampid_lookup_input.sql` that shows how you could populate this table using data in your Salesforce system already deployed with Cortex. You can use that as guide too in case your data comes from other system.
+
+2. Also, ensure you do not have duplicates in the `rampid_lookup_input` table (as in, same individual is present multiple times with same PII information, even if their `id` may be different). Cortex Lookup DAG will fail if a segment contains too many duplicate entries. This is enforced by LiveRamp APIs.
+
+3. LiveRamp RampIds [can change over period of time](https://docs.liveramp.com/connect/en/interpreting-rampid,-liveramp-s-people-based-identifier.html#idm45078819449264_body), for the same individual. This means, you need to perform a fresh lookup for already processed data time to time. Cortex provides a sample script `ddls/samples/clean_up_segment_matching.sql` that shows how you can do this at a segment level. This way, you can reset a whole segment, and system will perform a lookup for that segment and give you up to date RampIds.
+
+4. `rampid_lookup` - the output table - may contain slightly less number of records compared to the input table. This is by design, as Cortex tries to dedup the input records using PII details to ensure LiveRamp API lookup does not fail.
+
+## Configurations
+
+### Configure LiveRamp Authentication
+1. [Contact LiveRamp](https://liveramp.com/contact/) to obtain authentication credentials. This should include two fields: Client Id,  Client Secret.
+2. Create a secret using Google Cloud Secret Manager with name "cortex-framework-liveramp", and use the following as value:
+```
+{
+  'client_id':'<your client id obtained above>',
+  'client_secret':'<your client secret obtained above>',
+  'grant_type':'client_credentials'
+}
+```
+
+### Set up Cloud Composer Connection
+Create following connections in Cloud Composer / Airflow:
+Connection Name   | Purpose
+------------------|------------------------------------------------------
+`liveramp_cdc_bq` | For LiveRamp API -> CDC dataset transfer
+
+### config.ini
+This config file controls some behavior of the Cloud Composer DAG, as well as how LiveRamp APIs are consumed.
+
+Configure `LiveRamp/src/pipelines/config.ini` based on your needs. While these parameters are already described in the file, pay attention to `liveramp_api_base_url`.
+This parameter by default points to LiveRamp's production API url, for testing purpose, you may need to point it to the staging version, depending on your setup.
+</details>
+
 
 [Return to top of Section](#establish-integration-for-marketing-workloads)
 </details>
@@ -724,7 +812,7 @@ The following sections are specific to each workload. You do not need to configu
 | Parameter                 | Meaning               | Default Value          | Description       |
 | ------------------        | -------------         | ---------------------- | ------------------|
 | `SFDC.deployCDC`          | Deploy CDC            | `true`                 | Generate CDC processing scripts to run as DAGs in Cloud Composer. See the documentation for different ingestion options for Salesforce. |
-| `SFDC.createMappingViews` | Create mapping views  | `true`                 | The provided DAGs to fetch new records from the Salesforce APIs update records on landing. This value set to **true** will generate views in the CDC processed dataset to surface tables with the "latest version of the truth" from the RAW dataset. If **false** and `SFDC.deployCDC` is `true`, DAGs will be generated with change data capture processing based on SystemModstamp. See details on [CDC processing for Salesforce](#configure-api-integration-and-cdc-for-salesforce). |
+| `SFDC.createMappingViews` | Create mapping views  | `true`                 | The provided DAGs to fetch new records from the Salesforce APIs update records on landing. This value set to **true** will generate views in the CDC processed dataset to surface tables with the "latest version of the truth" from the Raw dataset. If **false** and `SFDC.deployCDC` is `true`, DAGs will be generated with change data capture processing based on SystemModstamp. See details on [CDC processing for Salesforce](#configure-api-integration-and-cdc-for-salesforce). |
 | `SFDC.createPlaceholders` | Create Placeholders   | `true`                 | Create empty placeholder tables in case they are not generated by the ingestion process to allow the downstream reporting deployment to execute without failure. |
 | `SFDC.datasets.raw`       | Raw landing dataset   | -                      | Used by the CDC process, this is where the replication tool lands the data from SFDC. If using test data, create an empty dataset. |
 | `SFDC.datasets.cdc`       | CDC Processed Dataset | -                      | Dataset that works as a source for the reporting views, and target for the records processed DAGs. If using test data, create an empty dataset. |
@@ -745,16 +833,16 @@ The following sections are specific to each workload. You do not need to configu
 | `marketing.GoogleAds.deployCDC`          | Deploy CDC for Google Ads                 | `true`                  | Generate Google Ads CDC processing scripts to run as DAGs in Cloud Composer.
 | `marketing.GoogleAds.lookbackDays`       | Lookback days for Google Ads              | `180`                   | Number of days to start fetching data from Google Ads API.              |
 | `marketing.GoogleAds.datasets.cdc`       | CDC dataset for Google Ads                |                         | CDC dataset for Google Ads.                                             |
-| `marketing.GoogleAds.datasets.raw`       | RAW dataset for Google Ads                |                         | Raw dataset for Google Ads.                                             |
+| `marketing.GoogleAds.datasets.raw`       | Raw dataset for Google Ads                |                         | Raw dataset for Google Ads.                                             |
 | `marketing.GoogleAds.datasets.reporting` | Reporting dataset for Google Ads          | `"REPORTING_GoogleAds"` | Reporting dataset for Google Ads.                                       |
 | `marketing.CM360.deployCDC`              | Deploy CDC scripts for CM360              | `true`                  | Generate CM360 CDC processing scripts to run as DAGs in Cloud Composer. |
 | `marketing.CM360.dataTransferBucket`     | Bucket with Data Transfer Service results | -                       | Bucket where DTv2 files are stored.                                     |
 | `marketing.CM360.datasets.cdc`           | CDC dataset for CM360                     |                         | CDC dataset for CM360.                                                  |
-| `marketing.CM360.datasets.raw`           | RAW dataset for CM360                     |                         | Raw dataset for CM360.                                                  |
+| `marketing.CM360.datasets.raw`           | Raw dataset for CM360                     |                         | Raw dataset for CM360.                                                  |
 | `marketing.CM360.datasets.reporting`     | Reporting dataset for CM360               | `"REPORTING_CM360"`     | Reporting dataset for CM360.                                            |
 | `marketing.TikTok.deployCDC`             | Deploy CDC scripts for TikTok             | `true`                  | Generate TikTok CDC processing scripts to run as DAGs in Cloud Composer.|
 | `marketing.TikTok.datasets.cdc`          | CDC dataset for TikTok                    |                         | CDC dataset for TikTok.                                                 |
-| `marketing.TikTok.datasets.raw`          | RAW dataset for TikTok                    |                         | Raw dataset for TikTok.                                                 |
+| `marketing.TikTok.datasets.raw`          | Raw dataset for TikTok                    |                         | Raw dataset for TikTok.                                                 |
 | `marketing.TikTok.datasets.reporting`    | Reporting dataset for TikTok              | `"REPORTING_TikTok"`    | Reporting dataset for TikTok.                                           |
 
 
@@ -964,7 +1052,7 @@ The following flow depicts the CDC processing for SAP, dependent on the `operati
 
 ![Replication with recordstamp and operation flag merged into cdc processed](images/17.png "image_tooltip")
 
-The following flow depicts the integration from APIs into RAW and CDC processing for Salesforce, dependent on the `Id` and `SystemModStamp` fields produced by Salesforce APIs.
+The following flow depicts the integration from APIs into Raw and CDC processing for Salesforce, dependent on the `Id` and `SystemModStamp` fields produced by Salesforce APIs.
 
 ![Replication with system modstamp and id mapped into cortex schema and merged into cdc processed](images/17b.png "image_tooltip")
 
@@ -1068,27 +1156,35 @@ The following parameters will be required for the automated generation of change
 
 ## Gathering Cloud Composer Settings
 
-If Cloud Composer is available, create connection(s) to the Source Project[ in Cloud Composer](https://cloud.google.com/composer/docs/how-to/managing/connections#creating_new_airflow_connections).
+If Cloud Composer is available, create connection(s) to the Source Project [in Cloud Composer](https://cloud.google.com/composer/docs/how-to/managing/connections#creating_new_airflow_connections).
 
 Please create connections with the following names for DAG execution, based on the types of deployments below.
 
 NOTE: If you are creating [tables in the Reporting layer](#optional-performance-optimization-for-reporting-views), please make sure to create separate connections for Reporting DAGs.
 
-If you are deploying... | Create for CDC   |  Create for Reporting |
---------------------|------------------|-----------------------|
-SAP      |  `sap_cdc_bq`    |   `sap_reporting_bq`  |
-SFDC     |  `sfdc_cdc_bq`   |   `sfdc_reporting_bq` |
+If you are deploying... | Create for Raw    |  Create for CDC     |  Create for Reporting    |
+----------------|---------------------------|---------------------|--------------------------|
+SAP             |       N/A                 |  `sap_cdc_bq`       |   `sap_reporting_bq`     |
+SFDC            | `sfdc_cdc_bq` (*)         |  `sfdc_cdc_bq`      |   `sfdc_reporting_bq`    |
+Google Ads      | `googleads_raw_dataflow`  |  `googleads_cdc_bq` | `googleads_reporting_bq` |
+CM360           | `cm360_raw_dataflow`      |  `cm360_cdc_bq`     | `cm360_reporting_bq`     |
+TikTok          | `tiktok_raw_dataflow`     |  `tiktok_cdc_bq`    | `tiktok_reporting_bq`    |
+LiveRamp        |       N/A                 |  `liveramp_cdc_bq`  |           N/A            |
 
+_* SFDC Raw Ingestion module uses the same Airflow connection as SFDC CDC module._
 
-Notes:
-*   If you are deploying for both SAP and Salesforce, we recommend creating both connections assuming security limitations will be applied to each service account. Alternatively, modify the name of the connection in the template prior to deployment to use the same connection to write into BigQuery as shown below.
+Please refer to sections for each individual data sources for details.
+
+**Notes:**
+*   Connection name suffixes indicate their intended usage. `_bq` are meant for BigQuery access, while `_dataflow` are meant to run Google Cloud DataFlow jobs.
+*   You only need to create connections for Raw if you are using the ingestion modules provided by Cortex.
+*   If you are deploying multiple data sources, for example both SAP and Salesforce, we recommend creating all connections assuming security limitations will be applied to separate service accounts. Alternatively, modify the name of the connection in the template prior to deployment to use the same connection to write into BigQuery as shown below.
+*   We do not recommend using the default connections and service accounts in Airflow, specially in production environments. This recommendation is to comply with the [principle of least privilege ](https://cloud.google.com/iam/docs/using-iam-securely#least_privilege)
 *   If you have [Secret Manager Backend enabled for Airflow](https://cloud.google.com/composer/docs/secret-manager), you can also create these connections within Secret Manager under the same name. Connections in Secret Manager takes precedence over connections created in Airflow.
 
-The GCS bucket structure in the template DAG expects the folders to be in /data/bq\_data\_replication. You can modify this path prior to deployment.
-
+The GCS bucket structure for some of the template DAG expects the folders to be in /data/bq\_data\_replication. You can modify this path prior to deployment.
 
 ![alt_text](images/20.png "image_tooltip")
-
 
 If you do not have an environment of Cloud Composer available yet, you can create one afterwards and move the files into the DAG bucket.
 
@@ -1233,6 +1329,9 @@ Enable Google Secret Manager as the security backend. See details [here](https:/
 
 ### Allow the Composer service account to access secrets
 Make sure your Composer service account (default: GCE service account) has `Secret Manager Secret Accessor` permission. See details [in the access control documentation](https://cloud.google.com/composer/docs/secret-manager#configure_access_control).
+
+### BigQuery connection in Airflow
+Make sure to create the connection `sfdc_cdc_bq` according to [instructions](#gathering-cloud-composer-settings).
 
 ## Table Partition and Cluster Settings
 For certain settings files (e.g. SAP CDC settings file `cdc_settings.yaml` or all Reporting settings yaml file `reporting_settings.yaml`) provide a way to create materialized tables with clusters or partitions of your choice. This is controlled by the following properties in the settings file:

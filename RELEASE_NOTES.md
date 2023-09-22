@@ -1,3 +1,16 @@
+## September 2023 - Release 5.2
+*   **LiveRamp for Marketing - NEW!🎉:** New integration templates and data models to enable identity resolution by [integrating with LiveRamp](https://docs.liveramp.com/identity/en/identity-resolution.html).
+*   **SAP Reusable DAGs are now deployed via the K9 deployment mechanism** so they now behave like other cross-workload DAGs. This applies to all DAGs in the [`external_dag`](https://github.com/GoogleCloudPlatform/cortex-reporting/tree/cca3c1c86047d5ea387c50dc5e4eccdb27141775/external_dag) directory. Note that these DAGs no longer search for SQL files from `bq_data_replication` directory. If you have modified the SQLs for them, Please follow these steps to migrate:
+    1. Back up any SQL file(s) you have modified from `gs://<your_airflow_bucket>/data/bq_data_replication`.
+    2. If any of the relevant DAG(s) are currently running, pause them in Airflow.
+    3. Deploy Cortex Data Foundations v5.2.
+    4. Copy your modified SQL file into the deployment directory, which by default will be `gs://<your_deployment_bucket>/dags/sap/reporting/<dag_name>`.
+    5. Copy `/dags` directory from the deployment bucket into your Airflow bucket. Then, wait for Airflow to refresh, and unpause the DAGs in Airflow.
+    6. Once you are good with the result, remove migrated file(s) from `gs://<your_airflow_bucket>/data/bq_data_replication`.
+*   **Metadata for SAP and TikTok:** New experimental annotations feature for SAP artifacts. The deployer will now create views with descriptions for views and their fields.
+*   **Support for new regions**: New supported regions incorporated into test harness.
+*   Fix for set hierarchy reader in SAP, generating a node with no associated master data for the header. **Note** the default name of the generated DAG has changed. Please follow the procedure described above for SAP reusable DAGs for migration.
+
 ## August 2023 - Release 5.1
 *   **TikTok for Marketing - NEW!🎉:** New integration templates and data models for TikTok to measure paid media campaign performance insights, through impressions and reach. See the [ERD](images/erd_tiktok.png) (or [PDF](docs/erd_tiktok.pdf))
 *   Placeholders for [K9 views](https://github.com/GoogleCloudPlatform/cortex-data-foundation#configure-k9-deployments) are now created for each workload: Reusable models like time dimension are required for the deployment of individual workloads, like SAP and Salesforce.com. If the submodules are executed independently (e.g., only SAP reporting), these dependencies will not be deployed. The placeholders create these dependencies so the submodules remain autonomous.
@@ -11,6 +24,7 @@
 *   K9: Move pre-processing or post-processing configuration to individual manifests to simplify execution.
 *   Test harness: Restore behavior to ignore a table in Raw if it exists, and it has no records, and `testData` is set to True.
 *   Materializer: Restore behavior to attempt to build all views sequentially when turbo mode is set to False.
+
 ## July 2023 - Release 5.0
 *   **New Marketing models:** A new repository, [Cortex for Marketing](https://github.com/GoogleCloudPlatform/cortex-marketing), has been added to the Data Foundation. This repository starts with data ingestion and data processing DAGs for Cloud Composer and Dataflow and predefined data models for Google Ads and Campaign Manager 360. This accelerates Ads reporting scenarios like keyword performance insights across campaigns and audience insights across display campaigns directly in BigQuery. Please check the [ERDs in the docs](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/docs) folder.
 *   **Quick demo deployment**: For those looking for a frictionless demo deployment experience, we have created a button that will guide them through an automated process to create sample datasets with test data and enable APIs and permissions. This is available in the [README](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main#quick-demo-setup).

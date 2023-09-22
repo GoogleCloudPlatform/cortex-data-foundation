@@ -339,6 +339,8 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
                 dataset_dicts.append(config["marketing"]["CM360"]["datasets"])
             if config["marketing"].get("deployTikTok"):
                 dataset_dicts.append(config["marketing"]["TikTok"]["datasets"])
+            if config["marketing"].get("deployLiveRamp"):
+                dataset_dicts.append(config["marketing"]["LiveRamp"]["datasets"])
         for dataset_dict in dataset_dicts:
             for ds in dataset_dict.items():
                 add_to = (reporting_datasets

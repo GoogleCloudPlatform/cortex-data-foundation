@@ -10,7 +10,6 @@ steps:
       - "-c"
       - |-
         set -e
-        echo "Executing {{ build_file.sql_file }}"
 
         # There are 2 possible locations for create_bq_object.py depending on which
         # repo we are working with, and we need to know which one it is in.
@@ -25,6 +24,9 @@ steps:
         fi
 
         export PYTHONPATH=$$PYTHONPATH:${common_base_path}
+        {%- if build_file.sql_file  %}
+        echo "Executing {{ build_file.sql_file }}"
+
         python ${common_base_path}/common/materializer/create_bq_object.py \
             --module_name='{{ module_name }}' \
             --target_dataset_type='{{ target_dataset_type }}' \
@@ -35,6 +37,19 @@ steps:
             {%- else %}
             --bq_object_setting='{{ build_file.bq_object_setting }}'
             {%- endif %}
+
+        {%- elif build_file.k9_id %}
+
+        echo "Executing Local K9 {{ build_file.k9_id }}"
+        python ${common_base_path}/common/materializer/deploy_local_k9.py \
+            --config_file '{{ config_file }}' \
+            --data_source '{{ module_name }}' \
+            --dataset_type '{{ target_dataset_type }}' \
+            --k9_definition '{{ build_file.k9_definition }}' \
+            --k9_setting '{{ build_file.k9_settings }}' \
+            --log_bucket "${_GCS_LOGS_BUCKET}"
+
+        {%- endif %}
 
 {% endfor %}
 

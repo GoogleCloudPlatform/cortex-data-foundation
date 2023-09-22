@@ -70,6 +70,9 @@ DATASETS = [
         (["deployMarketing", "marketing.deployTikTok"],
             "marketing.TikTok.datasets.reporting", "TikTok Reporting",
             True),
+        (["deployMarketing", "marketing.deployLiveRamp"],
+            "marketing.LiveRamp.datasets.cdc", "LiveRamp CDC",
+            False),
     ]
 
 

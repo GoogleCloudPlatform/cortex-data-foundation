@@ -26,7 +26,7 @@ dawgs:
   #
   #   workload_dependencies: (only if stage is "post") workloads that must be deployed with this k9,
   #                          separated with comma:
-  #                           SAP, SFDC, marketing, CM360, GoogleAds, TikTok
+  #                           SAP, SFDC, marketing, CM360, GoogleAds, TikTok, LiveRamp.
   #                          If one or more of listed workloads are not deployed,
   #                           this k9 will be skipped.
   #

@@ -22,6 +22,8 @@ from typing import Any, Dict
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 
+from common.py_libs import configs
+
 logger = logging.getLogger(__name__)
 
 
@@ -179,5 +181,35 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 "marketing_tiktok_datasets_reporting":
                     config_dict["marketing"]["TikTok"]["datasets"]["reporting"]
             })
+        # LiveRamp
+        if config_dict["marketing"].get("deployLiveRamp"):
+            jinja_data_file_dict.update({
+                "marketing_liveramp_datasets_cdc":
+                    config_dict["marketing"]["LiveRamp"]["datasets"]["cdc"]
+            })
 
     return jinja_data_file_dict
+
+
+def create_jinja_data_file_from_config_dict(config_dict: dict,
+                                            jinja_data_file) -> None:
+
+    jinja_data_file = Path(jinja_data_file)
+
+    logger.info("Creating jinja template data file '%s'...", jinja_data_file)
+
+    with open(jinja_data_file, "w", encoding="utf-8") as f:
+        jinja_data_file_dict = initialize_jinja_from_config(config_dict)
+        f.write(json.dumps(jinja_data_file_dict, indent=4))
+
+    logger.info("Jinja template data file '%s' created successfully.",
+                jinja_data_file)
+
+
+def create_jinja_data_file_from_config_file(config_file: str,
+                                            jinja_data_file: str) -> None:
+    """Generates jinja data file from Cortex Config file."""
+
+    config_dict = configs.load_config_file(config_file)
+    create_jinja_data_file_from_config_dict(config_dict, jinja_data_file)
+

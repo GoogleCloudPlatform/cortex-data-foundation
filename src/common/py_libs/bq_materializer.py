@@ -19,8 +19,11 @@ from google.cloud import bigquery
 
 logger = logging.getLogger(__name__)
 
-# File types supported by Reporting materializer.
-_REPORTING_FILE_TYPES = ["table", "view", "script"]
+# Entry types supported by materializer.
+_MATERIALIZER_ENTRY_TYPES = ["table", "view", "script", "k9_dawg"]
+
+# SQL Entry types supported by materializer.
+_SQL_ENTRY_TYPES = ["view", "table", "script"]
 
 # Frequency to refresh CDC table. These values corresponds to
 # Apache Airflow / Cloud Composer DAG schedule interval values.
@@ -221,29 +224,6 @@ def validate_table_setting(table_setting):
     if cluster_details:
         validate_cluster_details(cluster_details)
 
-def validate_file_setting(file_setting):
-    """Validates reporting materializer setting for a single SQL file."""
-
-    logger.debug("file_settings :\n %s", file_setting)
-
-    file_type = file_setting.get("type")
-    if not file_type:
-        raise ValueError("Missing 'type' property.")
-    if file_type not in _REPORTING_FILE_TYPES:
-        raise ValueError(f"'type' has to be one of the following:"
-                         f"{_REPORTING_FILE_TYPES}.\n"
-                         f"Specified 'type' is '{file_type}'.")
-
-    if file_type == "table":
-        table_setting = file_setting.get("table_setting")
-        validate_table_setting(table_setting)
-        # Above validation allows for "runtime" frequency, which is not allowed
-        # for reporting materializer. Let's do one additional check.
-        load_frequency = table_setting.get("load_frequency")
-        if load_frequency == "runtime":
-            raise ValueError("'load_frequency' can not be 'runtime'.")
-
-
 def validate_bq_materializer_settings(materializer_settings):
     """Validates all BQ materializer settings."""
 
@@ -251,20 +231,54 @@ def validate_bq_materializer_settings(materializer_settings):
 
     logger.debug("materializer_settings = %s", materializer_settings)
 
-    files_processed = set()
+    sql_files_processed = set()
+    k9s_processed = set()
 
-    for file_setting in materializer_settings:
-        sql_file = file_setting.get("sql_file")
-        if not sql_file:
-            raise ValueError("'sql_file' property missing from an entry.")
+    for entry_setting in materializer_settings:
+        entry_type = entry_setting.get("type")
 
-        logger.debug("  Checking setting for file '%s' ....", sql_file)
-        validate_file_setting(file_setting)
+        if not entry_type:
+            raise ValueError("Missing 'type' property.")
+        if entry_type not in _MATERIALIZER_ENTRY_TYPES:
+            raise ValueError(f"'type' has to be one of the following:"
+                            f"{_MATERIALIZER_ENTRY_TYPES}.\n"
+                            f"Specified 'type' is '{entry_type}'.")
 
-        # Check for duplicate entries.
-        if sql_file in files_processed:
-            raise ValueError(f"File '{sql_file}' is present multiple times.")
-        else:
-            files_processed.add(sql_file)
+        if entry_type in _SQL_ENTRY_TYPES:
+            sql_file = entry_setting.get("sql_file")
+            if sql_file:
+                logger.debug("  Checking setting for file '%s' ....", sql_file)
+            else:
+                raise ValueError("'sql_file' property missing "
+                                 "from an SQL entry.")
 
-    logger.info("BQ Materializer settings look good...")
+            # Check for duplicate entries.
+            if sql_file in sql_files_processed:
+                raise ValueError(f"File '{sql_file}' is present "
+                                 "multiple times.")
+            else:
+                sql_files_processed.add(sql_file)
+
+            if entry_type == "table":
+                table_setting = entry_setting.get("table_setting")
+                validate_table_setting(table_setting)
+                # Above validation allows for "runtime" frequency, which is not
+                # allowed for materializer. Let's do one additional check.
+                load_frequency = table_setting.get("load_frequency")
+                if load_frequency == "runtime":
+                    raise ValueError("'load_frequency' can not be 'runtime'.")
+
+        elif entry_type == "k9_dawg":
+            k9_id = entry_setting.get("k9_id")
+            if k9_id:
+                logger.debug("  Checking setting for local K9 '%s' ....", k9_id)
+            else:
+                raise ValueError("'k9_id' property missing from a K9 entry.")
+
+            # Check for duplicate entries.
+            if k9_id in k9s_processed:
+                raise ValueError(f"K9 '{k9_id}' is present multiple times.")
+            else:
+                k9s_processed.add(k9_id)
+
+    logger.info("BQ Materializer settings look good.")

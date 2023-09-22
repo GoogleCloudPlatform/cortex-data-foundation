@@ -26,6 +26,7 @@ import datetime
 import json
 import logging
 import textwrap
+import typing
 import sys
 
 from pathlib import Path
@@ -36,6 +37,7 @@ from common.py_libs import jinja
 from common.py_libs.dag_generator import generate_file_from_template
 
 from google.cloud.exceptions import BadRequest
+from google.cloud.exceptions import NotFound
 from google.cloud import bigquery
 
 # NOTE: All paths here are relative to the root directory, unless specified
@@ -221,9 +223,10 @@ def _generate_dag_files(module_name: str, target_dataset_type: str,
 
 
 def _create_view(bq_client: bigquery.Client, view_name: str,
-                 core_sql: str) -> None:
+                 description: typing.Optional[str], core_sql: str) -> None:
     """Creates BQ Reporting view."""
-    create_view_sql = ("CREATE OR REPLACE VIEW `" + view_name + "` AS (\n" +
+    create_view_sql = ("CREATE OR REPLACE VIEW `" + view_name + "` " +
+                       f"OPTIONS(description=\"{description or ''}\") AS (\n" +
                        textwrap.indent(core_sql, "    ") + "\n)")
     create_view_job = bq_client.query(create_view_sql)
     _ = create_view_job.result()
@@ -231,7 +234,8 @@ def _create_view(bq_client: bigquery.Client, view_name: str,
 
 
 def _create_table(bq_client: bigquery.Client, full_table_name: str,
-                  sql_str: str, table_setting: dict) -> None:
+                  description: typing.Optional[str], sql_str: str,
+                  table_setting: dict) -> None:
     """Creates empty BQ Reporting table."""
 
     # Steps to create table:
@@ -250,8 +254,10 @@ def _create_table(bq_client: bigquery.Client, full_table_name: str,
     temp_table_name = full_table_name + "_temp"
     bq_client.delete_table(temp_table_name, not_found_ok=True)
     logging.info("Creating temporary table '%s'", temp_table_name)
-    temp_table_sql = ("CREATE TABLE `" + temp_table_name + "` AS (\n" +
-                      "    SELECT * FROM (\n" +
+    temp_table_sql = ("CREATE TABLE `" + temp_table_name + "` " +
+                      "OPTIONS(expiration_timestamp=TIMESTAMP_ADD(" +
+                      "CURRENT_TIMESTAMP(), INTERVAL 12 HOUR))" +
+                      " AS (\n   SELECT * FROM (\n" +
                       textwrap.indent(sql_str, "        ") + "\n)\n" +
                       "    WHERE FALSE\n)")
     logging.info("temporary table sql = '%s'", temp_table_sql)
@@ -273,6 +279,9 @@ def _create_table(bq_client: bigquery.Client, full_table_name: str,
     cluster_details = table_setting.get("cluster_details")
     if cluster_details:
         table = bq_materializer.add_cluster_to_table_def(table, cluster_details)
+    # Add optional description
+    if description:
+        table.description = description
 
     try:
         _ = bq_client.create_table(table)
@@ -280,9 +289,15 @@ def _create_table(bq_client: bigquery.Client, full_table_name: str,
     except Exception as e:
         raise e
     finally:
-        # Cleanup - remote temporary table
+        # Cleanup - remove temporary table
         bq_client.delete_table(temp_table_name, not_found_ok=True)
-
+        try:
+            bq_client.get_table(temp_table_name)
+            logging.warning("⚠️ Couldn't delete temporary table `%s`."
+                            "Please delete it manually. ⚠️",
+                            temp_table_name)
+        except NotFound:
+            logging.info("Deleted temp table = %s'", temp_table_name)
 
 def _generate_table_refresh_sql(bq_client: bigquery.Client,
                                 full_table_name: str, sql_str: str) -> str:
@@ -335,6 +350,7 @@ def main():
     _validate_sql(bq_client, rendered_sql)
 
     object_type = bq_object_setting["type"]
+    object_description = bq_object_setting.get("description")
 
     if object_type in ["table", "view"]:
         object_name = Path(sql_file).stem
@@ -361,7 +377,8 @@ def main():
         # Create view or table, based on object type.
         if object_type == "view":
             try:
-                _create_view(bq_client, object_name_full, rendered_sql)
+                _create_view(bq_client, object_name_full, object_description,
+                             rendered_sql)
             except BadRequest as e:
                 if hasattr(e, "query_job") and e.query_job:  # type: ignore
                     query = e.query_job.query  # type: ignore
@@ -376,8 +393,8 @@ def main():
             try:
                 table_setting = bq_object_setting["table_setting"]
                 bq_materializer.validate_table_setting(table_setting)
-                _create_table(bq_client, object_name_full, rendered_sql,
-                              table_setting)
+                _create_table(bq_client, object_name_full, object_description,
+                              rendered_sql, table_setting)
             except BadRequest as e:
                 if hasattr(e, "query_job") and e.query_job:  # type: ignore
                     query = e.query_job.query  # type: ignore

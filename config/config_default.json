@@ -47,6 +47,7 @@
         "deployGoogleAds": true,
         "deployCM360": true,
         "deployTikTok": true,
+        "deployLiveRamp": true,
         "dataflowRegion": "",
         "GoogleAds": {
             "deployCDC": true,
@@ -72,6 +73,11 @@
                 "cdc": "CORTEX_TIKTOK_CDC",
                 "raw": "CORTEX_TIKTOK_RAW",
                 "reporting": "CORTEX_TIKTOK_REPORTING"
+            }
+        },
+        "LiveRamp": {
+            "datasets": {
+                "cdc": "CORTEX_LIVERAMP_CDC"
             }
         }
     }

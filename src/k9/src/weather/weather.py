@@ -32,7 +32,6 @@ default_args = {
 with DAG(
         'Weather',
         default_args=default_args,
-        template_searchpath=['/home/airflow/gcs/dags/weather/'],
         description='Generate weather related data',
         schedule_interval='@daily',
         start_date=datetime(2021, 1, 1),

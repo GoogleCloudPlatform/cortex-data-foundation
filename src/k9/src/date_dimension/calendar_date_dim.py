@@ -24,7 +24,6 @@ default_args = {
 }
 with DAG(
         'calendar_date_dim',
-        template_searchpath=['/home/airflow/gcs/dags/date_dimension/'],
         default_args=default_args,
         schedule_interval='@yearly',
         start_date=datetime(2022, 11, 2),

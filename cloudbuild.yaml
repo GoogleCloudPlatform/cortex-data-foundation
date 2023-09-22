@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ steps:
       - "-c"
       - |-
         set -e
+        if [[ -f "./cicd/local/copy_common.sh" ]]; then
+          echo "Copying common directory."
+          ./cicd/local/copy_common.sh
+        fi
         echo "Initial configuration ${_CONFIG_FILE}:"
         cat ${_CONFIG_FILE}
 
@@ -90,7 +94,7 @@ steps:
         _SQL_FLAVOUR_=$(jq -r ."SAP.SQLFlavor" "${_CONFIG_FILE}")
 
         if [[ "$${_DEPLOY_SAP_}" == "true" && "$${_SQL_FLAVOUR_}" != "union"  && "$${_DEPLOY_CDC_}" == "true" ]]; then
-          cp -f "${_CONFIG_FILE}" src/SAP/SAP_CDC/config/sap_config.json
+          cp -f "${_CONFIG_FILE}" src/SAP/SAP_CDC/config/config.json
           gcloud builds submit ./src/SAP/SAP_CDC \
             --config=./src/SAP/SAP_CDC/cloudbuild.cdc.yaml \
             --substitutions=_GCS_BUCKET='${_GCS_BUCKET}'
@@ -106,7 +110,7 @@ steps:
       - |-
         _DEPLOY_SAP_=$(jq -r ."deploySAP" "${_CONFIG_FILE}")
         if [[ "$${_DEPLOY_SAP_}" == "true" ]]; then
-          cp -f "${_CONFIG_FILE}" src/SAP/SAP_REPORTING/config/sap_config.json
+          cp -f "${_CONFIG_FILE}" src/SAP/SAP_REPORTING/config/config.json
           gcloud builds submit ./src/SAP/SAP_REPORTING \
             --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
             --substitutions=_GCS_BUCKET='${_GCS_BUCKET}'
@@ -152,7 +156,7 @@ steps:
       - |-
         _DEPLOY_SFDC_=$(jq -r ."deploySFDC" "${_CONFIG_FILE}")
         if [[ "$${_DEPLOY_SFDC_}" == "true" ]]; then
-          cp -f "${_CONFIG_FILE}" src/SFDC/config/sfdc_config.json
+          cp -f "${_CONFIG_FILE}" src/SFDC/config/config.json
           gcloud builds submit ./src/SFDC \
             --config=./src/SFDC/cloudbuild.sfdc.yaml \
             --substitutions=_GCS_BUCKET="${_GCS_BUCKET}"
@@ -172,6 +176,7 @@ steps:
           _DEPLOY_ADS_=$(jq -r ."marketing.deployGoogleAds" "${_CONFIG_FILE}")
           _DEPLOY_CM360_=$(jq -r ."marketing.deployCM360" "${_CONFIG_FILE}")
           _DEPLOY_TIKTOK_=$(jq -r ."marketing.deployTikTok" "${_CONFIG_FILE}")
+          _DEPLOY_LIVERAMP_=$(jq -r ."marketing.deployLiveRamp" "${_CONFIG_FILE}")
           if [[ "$${_DEPLOY_ADS_}" == "true" ]]; then
             echo "Deploying Google Ads Test Harness."
             python3 src/common/create_test_harness.py --workload "marketing.GoogleAds" --dataset "raw"
@@ -184,21 +189,24 @@ steps:
             echo "Deploying TikTok Test Harness."
             python3 src/common/create_test_harness.py --workload "marketing.TikTok" --dataset "raw"
           fi
+          if [[ "$${_DEPLOY_LIVERAMP_}" == "true" ]]; then
+            echo "Deploying LiveRamp Test Harness."
+            python3 src/common/create_test_harness.py --workload "marketing.LiveRamp" --dataset "cdc"
+          fi
         else
           echo "==Skipping Test Harness for Marketing=="
         fi
 
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: 'marketing-deploy'
-    waitFor: ['init_deploy_config', 'k9-pre', 'marketing-test-harness']
+    waitFor: ['k9-pre', 'marketing-test-harness']
     entrypoint: "bash"
     args:
       - "-c"
       - |-
         _DEPLOY_MARKETING_=$(jq -r ."deployMarketing" "${_CONFIG_FILE}")
         if [[ "$${_DEPLOY_MARKETING_}" == "true" ]]; then
-          _TGT_BUCKET_=$(jq -r ."targetBucket" "${_CONFIG_FILE}")
-          cp -f "${_CONFIG_FILE}" src/marketing/config/marketing_config.json
+          cp -f "${_CONFIG_FILE}" src/marketing/config/config.json
           gcloud builds submit ./src/marketing \
             --config=./src/marketing/cloudbuild.marketing.yaml \
             --substitutions=_GCS_LOGS_BUCKET="${_GCS_BUCKET}"

@@ -119,6 +119,9 @@ def configure(in_cloud_shell: bool,
     if (config.get("deployMarketing") and
         config["marketing"].get("deployTikTok")):
         defaults.append("deployTikTok")
+    if (config.get("deployMarketing") and
+        config["marketing"].get("deployLiveRamp")):
+        defaults.append("deployLiveRamp")
 
     while True:
         dialog = checkboxlist_dialog(
@@ -134,8 +137,10 @@ def configure(in_cloud_shell: bool,
                  "Marketing with Google Ads"),
                 ("deployCM360",
                  "Marketing with Campaign Manager 360 (CM360)"),
-                 ("deployTikTok",
-                 "Marketing with Tiktok"),
+                ("deployTikTok",
+                 "Marketing with TikTok"),
+                ("deployLiveRamp",
+                 "Marketing with LiveRamp"),
             ],
             default_values=defaults,
             style=Style.from_dict({
@@ -153,10 +158,12 @@ def configure(in_cloud_shell: bool,
         config["deploySFDC"] = "deploySFDC" in results
         config["deployMarketing"] = ("deployGoogleAds" in results or
                                      "deployCM360" in results or
-                                     "deployTikTok" in results)
+                                     "deployTikTok" in results or
+                                     "deployLiveRamp" in results)
         config["marketing"]["deployGoogleAds"] = "deployGoogleAds" in results
         config["marketing"]["deployCM360"] = "deployCM360" in results
         config["marketing"]["deployTikTok"] = "deployTikTok" in results
+        config["marketing"]["deployLiveRamp"] = "deployLiveRamp" in results
 
         if (config["deploySAP"] is False and config["deploySFDC"] is False
             and config["deployMarketing"] is False):
@@ -371,28 +378,28 @@ def configure(in_cloud_shell: bool,
             cm360 = config["marketing"]["CM360"]
             if cm360.get("dataTransferBucket", "") == "":
                 bucket_name = f"cortex-{source_project}-{bq_location}"
-                while not auto_names:
-                    bucket_completer = StorageBucketCompleter(source_project)
-                    bucket_name = get_value(session,
-                                    "CM360 Data Transfer Bucket",
-                                    bucket_completer,
-                                    bucket_name,
-                                    description="Specify "
-                                    "CM360 Data Transfer Bucket",
-                                    allow_arbitrary=True)
-                    if not is_bucket_name_valid(bucket_name):
-                        if yes_no(
-                            "Cortex Data Foundation Configuration",
-                            f"{bucket_name} is not a valid bucket name.",
-                            yes_text="Try again",
-                            no_text="Cancel"
-                        ):
-                            bucket_name = ""
-                            continue
-                        else:
-                            return None
+            while not auto_names:
+                bucket_completer = StorageBucketCompleter(source_project)
+                bucket_name = get_value(session,
+                                "CM360 Data Transfer Bucket",
+                                bucket_completer,
+                                bucket_name,
+                                description="Specify "
+                                "CM360 Data Transfer Bucket",
+                                allow_arbitrary=True)
+                if not is_bucket_name_valid(bucket_name):
+                    if yes_no(
+                        "Cortex Data Foundation Configuration",
+                        f"{bucket_name} is not a valid bucket name.",
+                        yes_text="Try again",
+                        no_text="Cancel"
+                    ):
+                        bucket_name = ""
+                        continue
                     else:
-                        break
-                config["marketing"]["CM360"]["dataTransferBucket"] = bucket_name
+                        return None
+                else:
+                    break
+            config["marketing"]["CM360"]["dataTransferBucket"] = bucket_name
 
     return config

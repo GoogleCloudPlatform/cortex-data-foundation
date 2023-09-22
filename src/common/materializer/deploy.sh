@@ -88,7 +88,7 @@ validate_args() {
 #-  -------------------
 
 set -o errexit -o noclobber -o nounset -o pipefail
-params="$(getopt -o l:t:y:m:c:f:h --long gcs_logs_bucket:,gcs_tgt_bucket:,target_type:,module_name:,config_file:,materializer_settings_file:,help --name "$0" -- "$@")"
+params="$(getopt -o l:t:y:m:c:f:k:h --long gcs_logs_bucket:,gcs_tgt_bucket:,target_type:,module_name:,config_file:,materializer_settings_file:,k9_manifest:,help --name "$0" -- "$@")"
 eval set -- "$params"
 
 while true; do
@@ -115,6 +115,10 @@ while true; do
     ;;
   -f | --materializer_settings_file)
     MATERIALIZER_SETTINGS_FILE=$2
+    shift 2
+    ;;
+  -k | --k9_manifest)
+    K9_MANIFEST_FILE=$2
     shift 2
     ;;
   -h | --help)
@@ -145,6 +149,7 @@ echo "  GCS_TGT_BUCKET = '${GCS_TGT_BUCKET}'"
 echo "  MODULE_NAME = '${MODULE_NAME}'"
 echo "  TGT_DATASET_TYPE = '${TGT_DATASET_TYPE}'"
 echo "  CONFIG_FILE = '${CONFIG_FILE}'"
+echo "  K9_MANIFEST_FILE = '${K9_MANIFEST_FILE}'"
 echo "  MATERIALIZER_SETTINGS_FILE = '${MATERIALIZER_SETTINGS_FILE}'"
 
 # Set various directories that help navigate to various things.
@@ -159,7 +164,8 @@ python3 "$THIS_DIR"/generate_build_files.py \
   --module_name "${MODULE_NAME}" \
   --config_file "${CONFIG_FILE}" \
   --target_dataset_type "${TGT_DATASET_TYPE}" \
-  --materializer_settings_file "${MATERIALIZER_SETTINGS_FILE}"
+  --materializer_settings_file "${MATERIALIZER_SETTINGS_FILE}" \
+  --k9_manifest_file "${K9_MANIFEST_FILE}"
 
 echo "Build files generated successfully."
 
@@ -167,7 +173,7 @@ echo "Build files generated successfully."
 set +e
 failure=0
 echo "Executing generated gcloud build files...."
-for build_file_name in "${GENERATED_FILES_PARENT_DIR}"/"${MODULE_NAME}"/cloudbuild.materializer.create_bq_objects.*.yaml; do
+for build_file_name in "${GENERATED_FILES_PARENT_DIR}"/"${MODULE_NAME}"/cloudbuild.materializer.*.yaml; do
   [[ -e "$build_file_name" ]] || break
   echo -e "gcloud builds submit . --config=\"${build_file_name}\" --substitutions=_GCS_LOGS_BUCKET=\"${GCS_LOGS_BUCKET}\",_GCS_TGT_BUCKET=\"${GCS_TGT_BUCKET}\" "
   gcloud builds submit . --config="${build_file_name}" --substitutions=_GCS_LOGS_BUCKET="${GCS_LOGS_BUCKET}",_GCS_TGT_BUCKET="${GCS_TGT_BUCKET}"
