@@ -1,5 +1,5 @@
 six==1.16.*
-requests==2.28.*
+requests==2.31.*
 gspread==5.7.*
 gspread-formatting==1.1.*
 google-api-python-client==2.80.*
