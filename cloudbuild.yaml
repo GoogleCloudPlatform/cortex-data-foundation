@@ -229,7 +229,7 @@ steps:
 
 
 logsBucket: "gs://$_GCS_BUCKET"
-timeout: 10200s
+timeout: 32400s
 substitutions:
   _CONFIG_FILE: "config/config.json"
   _DEPLOY_SAP_ML_MODELS: "true"

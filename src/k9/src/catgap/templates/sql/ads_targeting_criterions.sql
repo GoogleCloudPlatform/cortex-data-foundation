@@ -209,12 +209,12 @@ all_targeting_audiences AS
 targeting_audiences_real_texts AS
 (
 SELECT DISTINCT all_targeting_audiences.* EXCEPT(static_criterion_id),
-  COALESCE(affinity.Category, categories.Category, verticals.Category, products.Category) AS criterion_text
+  COALESCE(affinity.Category_path, categories.Category_path, verticals.Category, products.Category) AS criterion_text
 FROM all_targeting_audiences
 LEFT JOIN `{{ project_id_src }}.{{ dataset_k9_processing }}.ads_affinity_categories` affinity
-ON static_criterion_id = CAST(affinity.Criterion_ID AS STRING)
+ON static_criterion_id = CAST(affinity.Category_ID AS STRING)
 LEFT JOIN `{{ project_id_src }}.{{ dataset_k9_processing }}.ads_in_market_categories` categories
-ON static_criterion_id = CAST(categories.Criterion_ID AS STRING)
+ON static_criterion_id = CAST(categories.Category_ID AS STRING)
 LEFT JOIN `{{ project_id_src }}.{{ dataset_k9_processing }}.ads_verticals` verticals
 ON static_criterion_id = CAST(verticals.Criterion_ID AS STRING)
 LEFT JOIN `{{ project_id_src }}.{{ dataset_k9_processing }}.ads_products_services` products

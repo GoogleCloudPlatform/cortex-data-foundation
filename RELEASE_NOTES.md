@@ -1,3 +1,6 @@
+## November 2023 - Release 5.2.1 (hotfix)
+*   **Performance improvements for SAP Inventory**:  Updating `InventoryByPlant` and `InventoryKeyMetrics` for ECC and S4 to reduce memory processing requirements. Updated partitions and clusters for `StockMonthlySnapshots` and `StockWeeklySnapshot`.
+*   Increasing Cloud Build timeout for SAP reporting deployment and Data Foundation deployer.
 ## September 2023 - Release 5.2
 *   **LiveRamp for Marketing - NEW!🎉:** New integration templates and data models to enable identity resolution by [integrating with LiveRamp](https://docs.liveramp.com/identity/en/identity-resolution.html).
 *   **SAP Reusable DAGs are now deployed via the K9 deployment mechanism** so they now behave like other cross-workload DAGs. This applies to all DAGs in the [`external_dag`](https://github.com/GoogleCloudPlatform/cortex-reporting/tree/cca3c1c86047d5ea387c50dc5e4eccdb27141775/external_dag) directory. Note that these DAGs no longer search for SQL files from `bq_data_replication` directory. If you have modified the SQLs for them, Please follow these steps to migrate:
