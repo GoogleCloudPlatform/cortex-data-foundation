@@ -168,7 +168,9 @@ coverage[toml]==7.3.1 \
     --hash=sha256:f1a317fdf5c122ad642db8a97964733ab7c3cf6009e1a8ae8821089993f175ff \
     --hash=sha256:f2781fd3cabc28278dc982a352f50c81c09a1a500cc2086dc4249853ea96b981 \
     --hash=sha256:f4f456590eefb6e1b3c9ea6328c1e9fa0f1006e7481179d749b3376fc793478e
-    # via pytest-cov
+    # via
+    #   coverage
+    #   pytest-cov
 diff-cover==7.7.0 \
     --hash=sha256:60614cf7e722cf7fb1bde497afac0b514294e1e26534449622dac4da296123fb \
     --hash=sha256:bf86f32ec999f9a9e79bf24969f7127ea7b4e55c3ef3cd9300feb13188c89736
@@ -196,12 +198,12 @@ isort==5.12.0 \
 jinja-cli==1.2.2 \
     --hash=sha256:3a702c4a988046e02e08d7cf40a362bf2050aeafe08d926a54bc395610f0f5a2 \
     --hash=sha256:86afa68cb2c2626cb447a445b3ab41e5da59dbe3fafa609a4624fda9b250fde9
-    # via -r ./requirements.in
+    # via -r requirements.in
 jinja2==3.1.2 \
     --hash=sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852 \
     --hash=sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61
     # via
-    #   -r ./requirements.in
+    #   -r requirements.in
     #   diff-cover
     #   jinja-cli
     #   sqlfluff
@@ -316,7 +318,7 @@ packaging==23.1 \
 parameterized==0.9.0 \
     --hash=sha256:4e0758e3d41bea3bbd05ec14fc2c24736723f243b28d702081aef438c9372b1b \
     --hash=sha256:7fc905272cefa4f364c1a3429cbbe9c0f98b793988efb5bf90aac80f08db09b1
-    # via -r ./requirements.in
+    # via -r requirements.in
 pathspec==0.11.2 \
     --hash=sha256:1d6ed233af05e679efb96b1851550ea95bbb64b7c490b0f5aa52996c11e92a20 \
     --hash=sha256:e0d8d0ac2f12da61956eb2306b69f9469b42f4deb0f3cb6ed47b9cce9996ced3
@@ -340,23 +342,23 @@ pygments==2.16.1 \
 pylint==2.15.10 \
     --hash=sha256:9df0d07e8948a1c3ffa3b6e2d7e6e63d9fb457c5da5b961ed63106594780cc7e \
     --hash=sha256:b3dc5ef7d33858f297ac0d06cc73862f01e4f2e74025ec3eff347ce0bc60baf5
-    # via -r ./requirements.in
+    # via -r requirements.in
 pytest==7.4.2 \
     --hash=sha256:1d881c6124e08ff0a1bb75ba3ec0bfd8b5354a01c194ddd5a0a870a48d99b002 \
     --hash=sha256:a766259cfab564a2ad52cb1aae1b881a75c3eb7e34ca3779697c23ed47c47069
     # via
-    #   -r ./requirements.in
+    #   -r requirements.in
     #   pytest-cov
     #   pytest-env
     #   sqlfluff
 pytest-cov==4.1.0 \
     --hash=sha256:3904b13dfbfec47f003b8e77fd5b589cd11904a21ddf1ab38a64f204d6a10ef6 \
     --hash=sha256:6ba70b9e97e69fcc3fb45bfeab2d0a138fb65c4d0d6a41ef33983ad114be8c3a
-    # via -r ./requirements.in
+    # via -r requirements.in
 pytest-env==1.0.1 \
     --hash=sha256:603fe216e8e03a5d134989cb41317c59aabef013d2250c71b864ab0798fbe6f6 \
     --hash=sha256:e8faf927c6fcdbbc8fe3317506acc116713c9708d01652a0fd945f9ae27b71aa
-    # via -r ./requirements.in
+    # via -r requirements.in
 pyyaml==6.0.1 \
     --hash=sha256:04ac92ad1925b2cff1db0cfebffb6ffc43457495c9b3c39d3fcae417d7125dc5 \
     --hash=sha256:062582fca9fabdd2c8b54a3ef1c978d786e0f6b3a1510e0ac93ef59e0ddae2bc \
@@ -409,7 +411,7 @@ pyyaml==6.0.1 \
     --hash=sha256:fd1592b3fdf65fff2ad0004b5e363300ef59ced41c2e6b3a99d4089fa8c5435d \
     --hash=sha256:fd66fc5d0da6d9815ba2cebeb4205f95818ff4b79c3ebe268e75d961704af52f
     # via
-    #   -r ./requirements.in
+    #   -r requirements.in
     #   jinja-cli
     #   sqlfluff
     #   yq
@@ -506,18 +508,14 @@ regex==2023.8.8 \
 requests==2.31.0 \
     --hash=sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f \
     --hash=sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
-    # via -r ./requirements.in
-sqlfluff==1.4.5 \
-    --hash=sha256:10b193ee009046f8fe3af9d1895f767b691635653cccc8698bc01eee2ccb69df \
-    --hash=sha256:68a8abde2fa22b76a20d908e22087e2e12b0e4a2085be2ea955ff6305b0fea30
-    # via -r ./requirements.in
+    # via -r requirements.in
+sqlfluff==2.1.2 \
+    --hash=sha256:3273425afd36f07afc6782f031e7f2864539853dee2e7fa3f3aedd7caa262125 \
+    --hash=sha256:70efa82c01e0361039c6a098f00d901aee85f7d16be094753b301510aecadbc0
+    # via -r requirements.in
 tblib==2.0.0 \
     --hash=sha256:9100bfa016b047d5b980d66e7efed952fbd20bd85b56110aaf473cb97d18709a \
     --hash=sha256:a6df30f272c08bf8be66e0775fad862005d950a6b8449b94f7c788731d70ecd7
-    # via sqlfluff
-toml==0.10.2 \
-    --hash=sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b \
-    --hash=sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f
     # via sqlfluff
 tomli==2.0.1 \
     --hash=sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc \
@@ -627,16 +625,17 @@ xmltodict==0.13.0 \
 yapf==0.40.1 \
     --hash=sha256:958587eb5c8ec6c860119a9c25d02addf30a44f75aa152a4220d30e56a98037c \
     --hash=sha256:b8bfc1f280949153e795181768ca14ef43d7312629a06c43e7abd279323af313
-    # via -r ./requirements.in
+    # via -r requirements.in
 yq==3.2.3 \
     --hash=sha256:29c8fe1d36b4f64163f4d01314c6ae217539870f610216dee6025dfb5eafafb1 \
     --hash=sha256:b50c91894dad9894d1d36ea77d5722d5495cac9482d2351e55089360a90709ae
-    # via -r ./requirements.in
+    # via -r requirements.in
 zipp==3.16.2 \
     --hash=sha256:679e51dd4403591b2d6838a48de3d283f3d188412a9782faadf845f298736ba0 \
     --hash=sha256:ebc15946aa78bd63458992fc81ec3b6f7b1e92d51c35e6de1c3804e73b799147
     # via importlib-metadata
 
 # WARNING: The following packages were not pinned, but pip requires them to be
-# pinned when the requirements file includes hashes. Consider using the --allow-unsafe flag.
+# pinned when the requirements file includes hashes and the requirement is not
+# satisfied by a package already installed. Consider using the --allow-unsafe flag.
 # setuptools
