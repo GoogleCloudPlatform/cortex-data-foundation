@@ -52,7 +52,9 @@ _CLOUDBUILD_TEMPLATE_FILE = "cloudbuild_materializer.yaml.jinja"
 # (following applicable case convention) to align with of external naming.
 
 # All supported Cortex modules
-_CORTEX_MODULES = ["SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "k9"]
+_CORTEX_MODULES = [
+    "SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "k9"
+]
 
 # All supported Marketing modules
 _MARKETING_MODULES = ["GoogleAds", "CM360", "TikTok"]

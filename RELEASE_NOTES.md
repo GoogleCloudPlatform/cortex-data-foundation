@@ -1,5 +1,19 @@
+## December 2023 - Release 5.3
+*   **Welcome Data Mesh!**: New experimental initial functionality to deploy Data Mesh definitions leveraging Data Catalog, Dataplex and BigQuery. Current functionality includes definitions for Lakes, Zones, access policies and other exciting features. By default, configuration only creates descriptions in BigQuery and does not require any additional configuration. Please refer to the [documentation](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/common/data_mesh/README.md) for details on available features and configuration. Current descriptions focus on SAP.
+*   **Balance Sheet**: Experimental report for Balance Sheet, including financial statement version flattening. This is flagged experimental as the current DAG will be enhanced in a future release to address any performance issues that may result from initial feedback. Please contact cortex-support@google.com if you would like to provide feedback, we'll appreciate it. **Please review CDC settings, as ACDOCA, BSEG and BKPF have modified clustering and partition settings**.
+*   **Fiscal Time Dimension**: New persisted, optimized fiscal time dimension.
+*   Google Ads ingestion pipeline upgrade to Google Ads API version 15.
+*   Minor modifications to Marketing ingestion pipelines for LiveRamp: streamlined imports for Python libraries.
+*   Directory `external_dags` for SAP was converted into local K9.
+*   Modification on `AccountsPayable` for S4 to match Invoice based on reference. Thanks, Marcelo Saad!
+
+### Known issues and limitations
+- Local K9 for SAP produces a temporary folder (`tmp*`) in the target bucket for DAGS. Please remove it manually. There is no impact in the execution.
+- Nested fields are not yet supported by Data Mesh annotations. They will be incorporated in a follow-up release.
+- Data in the test harness for finance does not zero out in the balance sheet because it is incomplete. This is expected.
+
 ## November 2023 - Release 5.2.1 (hotfix)
-*   **Performance improvements for SAP Inventory**:  Updating `InventoryByPlant` and `InventoryKeyMetrics` for ECC and S4 to reduce memory processing requirements. Updated partitions and clusters for `StockMonthlySnapshots` and `StockWeeklySnapshot`.
+*   **Performance improvements for SAP Inventory**: Updating `InventoryByPlant` and `InventoryKeyMetrics` for ECC and S4 to reduce memory processing requirements. Updated partitions and clusters for `StockMonthlySnapshots` and `StockWeeklySnapshot`.
 *   Increasing Cloud Build timeout for SAP reporting deployment and Data Foundation deployer.
 ## September 2023 - Release 5.2
 *   **LiveRamp for Marketing - NEW!🎉:** New integration templates and data models to enable identity resolution by [integrating with LiveRamp](https://docs.liveramp.com/identity/en/identity-resolution.html).

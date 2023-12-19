@@ -22,10 +22,6 @@ steps:
       - "-c"
       - |-
         set -e
-        if [[ -f "./cicd/local/copy_common.sh" ]]; then
-          echo "Copying common directory."
-          ./cicd/local/copy_common.sh
-        fi
         echo "Initial configuration ${_CONFIG_FILE}:"
         cat ${_CONFIG_FILE}
 

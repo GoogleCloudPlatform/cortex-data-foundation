@@ -213,6 +213,7 @@ def validate_config(
     config["deploySAP"] = config.get("deploySAP", False)
     config["deploySFDC"] = config.get("deploySFDC", False)
     config["deployMarketing"] = config.get("deployMarketing", False)
+    config["deployDataMesh"] = config.get("deployDataMesh", False)
     config["testData"] = config.get("testData", False)
     config["turboMode"] = config.get("turboMode", True)
 
@@ -243,6 +244,11 @@ def validate_config(
         logging.warning(("⚠️ No K9 reporting dataset specified. "
                          "Defaulting to K9_REPORTING. ⚠️"))
         config["k9"]["datasets"]["reporting"] = "K9_REPORTING"
+
+    if config["deployDataMesh"] and "DataMesh" not in config:
+        logging.error(
+            "🛑 Data Mesh is enabled but no options are specified. 🛑")
+        return None
 
     logging.info("Validating common configuration resources.")
     if not _validate_config_resources(config):

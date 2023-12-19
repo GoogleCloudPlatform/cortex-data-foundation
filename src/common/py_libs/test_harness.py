@@ -19,7 +19,7 @@ from google.cloud import bigquery
 from common.py_libs import bq_helper
 
 
-TEST_HARNESS_VERSION="5_2"
+TEST_HARNESS_VERSION="5_3"
 
 
 def get_test_harness_dataset(workload_path: str,

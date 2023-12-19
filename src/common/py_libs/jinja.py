@@ -106,22 +106,24 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                     f"'{language}'" for language in config_dict["languages"])
         })
     # SAP
+    # Flavor specific fields use `get()` because they do not exist in the raw
+    # config and accessing them directly causes the function to fail.
     if config_dict.get("deploySAP"):
         jinja_data_file_dict.update({
             # raw datasets
             "dataset_raw_landing":
                 config_dict["SAP"]["datasets"]["raw"],
             "dataset_raw_landing_ecc":
-                config_dict["SAP"]["datasets"]["rawECC"],
+                config_dict["SAP"]["datasets"].get("rawECC"),
             "dataset_raw_landing_s4":
-                config_dict["SAP"]["datasets"]["rawS4"],
+                config_dict["SAP"]["datasets"].get("rawS4"),
             # cdc datasets
             "dataset_cdc_processed":
                 config_dict["SAP"]["datasets"]["cdc"],
             "dataset_cdc_processed_ecc":
-                config_dict["SAP"]["datasets"]["cdcECC"],
+                config_dict["SAP"]["datasets"].get("cdcECC"),
             "dataset_cdc_processed_s4":
-                config_dict["SAP"]["datasets"]["cdcS4"],
+                config_dict["SAP"]["datasets"].get("cdcS4"),
             # reporting datasets
             "dataset_reporting_tgt":
                 config_dict["SAP"]["datasets"]["reporting"],
@@ -129,9 +131,9 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
             "mandt":
                 config_dict["SAP"]["mandt"],
             "mandt_ecc":
-                config_dict["SAP"]["mandtECC"],
+                config_dict["SAP"].get("mandtECC"),
             "mandt_s4":
-                config_dict["SAP"]["mandtS4"],
+                config_dict["SAP"].get("mandtS4"),
             # Misc
             # We only use lowercase SQLFlavor in our templates
             "sql_flavor":
@@ -212,4 +214,3 @@ def create_jinja_data_file_from_config_file(config_file: str,
 
     config_dict = configs.load_config_file(config_file)
     create_jinja_data_file_from_config_dict(config_dict, jinja_data_file)
-

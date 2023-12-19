@@ -620,6 +620,7 @@ The following Google Cloud components are required:
     *   Looker **(optional, connects to reporting templates. Requires manual setup) **
     *   [Analytics Hub](https://cloud.google.com/analytics-hub) linked datasets (**optional**) are currently used for some external sources, such as the Weather DAG. You may choose to fill this structure with any other available source of your choice for advanced scenarios.
     *   [Dataflow](https://console.cloud.google.com/dataflow): Integration tool for Google Ads.
+    *   [Dataplex](https://cloud.google.com/dataplex): Used for Data Mesh
 
 From the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal), you can enable Google Cloud Services using the _gcloud_ command line interface in your Google Cloud project.
 
@@ -672,6 +673,12 @@ Grant the following permissions to the Cloud Build service account in both the s
 
 - BigQuery Data Editor
 - BigQuery Job User
+
+[Optional] If changing the default values for Data Mesh in `config/config.json` to implement features beyond descriptions, the executing account (Cloud Build service account) will need to have the following permissions:
+- Policy Tag Admin
+- Data Catalog TagTemplate Owner
+- Dataplex Editor
+- BigQuery Data Owner
 
 <details>
   <summary> [Optional] Create a Service Account for deployment with impersonation</summary>
@@ -747,6 +754,17 @@ gsutil mb -l <REGION/MULTI-REGION> gs://<BUCKET NAME>
 
 You will need to grant `Object Admin` permissions to the Cloud Build service account.
 
+## Configure Data Mesh
+The default configuration in `config/config.json` for Data Mesh will add the descriptions for all assets, but will not create any other structures or policies.
+
+Enabling any other options (e.g., deployLakes, deployCatalog, deployACLs) requires the configuration of permissions for the Cloud Build service account and the necessary configuration of the yaml files.
+
+Here is a high-level diagram of the available options:
+
+![data mesh structure for lakes zones and catalog](images/data_mesh1.png)
+
+You will find detailed instructions and examples to configure Data Mesh in the [documentation](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/common/data_mesh/README.md).
+
 ## Configure Deployment
 
 The behavior of the deployment is controlled by the configuration file [config.json](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/config/config.json).
@@ -773,6 +791,7 @@ Consider your target deployment:
 | `deploySAP`               | Deploy SAP              | `true`             | Execute the deployment for SAP workload (ECC or S/4HANA).                        |
 | `deploySFDC`              | Deploy Salesforce       | `true`             | Execute the deployment for Salesforce workload.                                  |
 | `deployMarketing`         | Deploy Marketing        | `true`             | Execute the deployment for Marketing  sources (Google Ads, CM360 and/or TikTok). |
+| `deployDataMesh`          | Deploy Data Mesh        | `true`             | Execute the deployment for Data Mesh, see the Data Mesh [README](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/README.md) for more info. |
 | `turboMode`               | Deploy in Turbo mode    | `true`             | Execute all views builds as a step in the same Cloud Build process, in parallel for a faster deployment. If set to `false`, each reporting view is generated in its own sequential build step. We recommend only setting it to `true` when using test data or after any mismatch between reporting columns and the source data have been resolved. |
 | `projectIdSource`         | Source Project ID       | -                  | Project where the source dataset is and the build will run.                      |
 | `projectIdTarget`         | Target Project ID       | -                  | Target project for user-facing datasets (reporting and ML datasets).             |
@@ -783,6 +802,10 @@ Consider your target deployment:
 | `testDataProject`         | Source for test harness | `kittycorn-public` | Source of the test data for demo deployments. Applies when `testData` is `true`. <br><br> > **Note**: Unless you have your own test harness, do not change this value. |
 | `k9.datasets.processing`  | K9 datasets - Processing| `"K9_PROCESSING"`  | Execute cross-workload templates (e.g., date dimension) as defined in the [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml). These templates are normally required by the downstream workloads. |
 | `k9.datasets.reporting`   | K9 datasets - Reporting | `"K9_REPORTING"`   | Execute cross-workload templates and external data sources (e.g., Weather) as defined in the [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml). Commented out by default. |
+| `DataMesh.deployDescriptions` | Data Mesh - Asset descriptions | `true`  | Deploy BigQuery asset schema descriptions. |
+| `DataMesh.deployLakes`    | Data Mesh - Lakes & Zones | `false`          | Deploy Dataplex Lakes & Zones that organize tables by processing layer, requires configuration before enabling. |
+| `DataMesh.deployCatalog`  | Data Mesh - Catalog Tags & Templates | `false` | Deploy Data Catalog Tags that allow custom metadata on BigQuery assets or fields, requires configuration before enabling. |
+| `DataMesh.deployACLs`     | Data Mesh - Access Control | `false`         | Deploy asset, row, or column level access control on BigQuery assets, requires configuration before enabling. |
 
 ### Workload-specific configuration
 
@@ -802,6 +825,7 @@ The following sections are specific to each workload. You do not need to configu
 | `SAP.SQLFlavor`          | SQL flavor for source system | `"ecc"`        | `s4` or `ecc`. For test data, keep the default value (`ecc`). For Demand Sensing, only `ecc` test data is provided at this time. |
 | `SAP.mandt`              | Mandant or Client            | `"100"`        | Default mandant or client for SAP. For test data, keep the default value (`100`). For Demand Sensing, use `900`. |
 
+Note: While there is not a minimum version of SAP that is required, the ECC models have been developed on the current earliest supported version of SAP ECC. Differences in fields between our system and other systems are expected, regardless of the version.
 
 [Return to top of section](#workload-specific-configuration)
 </details>
@@ -854,7 +878,7 @@ The following sections are specific to each workload. You do not need to configu
 
 ## Configure SAP Hierarchies
 
-You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/external_dag/hier_reader/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to `true`.
+You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/local_k9/hier_reader/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to `true`.
 
 ## Configure External Datasets for K9
 
