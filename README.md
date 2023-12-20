@@ -763,7 +763,7 @@ Here is a high-level diagram of the available options:
 
 ![data mesh structure for lakes zones and catalog](images/data_mesh1.png)
 
-You will find detailed instructions and examples to configure Data Mesh in the [documentation](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/common/data_mesh/README.md).
+You will find detailed instructions and examples to configure Data Mesh in the [documentation](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/docs/data_mesh/README.md).
 
 ## Configure Deployment
 
@@ -791,7 +791,7 @@ Consider your target deployment:
 | `deploySAP`               | Deploy SAP              | `true`             | Execute the deployment for SAP workload (ECC or S/4HANA).                        |
 | `deploySFDC`              | Deploy Salesforce       | `true`             | Execute the deployment for Salesforce workload.                                  |
 | `deployMarketing`         | Deploy Marketing        | `true`             | Execute the deployment for Marketing  sources (Google Ads, CM360 and/or TikTok). |
-| `deployDataMesh`          | Deploy Data Mesh        | `true`             | Execute the deployment for Data Mesh, see the Data Mesh [README](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/README.md) for more info. |
+| `deployDataMesh`          | Deploy Data Mesh        | `true`             | Execute the deployment for Data Mesh, see the Data Mesh [README](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/docs/data_mesh/README.md) for more info. |
 | `turboMode`               | Deploy in Turbo mode    | `true`             | Execute all views builds as a step in the same Cloud Build process, in parallel for a faster deployment. If set to `false`, each reporting view is generated in its own sequential build step. We recommend only setting it to `true` when using test data or after any mismatch between reporting columns and the source data have been resolved. |
 | `projectIdSource`         | Source Project ID       | -                  | Project where the source dataset is and the build will run.                      |
 | `projectIdTarget`         | Target Project ID       | -                  | Target project for user-facing datasets (reporting and ML datasets).             |

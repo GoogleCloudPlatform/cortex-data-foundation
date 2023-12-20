@@ -48,6 +48,8 @@ Lineage Link                                                                    
 
 ## Design
 
+![Overview for users of the 3 phases and subcomponents](images/data_mesh_overview.png)
+
 Data Mesh for Cortex is designed similarly to the overall data foundation and
 can be thought of in three phases with various subcomponents handled by Cortex
 or users.
@@ -98,7 +100,7 @@ associated [deployment option](#deployment-options) is enabled. For advanced
 uses, see the canonical definition of these spec schemas found in
 [`src/common/data_mesh/src/data_mesh_types.py`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py).
 
-### Metadata Resources {#metadata-resources}
+### Metadata Resources
 
 These resources are shared entities that exist within a project that can be
 applied to many data assets. Most of the specs include a `display_name` field
@@ -115,7 +117,7 @@ included below.
 
 If the deployment references metadata resources in different source and target
 projects, there must be a spec defined for each project. For
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SFDC/config/lakes),
+[example](https://github.com/GoogleCloudPlatform/cortex-salesforce/tree/2c1353ac08525f65e54e22c9e32b189f173c7b91/config/lakes),
 there are two Lake specs for SFDC. One for the raw and CDC zones, and one for
 reporting.
 
@@ -155,12 +157,12 @@ multi-region, select a single region within that group for the Lake region.
     [locations](https://cloud.google.com/dataplex/docs/locations).
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/lakes/lakes.yaml).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/lakes/lakes.yaml).
 
 These resources are defined in YAML files that specify
 [`data_mesh_types.Lakes`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L258).
 
-#### Catalog Tag Templates {#catalog-tag-templates}
+#### Catalog Tag Templates
 
 Data Catalog Tag Templates can be used to add context to BigQuery tables or
 individual columns. One of their uses in Cortex is to organize the data from a
@@ -185,13 +187,13 @@ enable validation checks during data mesh deployment that tags aren't being
 applied at an inappropriate level.
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/tag_templates/templates.yaml).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/tag_templates/templates.yaml).
 
 Templates are defined in YAML files that specify
 [`data_mesh_types.CatalogTagTemplates`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L123).
 
- Catalog Tags are instances of the templates, and are discussed below within the
-[Asset Annotations](#catalog-tags).
+ [Catalog Tags](#catalog-tags) are instances of the templates, and are discussed
+ below within the Asset Annotations.
 
 #### Asset and Column Level Access Control with Tag Templates
 
@@ -204,7 +206,7 @@ principals specified for each business domain. Each policy accepts `filters`
 that can be used to only match tags with specific values. In this case we could
 match the `domain` values. Note that these `filters` currently only support
 matching for equality and no other operators. If multiple filters are listed,
-the results must satisfy all filters (i.e. `filter_a AND filter_b` ). The final
+the results must satisfy all filters (i.e. `filter_a AND filter_b`). The final
 set of asset policies is the union of those defined directly in the annotations,
 and those from the template policies.
 
@@ -229,7 +231,7 @@ specific columns within data assets that may not be universally understood.
 Currently users can add terms manually in the console, but there is no support
 through the resource specs.
 
-#### Policy Taxonomies & Tags {#policy-taxonomies-and-tags}
+#### Policy Taxonomies and Tags
 
 Policy taxonomies and tags allow
 [column level access control](#column-level-access) over sensitive data assets
@@ -255,12 +257,12 @@ potential uses, however resources that affect access control are not enabled in
 the Data Mesh deployment by default.
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/policy_taxonomies/policy_taxonomies.yaml).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/policy_taxonomies/policy_taxonomies.yaml).
 
 Policy Taxonomies are defined in YAML files that specify
 [`data_mesh_types.PolicyTaxonomies`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L180).
 
-### Asset Annotations {#asset-annotations}
+### Asset Annotations
 
 Annotations specify metadata applicable to a particular asset and may reference
 the shared metadata resources that were defined above.
@@ -285,12 +287,12 @@ below. Descriptions for other sources will be added over time.
 *   Marketing TikTok (reporting only)
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/annotations/BalanceSheet.yaml).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/annotations/BalanceSheet.yaml).
 
 Annotations are defined in YAML files that specify
 [`data_mesh_types.BqAssetAnnotation`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L309).
 
-#### Catalog Tags {#catalog-tags}
+#### Catalog Tags
 
 Catalog Tags are instances of the defined [templates](#catalog-tag-templates)
 where field values are assigned that apply to the specific asset. Be sure to
@@ -306,7 +308,7 @@ assign values that match the field types declared in the associated template.
 ```
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/annotations/BalanceSheet.yaml#L3).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/annotations/BalanceSheet.yaml#L3).
 
 Spec definition:
 [`data_mesh_types.CatalogTag`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L117).
@@ -317,7 +319,7 @@ When specifying readers and principals for access policies at any of the
 following levels, the strings must be valid principals following the format of
 [IAM Policy Binding member](https://cloud.google.com/iam/docs/reference/rest/v1/Policy#binding).
 
-#### Asset Level Access Control {#asset-level-access}
+#### Asset Level Access
 
 Access can be granted on individual BigQuery assets with `READER`, `WRITER`, or
 `OWNER` permissions. These permissions are equivalent to the
@@ -331,12 +333,12 @@ unintended loss of access. To remove asset owners, use the console.
 Overwriting will remove existing principals with the `READER` or `WRITER` role.
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/annotations/BalanceSheet.yaml#L62).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/annotations/BalanceSheet.yaml#L62).
 
 Spec definition:
 [`data_mesh_types.BqAssetPolicy`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L288).
 
-#### Row Level Access Control {#row-level-access}
+#### Row Level Access
 
 Access can also be granted on sets of rows based on certain column value
 filters. When specifying the row access policy, the provided filter string will
@@ -359,12 +361,12 @@ See here for more
 [row level security best practices](https://cloud.google.com/bigquery/docs/best-practices-row-level-security).
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/annotations/BalanceSheet.yaml#L67).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/annotations/BalanceSheet.yaml#L67).
 
 Spec definition:
 [`data_mesh_types.BqRowPolicy`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L273).
 
-#### Column Level Access Control {#column-level-access}
+#### Column Level Access
 
 To enable column level access, annotate individual fields with a
 [Policy Tag](#policy-taxonomies-and-tags) identified by the Policy Tag name and
@@ -372,12 +374,12 @@ Taxonomy name. Update the policy tag metadata resource to configure access
 control.
 
 See the following
-[example](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/SAP/SAP_REPORTING/config/ecc/annotations/SalesOrderDetails_SAMPLE.yaml#L13).
+[example](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/bee2564c0a4830ed31d0603765e44424f7a5d99e/config/ecc/annotations/SalesOrderDetails_SAMPLE.yaml#L13).
 
 Spec definition:
 [`data_mesh_types.PolicyTagId`](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/src/common/data_mesh/src/data_mesh_types.py#L154).
 
-### Spec Directories {#spec-directories}
+### Spec Directories
 
 The base specs are in config directories similar to the following locations:
 
@@ -397,7 +399,7 @@ containing additional resource specs within that directory if desired.
 [Asset Annotations](#asset-annotations) are defined at the asset level and
 contain many YAML files in the directory with a single annotation per file.
 
-## Deploying the Data Mesh {#deployment}
+## Deploying the Data Mesh
 
 The Data Mesh can either be deployed as part of the data foundation deployment,
 or on its own. In either case, it will use the Cortex `config.json` file to
@@ -407,7 +409,7 @@ existing resources or annotations to prevent any unintentional losses. However,
 there is also an ability to [overwrite](#overwrite) existing resources when
 deployed on its own.
 
-### Deployment Options {#deployment-options}
+### Deployment Options
 
 The following deployment options can be enabled or disabled based on the user's
 needs and spend constraints in `config.json` > `DataMesh`.
@@ -481,7 +483,7 @@ python src/common/data_mesh/deploy_data_mesh.py \
 See the [Spec Directories](#spec-directories) section for info on directory
 locations.
 
-#### Overwrite {#overwrite}
+#### Overwrite
 
 > [!CAUTION]
 > Read this section thoroughly before using the overwrite option.
