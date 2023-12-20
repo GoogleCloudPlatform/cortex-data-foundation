@@ -48,8 +48,6 @@ Lineage Link                                                                    
 
 ## Design
 
-![Overview for users of the 3 phases and subcomponents](images/data_mesh_overview.png)
-
 Data Mesh for Cortex is designed similarly to the overall data foundation and
 can be thought of in three phases with various subcomponents handled by Cortex
 or users.
