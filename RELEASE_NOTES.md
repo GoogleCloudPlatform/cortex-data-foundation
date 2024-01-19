@@ -1,4 +1,4 @@
-## December 2023 - Release 5.3.1 (hotfix)
+## January 2024 - Release 5.3.1 (hotfix)
 *   Fix race condition and numbering sorting that leads to Cloud Build sequence bypass (`SAP_REPORTING/common/materializer/generate_build_files.py`)
 *   Experimental preview of hierarchy flattener and base view for P&L Report. These artifacts are subject to change to include further optimizations, but provide a preview of an upcoming feature.
 ## December 2023 - Release 5.3
