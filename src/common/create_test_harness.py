@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ sys.path.append(str(pathlib.Path(__file__).parent.parent))
 from common.py_libs.logging import initialize_console_logging
 from common.py_libs.test_harness import load_dataset_test_data
 from common.py_libs.configs import load_config_file
+from common.py_libs.test_harness import TEST_HARNESS_VERSION
 
 
 _DEFAULT_CONFIG = "config/config.json"  # data foundation config
@@ -55,6 +56,8 @@ def main(args: typing.Sequence[str]):
     config = load_config_file(params.config_file)
 
     test_data = config.get("testData", False)
+    test_harness_version = config.get("testHarnessVersion",
+                                      TEST_HARNESS_VERSION)
     if not test_data:
         logging.error("testData in %s is false. Aborting.", params.config_file)
         return 1
@@ -89,7 +92,8 @@ def main(args: typing.Sequence[str]):
                            dataset_type,
                            dataset_name,
                            project,
-                           location)
+                           location,
+                           test_harness_version)
     logging.info("Test data for dataset `%s.%s` has been loaded.",
                  project, dataset_name)
 

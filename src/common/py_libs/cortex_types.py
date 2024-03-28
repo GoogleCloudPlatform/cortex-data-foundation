@@ -26,6 +26,8 @@ class Workload(enum.Enum):
     MARKETING_CM360 = enum.auto()
     MARKETING_GA = enum.auto()
     MARKETING_TIKTOK = enum.auto()
+    MARKETING_META = enum.auto()
+    MARKETING_SFMC = enum.auto()
 
 class DataLayer(enum.Enum):
     UNKNOWN = enum.auto()

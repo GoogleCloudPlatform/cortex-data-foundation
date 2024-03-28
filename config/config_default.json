@@ -48,6 +48,8 @@
         "deployCM360": true,
         "deployTikTok": true,
         "deployLiveRamp": true,
+        "deployMeta": true,
+        "deploySFMC": true,
         "dataflowRegion": "",
         "GoogleAds": {
             "deployCDC": true,
@@ -78,6 +80,23 @@
         "LiveRamp": {
             "datasets": {
                 "cdc": "CORTEX_LIVERAMP_CDC"
+            }
+        },
+        "Meta": {
+            "deployCDC": true,
+            "datasets": {
+                "cdc": "CORTEX_META_CDC",
+                "raw": "CORTEX_META_RAW",
+                "reporting": "CORTEX_META_REPORTING"
+            }
+        },
+        "SFMC": {
+            "deployCDC": true,
+            "fileTransferBucket": "",
+            "datasets": {
+                "cdc": "CORTEX_SFMC_CDC",
+                "raw": "CORTEX_SFMC_RAW",
+                "reporting": "CORTEX_SFMC_REPORTING"
             }
         }
     }

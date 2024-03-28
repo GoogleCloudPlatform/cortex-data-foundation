@@ -35,6 +35,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # pylint:disable=wrong-import-position
 from common.py_libs import bq_helper, resource_validation_helper
+from common.py_libs.test_harness import TEST_HARNESS_VERSION
 
 _DEFAULT_CONFIG_ = "config/config.json"
 _VALIDATOR_FILE_NAME_ = "config_validator"
@@ -249,6 +250,10 @@ def validate_config(
         logging.error(
             "🛑 Data Mesh is enabled but no options are specified. 🛑")
         return None
+
+    logging.info("Fetching test harness version.")
+    config["testHarnessVersion"] = config.get("testHarnessVersion",
+                                              TEST_HARNESS_VERSION)
 
     logging.info("Validating common configuration resources.")
     if not _validate_config_resources(config):

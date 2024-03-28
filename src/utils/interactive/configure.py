@@ -122,6 +122,12 @@ def configure(in_cloud_shell: bool,
     if (config.get("deployMarketing") and
         config["marketing"].get("deployLiveRamp")):
         defaults.append("deployLiveRamp")
+    if (config.get("deployMarketing") and
+        config["marketing"].get("deployMeta")):
+        defaults.append("deployMeta")
+    if (config.get("deployMarketing") and
+        config["marketing"].get("deploySFMC")):
+        defaults.append("deploySFMC")
 
     while True:
         dialog = checkboxlist_dialog(
@@ -141,6 +147,10 @@ def configure(in_cloud_shell: bool,
                  "Marketing with TikTok"),
                 ("deployLiveRamp",
                  "Marketing with LiveRamp"),
+                ("deployMeta",
+                 "Marketing with Meta"),
+                ("deploySFMC",
+                 "Marketing with SFMC"),
             ],
             default_values=defaults,
             style=Style.from_dict({
@@ -159,11 +169,15 @@ def configure(in_cloud_shell: bool,
         config["deployMarketing"] = ("deployGoogleAds" in results or
                                      "deployCM360" in results or
                                      "deployTikTok" in results or
-                                     "deployLiveRamp" in results)
+                                     "deployLiveRamp" in results or
+                                     "deployMeta" in results or
+                                     "deploySFMC" in results)
         config["marketing"]["deployGoogleAds"] = "deployGoogleAds" in results
         config["marketing"]["deployCM360"] = "deployCM360" in results
         config["marketing"]["deployTikTok"] = "deployTikTok" in results
         config["marketing"]["deployLiveRamp"] = "deployLiveRamp" in results
+        config["marketing"]["deployMeta"] = "deployMeta" in results
+        config["marketing"]["deploySFMC"] = "deploySFMC" in results
 
         if (config["deploySAP"] is False and config["deploySFDC"] is False
             and config["deployMarketing"] is False):
@@ -401,5 +415,32 @@ def configure(in_cloud_shell: bool,
                 else:
                     break
             config["marketing"]["CM360"]["dataTransferBucket"] = bucket_name
+        if config["marketing"].get("deploySFMC"):
+            cm360 = config["marketing"]["SFMC"]
+            if cm360.get("fileTransferBucket", "") == "":
+                bucket_name = f"cortex-{source_project}-{bq_location}"
+            while not auto_names:
+                bucket_completer = StorageBucketCompleter(source_project)
+                bucket_name = get_value(session,
+                                "SFMC File Transfer Bucket",
+                                bucket_completer,
+                                bucket_name,
+                                description="Specify "
+                                "SFMC File Transfer Bucket",
+                                allow_arbitrary=True)
+                if not is_bucket_name_valid(bucket_name):
+                    if yes_no(
+                        "Cortex Data Foundation Configuration",
+                        f"{bucket_name} is not a valid bucket name.",
+                        yes_text="Try again",
+                        no_text="Cancel"
+                    ):
+                        bucket_name = ""
+                        continue
+                    else:
+                        return None
+                else:
+                    break
+            config["marketing"]["SFMC"]["fileTransferBucket"] = bucket_name
 
     return config

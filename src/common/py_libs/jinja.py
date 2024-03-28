@@ -189,6 +189,26 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 "marketing_liveramp_datasets_cdc":
                     config_dict["marketing"]["LiveRamp"]["datasets"]["cdc"]
             })
+        # Meta
+        if config_dict["marketing"].get("deployMeta"):
+            jinja_data_file_dict.update({
+                "marketing_meta_datasets_raw":
+                    config_dict["marketing"]["Meta"]["datasets"]["raw"],
+                "marketing_meta_datasets_cdc":
+                    config_dict["marketing"]["Meta"]["datasets"]["cdc"],
+                "marketing_meta_datasets_reporting":
+                    config_dict["marketing"]["Meta"]["datasets"]["reporting"]
+            })
+        # SFMC
+        if config_dict["marketing"].get("deploySFMC"):
+            jinja_data_file_dict.update({
+                "marketing_sfmc_datasets_raw":
+                    config_dict["marketing"]["SFMC"]["datasets"]["raw"],
+                "marketing_sfmc_datasets_cdc":
+                    config_dict["marketing"]["SFMC"]["datasets"]["cdc"],
+                "marketing_sfmc_datasets_reporting":
+                    config_dict["marketing"]["SFMC"]["datasets"]["reporting"]
+            })
 
     return jinja_data_file_dict
 

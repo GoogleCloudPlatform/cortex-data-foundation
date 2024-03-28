@@ -32,7 +32,7 @@ steps:
       export PYTHONPATH=$$PYTHONPATH:./
       python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./requirements.txt" 1>/dev/null
       python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./catgap_pipeline/requirements.txt" 1>/dev/null
-      python3 ./catgap_dag_generator.py --beam-sdk-version "2.48.0"
+      python3 ./catgap_dag_generator.py --beam-sdk-version "2.53.0"
       bash generated_dag/run_pipeline.sh DeployTemplate
       echo "CATGAP pipeline template has been deployed."
       # Copy generated DAG python to the Target GCS bucket

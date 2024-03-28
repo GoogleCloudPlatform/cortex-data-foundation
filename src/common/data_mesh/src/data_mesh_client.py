@@ -111,7 +111,7 @@ def _get_grant_row_policy_query(asset_id: str, policy: dmt.BqRowPolicy,
 
 def _get_drop_all_row_policy_query(asset_id: str) -> str:
     return f"""
-        DROP ALL ROW ACCESS POLICIES ON {asset_id};
+        DROP ALL ROW ACCESS POLICIES ON `{asset_id}`;
     """
 
 

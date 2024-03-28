@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import yaml
 from google.cloud import bigquery
 
 from common.py_libs import configs, jinja, bq_helper, test_harness
+from common.py_libs.test_harness import TEST_HARNESS_VERSION
 
 def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
                               target_bucket: str, bq_client: bigquery.Client,
@@ -160,6 +161,8 @@ def deploy_k9(k9_manifest: dict,
     deploy_test_data = config["testData"]
     location = config["location"].lower()
     target_bucket = config["targetBucket"]
+    test_harness_version = config.get("testHarnessVersion",
+                                      TEST_HARNESS_VERSION)
     bq_client = bigquery.Client(source_project, location=location)
 
     k9_id = k9_manifest["id"]
@@ -183,7 +186,8 @@ def deploy_k9(k9_manifest: dict,
         test_data_dataset = test_harness.get_test_harness_dataset(
             data_source,
             dataset_type,
-            location)
+            location,
+            test_harness_version)
         sources = [
             f"{config['testDataProject']}.{test_data_dataset}.{table}"
             for table in tables

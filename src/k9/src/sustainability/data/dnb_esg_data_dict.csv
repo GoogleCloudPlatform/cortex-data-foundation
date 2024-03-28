@@ -1,0 +1,97 @@
+Column Details,Field Name,Description
+`duns` BIGINT,,Duns_Number,D-U-N-S ID
+`country_iso_alpha_2_code` STRING,,Duns_Number,Headquarter country
+`organization_name` STRING,,Company_Name,Name of company
+`major_industry_category` STRING,,Sector_Category,SASB SICS® Sector
+`industry_sector_category` STRING,,Industry,SASB SICS® Industry
+`esg_ranking_score` INT,,ESG_ranking,Overall ESG Ranking where 1 is low risk and 5 is high risk
+`environmental_ranking_score` INT,,E_ranking,Overall Environmental Ranking where 1 is low risk and 5 is high risk
+`environmental_ranking_score_reason_1` BIGINT,,E_Reason_code_1,Primary reason driving the overall E Ranking classified as one of eleven E Topics
+`environmental_ranking_score_reason_2` BIGINT,,E_Reason_code_2,Seconday reason driving overall E Ranking classified as one of eleven E Topics
+`environmental_ranking_score_reason_3` BIGINT,,E_Reason_code_3,Tertiary reason driving the overall E Ranking classified as one of eleven E Topics
+`social_ranking_score` INT,,S_ranking,Overall Social Ranking where 1 is low risk and 5 is high risk
+`social_ranking_score_reason_1` BIGINT,,S_Reason_code_1,Primary reason driving the overall S Ranking classified as one of thirteen S Topics
+`social_ranking_score_reason_2` BIGINT,,S_Reason_code_2,Seconday reason driving overall S Ranking classified as one of thirteen S Topics
+`social_ranking_score_reason_3` BIGINT,,S_Reason_code_3,Tertiary reason driving the overall S Ranking classified as one of thirteen S Topics
+`governance_ranking_score` INT,,G_ranking,Overall Governance Ranking where 1 is low risk and 5 is high risk
+`governance_ranking_score_reason_1` BIGINT,,G_Reason_code_1,Primary reason driving the overall G Ranking classified as one of seven G Topics
+`governance_ranking_score_reason_2` BIGINT,,G_Reason_code_2,Seconday reason driving overall G Ranking classified as one of seven G Topics
+`governance_ranking_score_reason_3` BIGINT,,G_Reason_code_3,Tertiary reason driving the overall G Ranking classified as one of seven G Topics
+`esg_ranking_peer_percentile` STRING,,ESG_ranking_peer_percentile,Percentile ranking of the company's ESG Ranking compared to SASB industry peer group, where higher percentile indicates better performance
+`environmental_ranking_peer_percentile` STRING,,Environmental_ranking_peer_percentile,Percentile ranking of the company's E Ranking compared to SASB industry peer group, where higher percentile indicates better performance
+`social_ranking_peer_percentile` STRING,,Social_ranking_peer_percentile,Percentile ranking of the company's S Ranking compared to SASB industry peer group, where higher percentile indicates better performance
+`governance_ranking_peer_percentile` STRING,,Governance_ranking_peer_percentile,Percentile ranking of the company's G Ranking compared to SASB industry peer group, where higher percentile indicates better performance
+`esg_ranking_average_peer_score` DECIMAL(10,2),,ESG_ranking_average_peer_score,Average ESG ranking for company's SASB Industry peer group where 1 is low risk and 5 is high risk
+`environmental_ranking_average_peer_score` DECIMAL(10,2),,Environmental_ranking_average_peer_score,Average E ranking for company's SASB Industry peer group where 1 is low risk and 5 is high risk
+`social_ranking_average_peer_score` DECIMAL(10,2),,Social_ranking_average_peer_score,Average S ranking for company's SASB Industry peer group where 1 is low risk and 5 is high risk
+`governance_ranking_average_peer_score` DECIMAL(10,2),,Governance_ranking_average_peer_score,Average G ranking for company's SASB Industry peer group where 1 is low risk and 5 is high risk
+`theme1_score` INT,,environmental_ranking_natural_resources_score,Overall ranking for company's performance related to theme Natural Resources where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme2_score` INT,,environmental_ranking_emissions_climate_score,Overall ranking for company's performance related to theme GHG Emissions and Climate where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme3_score` INT,,environmental_ranking_risk_score,Overall ranking for company's performance related to theme Environmental Risk where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme4_score` INT,,environmental_ranking_opportunities_score,Overall ranking for company's performance related to theme Environmental Opportunities where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme5_score` INT,,social_ranking_human_capital_score,Overall ranking for company's performance related to theme Human Capital where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme6_score` INT,,social_ranking_product_service_score,Overall ranking for company's performance related to theme Products and Services where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme7_score` INT,,social_ranking_customers_score,Overall ranking for company's performance related to theme Customer Engagement where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme8_score` INT,,social_ranking_community_score,Overall ranking for company's performance related to theme Community Engagement where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme9_score` INT,,social_ranking_supplier_score,Overall ranking for company's performance related to theme Supplier Engagement where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme10_score` INT,,social_ranking_certifications_score,Overall ranking for company's performance related to theme Social Certifications where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme11_score` INT,,governance_ranking_corporate_governance_score,Overall ranking for company's performance related to theme Corporate Governance where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme12_score` INT,,governance_ranking_corporate_behavior_score,Overall ranking for company's performance related to theme Corporate Behaviors where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme13_score` INT,,governance_ranking_business_resilience_score,Overall ranking for company's performance related to theme Business Sustainability and Resiliency where 1 is low risk, 2 is medium risk and 3 is high risk
+`theme14_score` INT,,climate_risk_score,Overall score for company's performance related to topic Climate Risk where 100 is best performance and 0 is worst performance
+`theme15_score` INT,,energy_management_score,Overall score for company's performance related to topic Energy Management where 100 is best performance and 0 is worst performance
+`theme16_score` INT,,environmental_certifications_score,Overall score for company's performance related to topic Environmental Certifications where 100 is best performance and 0 is worst performance
+`theme17_score` INT,,environmental_compliance_score,Overall score for company's performance related to topic Environmental Compliance where 100 is best performance and 0 is worst performance
+`theme18_score` INT,,environmental_opportunities_score,Overall score for company's performance related to topic Environmental Opportunities where 100 is best performance and 0 is worst performance
+`theme19_score` INT,,ghg_emissions_score,Overall score for company's performance related to topic GHG Emissions where 100 is best performance and 0 is worst performance
+`theme20_score` INT,,land_use_and_biodiversity_score,Overall score for company's performance related to topic Land Use and Biodiversity where 100 is best performance and 0 is worst performance
+`theme21_score` INT,,material_sourcing_and_management_score,Overall score for company's performance related to topic Materials Sourcing and Management where 100 is best performance and 0 is worst performance
+`theme22_score` INT,,pollution_prevention_and_management_score,Overall score for company's performance related to topic Pollution Prevention and Management where 100 is best performance and 0 is worst performance
+`theme23_score` INT,,waste_and_hazards_management_score,Overall score for company's performance related to topic Waste and Hazards Management where 100 is best performance and 0 is worst performance
+`theme24_score` INT,,water_management_score,Overall score for company's performance related to topic Water Management where 100 is best performance and 0 is worst performance
+`theme25_score` INT,,community_engagement_score,Overall score for company's performance related to topic Community Engagement where 100 is best performance and 0 is worst performance
+`theme26_score` INT,,corporate_philanthropy_score,Overall score for company's performance related to topic Corporate Philanthropy where 100 is best performance and 0 is worst performance
+`theme27_score` INT,,cyber_risk_score,Overall score for company's performance related to topic Cyber Risk where 100 is best performance and 0 is worst performance
+`theme28_score` INT,,data_privacy_score,Overall score for company's performance related to topic Data Privacy where 100 is best performance and 0 is worst performance
+`theme29_score` INT,,diversity_and_inclusion_score,Overall score for company's performance related to topic Diversity and Inclusion where 100 is best performance and 0 is worst performance
+`theme30_score` INT,,health_and_safety_score,Overall score for company's performance related to topic Health and Safety where 100 is best performance and 0 is worst performance
+`theme31_score` INT,,human_right_abuses_score,Overall score for company's performance related to topic Human Rights Abuses where 100 is best performance and 0 is worst performance
+`theme32_score` INT,,labor_relations_score,Overall score for company's performance related to topic Labor Relations where 100 is best performance and 0 is worst performance
+`theme33_score` INT,,product_and_services_score,Overall score for company's performance related to topic Products and Services where 100 is best performance and 0 is worst performance
+`theme34_score` INT,,product_management_and_quality_score,Overall score for company's performance related to topic Product Quality Management where 100 is best performance and 0 is worst performance
+`theme35_score` INT,,social_related_certifications_score,Overall score for company's performance related to topic Social-related Certifications where 100 is best performance and 0 is worst performance
+`theme36_score` INT,,suppliers_engagement_score,Overall score for company's performance related to topic Supplier Engagement where 100 is best performance and 0 is worst performance
+`theme37_score` INT,,training_and_education_score,Overall score for company's performance related to topic Training and Education where 100 is best performance and 0 is worst performance
+`theme38_score` INT,,board_accountability_score,Overall score for company's performance related to topic Board Accountability where 100 is best performance and 0 is worst performance
+`theme39_score` INT,,business_ethics_score,Overall score for company's performance related to topic Business Ethics where 100 is best performance and 0 is worst performance
+`theme40_score` INT,,business_resilience_and_sustainability_score,Overall score for company's performance related to topic Business Resilience and Sustainability where 100 is best performance and 0 is worst performance
+`data_depth1` STRING,,esg_data_depth,Measure of material available data for informing theme and ESG rankings where A is highest level of data richness and I is lowest level
+`data_depth2` STRING,,environmental_data_depth,Measure of material available data for informing Environmental themes and rankings where A is highest level of data richness and I is lowest level
+`data_depth3` STRING,,social_data_depth,Measure of material available data for informing Social themes and rankings where A is highest level of data richness and I is lowest level
+`data_depth4` STRING,,governance_data_depth,Measure of material available data for informing Governnance themes and rankings where A is highest level of data richness and I is lowest level
+`data_depth5` STRING,,,
+`data_depth6` STRING,,,
+`data_depth7` STRING,,,
+`data_depth8` STRING,,,
+`data_depth9` STRING,,,
+`data_depth10` STRING,,,
+`data_depth11` STRING,,,
+`data_depth12` STRING,,,
+`data_depth13` STRING,,,
+`data_depth14` STRING,,,
+`data_depth15` STRING,,,
+`data_depth16` STRING,,,
+`data_depth17` STRING,,,
+`var1` STRING,,business_transparency_score,Overall score for company's performance related to topic Business Transparency where 100 is best performance and 0 is worst performance
+`var2` STRING,,corporate_compliance_behaviors_score,Overall score for company's performance related to topic Corporate Compliance Behaviors where 100 is best performance and 0 is worst performance
+`var3` STRING,,governance_related_certifications_score,Overall score for company's performance related to topic Governance-related Certifications where 100 is best performance and 0 is worst performance
+`var4` STRING,,shareholder_rights_score,Overall score for company's performance related to topic Shareholder Rights where 100 is best performance and 0 is worst performance
+`var5` STRING,,,
+`var6` STRING,,,
+`var7` STRING,,,
+`var8` STRING,,,
+`var9` STRING,,indicator_with_self_assessments,Indication that the company has completed a D&B ESG Self-Assessment and answers from the Assessment have been incorporated into the current performance data
+`var10` STRING,,,
+`load_year` INT,,load_year,Year data was made available
+`load_month` INT,,load_month,Month data was made available
+`load_date` INT,load_date,Date data was made available

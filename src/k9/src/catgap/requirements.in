@@ -1,1 +1,2 @@
-apache-beam[gcp]~=2.48.0
+apache-beam[gcp]~=2.53.0
+pyarrow>=14.0.1

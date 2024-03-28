@@ -84,6 +84,14 @@ def _should_skip_k9(k9_manifest: dict,
             skip_this = skip_this or (
                 not config["deployMarketing"] or
                 not config["marketing"]["deployLiveRamp"])
+        elif dep == "meta":
+            skip_this = skip_this or (
+                not config["deployMarketing"] or
+                not config["marketing"]["deployMeta"])
+        elif dep == "sfmc":
+            skip_this = skip_this or (
+                not config["deployMarketing"] or
+                not config["marketing"]["deploySFMC"])
         else:
             raise ValueError(f"Invalid workload dependency {dep}")
 

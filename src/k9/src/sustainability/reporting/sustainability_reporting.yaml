@@ -1,0 +1,13 @@
+bq_independent_objects:
+
+  - sql_file: src/k9/src/sustainability/reporting/SustainableSourcing.sql
+    type: table
+    table_setting:
+      load_frequency: "@monthly"
+
+bq_dependent_objects:
+
+  - sql_file: src/k9/src/sustainability/reporting/SustainableVendorSourcing.sql
+    type: table
+    table_setting:
+      load_frequency: "@monthly"

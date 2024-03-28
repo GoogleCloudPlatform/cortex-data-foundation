@@ -173,6 +173,8 @@ steps:
           _DEPLOY_CM360_=$(jq -r ."marketing.deployCM360" "${_CONFIG_FILE}")
           _DEPLOY_TIKTOK_=$(jq -r ."marketing.deployTikTok" "${_CONFIG_FILE}")
           _DEPLOY_LIVERAMP_=$(jq -r ."marketing.deployLiveRamp" "${_CONFIG_FILE}")
+          _DEPLOY_META_=$(jq -r ."marketing.deployMeta" "${_CONFIG_FILE}")
+          _DEPLOY_SFMC_=$(jq -r ."marketing.deploySFMC" "${_CONFIG_FILE}")
           if [[ "$${_DEPLOY_ADS_}" == "true" ]]; then
             echo "Deploying Google Ads Test Harness."
             python3 src/common/create_test_harness.py --workload "marketing.GoogleAds" --dataset "raw"
@@ -188,6 +190,14 @@ steps:
           if [[ "$${_DEPLOY_LIVERAMP_}" == "true" ]]; then
             echo "Deploying LiveRamp Test Harness."
             python3 src/common/create_test_harness.py --workload "marketing.LiveRamp" --dataset "cdc"
+          fi
+          if [[ "$${_DEPLOY_META_}" == "true" ]]; then
+            echo "Deploying Meta Test Harness."
+            python3 src/common/create_test_harness.py --workload "marketing.Meta" --dataset "raw"
+          fi
+          if [[ "$${_DEPLOY_SFMC_}" == "true" ]]; then
+            echo "Deploying SFMC Test Harness."
+            python3 src/common/create_test_harness.py --workload "marketing.SFMC" --dataset "raw"
           fi
         else
           echo "==Skipping Test Harness for Marketing=="
@@ -223,6 +233,28 @@ steps:
                 --stage post \
                 --logs-bucket "${_GCS_BUCKET}"
 
+  - name: gcr.io/kittycorn-public/credly:latest
+    id: 'credly-badge'
+    waitFor: ['k9-pre', 'sap-reporting', 'sfdc-deploy']
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |-
+        _FLAG_=$(jq -r ."shareWithCredly" "${_CONFIG_FILE}")
+        if [[ "$${_FLAG_}" != "true" ]]; then
+          echo "===Skipping assigning a badge==="
+        else
+          _EMAIL_=$(jq -r ."userInfo.email" "${_CONFIG_FILE}")
+          _FN_=$(jq -r ."userInfo.firstName" "${_CONFIG_FILE}")
+          _LN_=$(jq -r ."userInfo.lastName" "${_CONFIG_FILE}")
+          cd /usr/src/app
+          if [ -z "$${_EMAIL_}" ] || [ -z "$${_FN_}" ] || [ -z "$${_LN_}" ] || ! [ -f credly.py ]; then
+            echo "===Email, first name and last name are required in config.json==="
+            echo "===Skipping assigning a badge==="
+          else
+            python3 credly.py --fn "$${_FN_}" --ln "$${_LN_}" --email "$${_EMAIL_}" || exit 0
+          fi
+        fi
 
 logsBucket: "gs://$_GCS_BUCKET"
 timeout: 32400s

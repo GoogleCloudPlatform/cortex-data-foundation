@@ -1,3 +1,56 @@
+## March 2024 - Release 5.4
+### Coming Soon
+The following changes are on our roadmap and are planned to happen **no sooner than two releases** from now. For any questions, please reach out to cortex-support@google.com.
+*   **Goodbye Submodules!**: Currently, Cortex Framework employs multiple submodules, and we are streamlining this structure into a monorepo.  For a limited time, we will continue replicating code to the existing submodule repositories, **however the main repo `cortex-data-foundation` will no longer contain submodules.**
+
+*   Cloud Composer 1 is entering [post-maintenance mode](https://cloud.google.com/composer/docs/how-to/managing/creating), and  Cortex support for Airflow 1 / Cloud Composer 1 will end. Please plan upgrades to Airflow 2 / Cloud Composer 2 following [this official guide](https://cloud.google.com/composer/docs/migrate-composer-2-snapshots-af-2).
+
+### Marketing
+*   **Meta for Marketing - NEW! 🎉 :**  Measure and understand [Meta (Facebook & Instagram)](https://www.facebook.com/business) paid media campaign performance with new BigQuery integration templates, data models, and a [Looker Semantic Model](https://github.com/looker-open-source/block-cortex-meta) with sample dashboards for further analytics. See the [README](README_Marketing.md#configure-integration-for-meta-facebook--instagram-ads) and [ERD](docs/erd_meta.pdf) for details.
+
+*   **Salesforce Marketing Cloud (SFMC) for Marketing - NEW! 🎉 :** Measure and understand [SFMC](https://www.salesforce.com/eu/products/marketing-cloud/platform/) email marketing campaign performance with new BigQuery integration templates, data models, and [Looker Semantic Model](https://github.com/looker-open-source/block-cortex-sfmc) with sample dashboards for further analytics. See the [README](README_Marketing.md#configure-integration-for-salesforce-marketing-cloud-sfmc) and [ERD](docs/erd_sfmc.pdf) for details.
+
+*   Support for Google Ads API updated to [v15](https://ads-developers.googleblog.com/2023/10/announcing-v15-of-google-ads-api.html).
+
+### SAP Finance
+*   New Profit & Loss view - `ProfitAndLoss` shows a company's revenues, expenses, and profits and provides a snapshot of a company's financial health at a specific time.
+
+*   Profit and Loss Overview views demonstrating Financial Statement Version (FSV), cost-center and profit-center hierarchy.
+
+*   Added Profit and Loss content including sample Financial Income Statement Dashboards to the [Looker Semantic Model for Cortex SAP Framework](https://github.com/looker-open-source/block-cortex-sap/blob/main/RELEASE_NOTES.md).
+
+*   Hierarchy flattener for profit-center and cost-center hierarchy.
+
+*   Performance improvements and optimizations to the `financial_statements` code, which significantly decreases execution time and resources required for `FinancialStatement` and `BalanceSheet` views.
+
+*   See the updated SAP ECC ERD [[PNG]](images/erd_ecc.png) [[PDF]](docs/erd_ecc.pdf) and S/4 ERD [[PNG]](images/erd_s4.png) [[PDF]](docs/erd_s4.pdf).
+
+### K9 - Sustainability
+*   **Initial Sustainability ESG Intelligence integration - NEW! 🎉 :** Added Intelligent ESG data for Sustainability analysis utilizing Dun & Bradstreet sourced data with [Sustainability Looker Studio Dashboard](https://lookerstudio.google.com/c/reporting/cab436f2-ff83-4cfa-b7e4-e99b9fd9a8d0/page/p_7hgitrkzed) samples. See the [README](README_Sustainability.md) for more. Visit the dashboard for the embedded [README](https://lookerstudio.google.com/c/reporting/cab436f2-ff83-4cfa-b7e4-e99b9fd9a8d0/page/p_wa5lq4dsfd). **Note: This feature is experimental and the data model is subject to change in subsequent releases.**
+
+### Credly Badger
+*   **Get a Credly Badge - NEW! 🎉:** Obtain and share a Credly Digital Badge with your social media contacts on LinkedIn, Twitter/X, Facebook, & more, certifying & credentialing your successful deployment of Cortex! Visit the [README](README.md#optional-credly-badger-configuration) to see how to configure your deployment to get the badge.
+
+### Salesforce CRM (SFDC)
+*   Added `Line of Business` Catalog tags for Data Mesh annotations
+
+### Readme Updates
+*   The [README](README.md) has been revised into subpages by data source to make reading and navigation easier. [SAP](README_SAP.md), [SFDC](README_SFDC.md), and [Marketing](README_Marketing.md) have separate pages now.
+
+*   Sections have been modified to remove collapsing making searches easier.
+
+### Misc Technical Notes
+*   Updated DAG `ApacheBeam[gcp]` version requirements to 2.53.0.
+
+*   New test harness regions added: `me-central1` and `me-west1`.
+
+*   Addressed a variety of vulnerabilities in Python library versions.
+
+### Known Issues & Limitations for 5.4
+*   Only the company code `C006` balances in the SAP Finance test harness data. This is expected.
+
+*   The remaining [Known Issues & Limitations](RELEASE_NOTES.md#known-issues-and-limitations-for-53) from the previous release are still in effect.
+
 ## January 2024 - Release 5.3.1 (hotfix)
 *   Fix race condition and numbering sorting that leads to Cloud Build sequence bypass (`SAP_REPORTING/common/materializer/generate_build_files.py`)
 *   Experimental preview of hierarchy flattener and base view for P&L Report. These artifacts are subject to change to include further optimizations, but provide a preview of an upcoming feature.
@@ -10,7 +63,7 @@
 *   Directory `external_dags` for SAP was converted into local K9.
 *   Modification on `AccountsPayable` for S4 to match Invoice based on reference. Thanks, Marcelo Saad!
 
-### Known issues and limitations
+### Known issues and limitations for 5.3
 - Local K9 for SAP produces a temporary folder (`tmp*`) in the target bucket for DAGS. Please remove it manually. There is no impact in the execution.
 - Nested fields are not yet supported by Data Mesh annotations. They will be incorporated in a follow-up release.
 - Data in the test harness for finance does not zero out in the balance sheet because it is incomplete. This is expected.

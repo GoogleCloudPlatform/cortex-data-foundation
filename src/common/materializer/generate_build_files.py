@@ -53,11 +53,11 @@ _CLOUDBUILD_TEMPLATE_FILE = "cloudbuild_materializer.yaml.jinja"
 
 # All supported Cortex modules
 _CORTEX_MODULES = [
-    "SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "k9"
+    "SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "k9"
 ]
 
 # All supported Marketing modules
-_MARKETING_MODULES = ["GoogleAds", "CM360", "TikTok"]
+_MARKETING_MODULES = ["GoogleAds", "CM360", "TikTok", "Meta", "SFMC"]
 
 # All supported target dataset types
 _CORTEX_DATASET_TYPES_LOWER = ["cdc", "reporting", "processing"]
@@ -192,7 +192,7 @@ def _create_build_files(global_settings: dict, bq_obj_settings: dict,
             "build_files_list": build_files_list
         })
 
-        build_file_num = f"{build_file_counter:02d}"
+        build_file_num = f"{build_file_counter:03d}"
         build_file_name = f"cloudbuild.materializer.{tgt_dataset_name}.{build_file_num}.yaml"  #pylint: disable=line-too-long
         build_file = Path(generated_files_dir, build_file_name)
 
