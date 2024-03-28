@@ -23,10 +23,10 @@ The following changes are on our roadmap and are planned to happen **no sooner t
 
 *   Performance improvements and optimizations to the `financial_statements` code, which significantly decreases execution time and resources required for `FinancialStatement` and `BalanceSheet` views.
 
-*   See the updated SAP ECC ERD [[PNG]](images/erd_ecc.png) [[PDF]](docs/erd_ecc.pdf) and S/4 ERD [[PNG]](images/erd_s4.png) [[PDF]](docs/erd_s4.pdf).
+*   See the updated SAP ECC [ERD](docs/erd_ecc.pdf) and S/4 [ERD](docs/erd_s4.pdf).
 
 ### K9 - Sustainability
-*   **Initial Sustainability ESG Intelligence integration - NEW! 🎉 :** Added Intelligent ESG data for Sustainability analysis utilizing Dun & Bradstreet sourced data with [Sustainability Looker Studio Dashboard](https://lookerstudio.google.com/c/reporting/cab436f2-ff83-4cfa-b7e4-e99b9fd9a8d0/page/p_7hgitrkzed) samples. See the [README](README_Sustainability.md) for more. Visit the dashboard for the embedded [README](https://lookerstudio.google.com/c/reporting/cab436f2-ff83-4cfa-b7e4-e99b9fd9a8d0/page/p_wa5lq4dsfd). **Note: This feature is experimental and the data model is subject to change in subsequent releases.**
+*   **Initial Sustainability ESG Intelligence integration - NEW! 🎉 :** Added Intelligent ESG data for Sustainability analysis utilizing Dun & Bradstreet sourced data with [Sustainability Looker Studio Dashboard](https://lookerstudio.google.com/c/reporting/cab436f2-ff83-4cfa-b7e4-e99b9fd9a8d0/page/RJ2qD) samples. See the [README](README_Sustainability.md) for more. Visit the dashboard for the embedded [README](https://lookerstudio.google.com/c/reporting/cab436f2-ff83-4cfa-b7e4-e99b9fd9a8d0/page/p_wa5lq4dsfd). **Note: This feature is experimental and the data model is subject to change in subsequent releases.**
 
 ### Credly Badger
 *   **Get a Credly Badge - NEW! 🎉:** Obtain and share a Credly Digital Badge with your social media contacts on LinkedIn, Twitter/X, Facebook, & more, certifying & credentialing your successful deployment of Cortex! Visit the [README](README.md#optional-credly-badger-configuration) to see how to configure your deployment to get the badge.

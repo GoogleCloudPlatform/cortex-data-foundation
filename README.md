@@ -23,7 +23,7 @@ If you want to create a **demo** instance, with automatic generation of BigQuery
 
 > **Warning** This demo deployment is **not suitable for production environments**.
 
-Please see [here]((https://www.youtube.com/watch?v=n1d654fkPjY&list=PL-yfhks0lM0tFbWvwAUSWmDN6oO64jA8T)) for a video walkthrough.
+Please see [here](https://www.youtube.com/watch?v=n1d654fkPjY&list=PL-yfhks0lM0tFbWvwAUSWmDN6oO64jA8T) for a video walkthrough.
 
 # Deployment for Development or Production environments
 
