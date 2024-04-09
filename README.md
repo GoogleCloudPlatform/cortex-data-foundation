@@ -117,6 +117,7 @@ Each workload has different ways to integrate with BigQuery. This section explai
 * [Integration options for SAP ECC or SAP S/4HANA](./README_SAP.md)
 * [Integration options for Salesforce Sales Cloud](./README_SFDC.md)
 * [Integration options for Marketing data sources](./README_Marketing.md)
+* [Integration options for Sustainability data sources](./README_Sustainability.md)
 
 
 
