@@ -1,31 +1,36 @@
 # **Google Cloud Cortex Framework**
+[Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) helps you accelerate business insights and outcomes with less risk, complexity, and cost with reference architectures, packaged solution deployment content, and integration services to kickstart your data and AI cloud journey. 
 
+## About Cortex Data Foundation
+**Cortex Data Foundation** is the core architectual component of the Cortex Framework reference architecture and provides packaged analytics artifacts which can be automatically deployed for use with [Google Cloud BigQuery](https://cloud.google.com/bigquery). 
 
-## About the Data Foundation for Google Cloud Cortex Framework
-The Data Foundation for [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) is a set of analytical artifacts that can be automatically deployed together with reference architectures.
 
 ![Cortex framework](images/cortex_framework.png)
 
-The current repository contains the analytical views and models that serve as a foundational data layer for the Google Cloud Cortex Framework in BigQuery. Here is the list of entity-relationship diagrams:
+This repository contains predfined analytical views and models to accelerate the build out of an enterprise wide data foundation in BigQuery. The data sources and models available are depicted in the entity-relationship diagrams below:
+
+**Operational related data sources**
 -  [SAP ECC](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf))
 -  [SAP S/4](images/erd_s4.png)([PDF](docs/erd_s4.pdf))
--  [Salesforce.com](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf))
+-  [Salesforce Sales Cloud](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf))
+
+**Marketing related data sources**
+-  [Salesforce Marketing Cloud](images/erd_sfmc.png) ([PDF](docs/erd_sfmc.pdf))
 -  [Google Ads](images/erd_gads.png) ([PDF](docs/erd_gads.pdf))
--  [CM360 enriched with DV360](images/erd_cm360.png) ([PDF](docs/erd_cm360.pdf))
+-  [Google CM360 enriched with DV360](images/erd_cm360.png) ([PDF](docs/erd_cm360.pdf))
 -  [TikTok](images/erd_tiktok.png) ([PDF](docs/erd_tiktok.pdf))
 -  [Meta](images/erd_meta.png) ([PDF](docs/erd_meta.pdf))
--  [SFMC](images/erd_sfmc.png) ([PDF](docs/erd_sfmc.pdf))
--  [Sustainability](images/erd_sustainability.png) ([PDF](docs/erd_sustainability.pdf))
-# Quick demo setup
-If you want to create a **demo** instance, with automatic generation of BigQuery datasets, automatic permission granting and test data, click this button:
+
+**Sustainability related data sources**
+-  [Dun & Bradstreet with SAP](images/erd_sustainability.png) ([PDF](docs/erd_sustainability.pdf))
+# Quick demo deployment
+To explore this content you can create a **demo** instance, with automatic generation of BigQuery datasets, automatic permission granting and sample test data, with a click of a button here:
 
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/?terminal=true&show=terminal&cloudshell_git_repo=https%3A%2F%2Fgithub.com%2FGoogleCloudPlatform%2Fcortex-data-foundation&cloudshell_tutorial=docs%2Ftutorial.md)
 
 > **Warning** This demo deployment is **not suitable for production environments**.
 
-Please see [here](https://www.youtube.com/watch?v=n1d654fkPjY&list=PL-yfhks0lM0tFbWvwAUSWmDN6oO64jA8T) for a video walkthrough.
-
-# Deployment for Development or Production environments
+# Deployment for development or production environments
 
 ### Clone the Data Foundation repository
 
@@ -42,7 +47,7 @@ We recommend using the [Cloud Shell](https://shell.cloud.google.com/?fromcloudsh
    ```bash
    cd cortex-data-foundation
    ```
-   If this is not the first time you clone the repository, execute `git pull --recurse-submodules` to pull the latest changes. If you are already an expert in configuration and requirements, you can skip to the build command in section [Execute deployment](#execute-deployment).
+   If this is not the first time you have cloned the repository, execute `git pull --recurse-submodules` to pull the latest changes. If you are already familair with the configuration and requirements, you can skip to the build command in section [Execute deployment](#execute-deployment).
 
 ## **Deployment steps**
 
@@ -51,7 +56,7 @@ These are the steps for deployment:
 0.  [Prerequisites](#prerequisites)
 1.  [Establish project and dataset structure](#establish-project-and-dataset-structure)
 2.  [Establish integration mechanism](#establish-integration-mechanism)
-3.  [Configure Cloud Platform Components](#configure-google-cloud-platform-components)
+3.  [Configure cloud platform components](#configure-google-cloud-platform-components)
 4.  [Configure deployment](#configure-deployment)
 5.  [Execute deployment](#execute-deployment)
 6.  [Test, customize, prepare for upgrade](#test-customize-and-prepare-for-upgrade)
@@ -60,14 +65,14 @@ These are the steps for deployment:
 
 ## Prerequisites
 
-### Understand the Framework
+### Understand your business requirements and the technical components of the Framework
 
 A successful deployment depends on a good understanding of:
 - Your company's business rules and requirements
-- Functional understanding of the workload (e.g., SAP, Salesforce)
-- Google Cloud fundamentals and products
+- Functional understanding of the data workload (e.g. SAP, Salesforce, Meta, etc)
+- Knowledge of Google Cloud and data and AI products
 
-Before continuing with this guide, make sure you are familiar with:
+Before continuing, make sure you are familiar with:
 -   Google Cloud Platform [fundamentals](https://www.cloudskillsboost.google/course_templates/60)
 -   How to navigate the [Cloud Console](https://cloud.google.com/cloud-console), [Cloud Shell](https://cloud.google.com/shell/docs/using-cloud-shell) and [Cloud Shell Editor](https://cloud.google.com/shell/docs/editor-overview)
 -   Fundamentals of [BigQuery](https://cloud.google.com/bigquery/docs/introduction)
@@ -75,19 +80,19 @@ Before continuing with this guide, make sure you are familiar with:
 -   General navigation of [Cloud Build](https://cloud.google.com/build/docs/overview)
 -   Fundamentals of [Identity and Access Management](https://cloud.google.com/iam/docs/)
 -   Fundamentals of [Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) or [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html)
--   Fundamentals of [Cloud Dataflow](https://cloud.google.com/dataflow)
+-   Fundamentals of [Dataflow](https://cloud.google.com/dataflow)
 
 ## Establish project and dataset structure
-You will require at least one GCP project to host the BigQuery datasets and execute the deployment process.
+You will require at least one Google Cloud project to host the BigQuery datasets and execute the deployment process.
 
-This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure). Each workload should have at least one CDC and one Reporting dataset (i.e., one CDC and one Reporting dataset for SAP, one CDC and one Reporting dataset for SFDC).
+This is where the deployment process will trigger Cloud Build runs. In the project structure, we refer to this as the [Source Project](#dataset-structure). Each workload should have at least one Change Data Capture (CDC) and one Reporting dataset (i.e. one CDC and one Reporting dataset for SAP, one CDC and one Reporting dataset for Salesforce).
 
 ![structure for parameters](images/10.png "image_tooltip")
 
-> **Note** If you want to have separate sets of projects and datasets for each workload (e.g., one set of source and target projects for SAP and a different set of target and source projects for Salesforce), run separate deployments for each workload.
+> **Note** If you want to have separate sets of projects and datasets for each workload (e.g. one set of source and target projects for SAP and a different set of target and source projects for Salesforce), run separate deployments for each workload.
 
 You will need to identify:
-*   **Deploy SAP, Salesforce.com, marketing?:** Decide whether you want to deploy models for all workloads at the same time or only one set of models.
+*   **Deploy SAP, Salesforce, etc:** Decide whether you want to deploy models for all workloads or only one set of models.
 *   **Source Google Cloud Project:** Project where the source data is located, from which the data models will consume. This project is normally accessed by technical practitioners.
 *   **Target Google Cloud Project:** Project where the Data Foundation predefined data models will be deployed and accessed by end-users. This may or may not be different from the source project depending on your needs.
 *   **Source BigQuery Dataset (Raw):** BigQuery dataset where the source data is replicated to or where the test data will be created. The recommendation is to have separate datasets, one for each data source (e.g., one raw dataset for SAP and one raw dataset for Google Ads).
@@ -95,7 +100,7 @@ You will need to identify:
 *   **Target BigQuery reporting dataset:** BigQuery dataset where the Data Foundation predefined data models will be deployed. The recommendation is to have two separate reporting datasets, one for each source (i.e., one reporting dataset for SAP and one reporting dataset for Salesforce). This dataset is automatically created by the deployer if it does not exist.
 *   **Target BigQuery machine learning dataset:** BigQuery dataset where the BQML predefined models will be deployed. This dataset is automatically created by the deployer if it does not exist.
 *   **Pre-processing K9 dataset:** BigQuery dataset where cross-workload, reusable DAG components, such as time dimensions, can be deployed. The workloads will have a dependency on this dataset unless modified. This dataset is automatically created by the deployer if it does not exist.
-*   **Post-processing K9 dataset:** BigQuery dataset where cross-workload reporting (e.g., SAP + Google Ads Reporting (CATGAP)) and additional external source DAGs, (e.g., Weather or Google Trends ingestion) can be deployed. This dataset is automatically created by the deployer if it does not exist.
+*   **Post-processing K9 dataset:** BigQuery dataset where cross-workload reporting (e.g. SAP + Google Ads reporting for [CATGAP](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/src/catgap)) and additional external source DAGs (e.g. Google Trends ingestion) can be deployed. This dataset is automatically created by the deployer if it does not exist.
 
 
 **Alternatively**, if you do not have a replication tool set up or do not wish to use the replicated data, the deployment process can generate test tables and fake data for you. You will still need to [create](https://cloud.google.com/bigquery/docs/datasets) and identify the CDC and Raw datasets ahead of time.
@@ -110,8 +115,8 @@ Each workload has different ways to integrate with BigQuery. This section explai
 
 
 * [Integration options for SAP ECC or SAP S/4HANA](./README_SAP.md)
-* [Integration options for Salesforce](./README_SFDC.md)
-* [Integration options for Marketing](./README_Marketing.md)
+* [Integration options for Salesforce Sales Cloud](./README_SFDC.md)
+* [Integration options for Marketing data sources](./README_Marketing.md)
 
 
 
@@ -119,7 +124,7 @@ Each workload has different ways to integrate with BigQuery. This section explai
 
 The K9 deployer is responsible for ingestion, processing and modeling of components that are reusable across different data sources. For example, the time dimension is reusable across all data sources where tables may need to slice and dice analytical results based on a Gregorian calendar.
 
-External data sources that can be combined across different workloads to gain enriched insights and are also reusable are part of the K9 deployer. For example, Weather data or Google Trends ingestion and processing can be combined across SAP, Salesforce and Marketing. The [CATGAP](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/src/catgap) is an example of a combination of Google Ads and SAP.
+External data sources that can be combined across different workloads to gain enriched insights and are also reusable are part of the K9 deployer. For example, Weather data or Google Trends ingestion and processing can be combined across SAP, Salesforce and Marketing data sources. [CATGAP](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/src/catgap) is an example which combines Google Ads and SAP.
 
 ![K9 sample deployment](images/k9_datasets.png)
 
@@ -129,12 +134,12 @@ The pre-processing K9 step executes before all workloads start their deployment,
 
 The DAGs and models to be generated can be configured in [K9 configuration file](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/config/k9_settings.yaml).
 
-If you are using submodules independently (e.g., only cortex-reporting) or a deployment framework like Dataform or dbt, we recommend porting the pre-k9 DAG execution into your scheduler of choice. The Reporting views that tap into reusable models select from the separate K9 datasets.
+If you are using submodules independently (e.g. only cortex-reporting) or a deployment framework like Dataform or dbt, we recommend porting the pre-k9 DAG execution into your scheduler of choice. The Reporting views that tap into reusable models select from the separate K9 datasets.
 
 
 ## Configure Google Cloud Platform components
 
-### Enable Required Components
+### Enable required components
 
 The following Google Cloud components are required:
 
@@ -145,11 +150,11 @@ The following Google Cloud components are required:
 *   Cloud Build API
 *   Cloud Resource Manager API
 *   Optional components:
-    *   [Cloud Composer](https://console.cloud.google.com/marketplace/product/google/composer.googleapis.com) for change data capture (CDC) processing (SAP and Salesforce), hierarchy flattening (SAP only), and data replication (Salesforce only) through Directed Acyclic Graphs ([DAG](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html)s). You can find how to set up an instance of Cloud Composer in the [documentation](https://cloud.google.com/composer/docs/how-to/managing/creating).
-    *   Looker **(optional, connects to reporting templates. Requires manual setup) **
-    *   [Analytics Hub](https://cloud.google.com/analytics-hub) linked datasets (**optional**) are currently used for some external sources, such as the Weather DAG. You may choose to fill this structure with any other available source of your choice for advanced scenarios.
-    *   [Dataflow](https://console.cloud.google.com/dataflow): Integration tool for Google Ads.
-    *   [Dataplex](https://cloud.google.com/dataplex): Used for Data Mesh
+    *   [Cloud Composer](https://console.cloud.google.com/marketplace/product/google/composer.googleapis.com) for change data capture (CDC) processing, hierarchy flattening (SAP only), and data replication (Non-SAP only) through Directed Acyclic Graphs ([DAGs](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html)). To set up an instance of Cloud Composer review the [documentation](https://cloud.google.com/composer/docs/how-to/managing/creating).
+    *   Looker **(optional)** connects to reporting templates. Requires manual setup
+    *   [Analytics Hub](https://cloud.google.com/analytics-hub) linked datasets **(optional)** are currently used for some external sources, such as the Weather DAG. You may choose to fill this structure with any other available source of your choice for advanced scenarios.
+    *   [Dataflow](https://console.cloud.google.com/dataflow): Integration tool for many of the Marketing data sets like Google Ads.
+    *   [Dataplex](https://cloud.google.com/dataplex): Used for building a Data Mesh, view [documentation](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/docs/data_mesh/README.md).
 
 From the [Cloud Shell](https://shell.cloud.google.com/?fromcloudshell=true&show=ide%2Cterminal), you can enable Google Cloud Services using the _gcloud_ command line interface in your Google Cloud project.
 
@@ -294,7 +299,7 @@ Here is a high-level diagram of the available options:
 
 You will find detailed instructions and examples to configure Data Mesh in the [documentation](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/docs/data_mesh/README.md).
 
-## Configure Deployment
+## Configure deployment
 
 The behavior of the deployment is controlled by the configuration file [config.json](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/config/config.json).
 
@@ -308,7 +313,7 @@ Open the file in `config/config.json`. From the Cloud Shell:
 edit config/config.json
 ```
 
-### Global Deployment Configuration
+### Global deployment configuration
 
 Consider your target deployment:
 
@@ -340,20 +345,22 @@ Consider your target deployment:
 
 The following sections are specific to each workload. You do not need to configure them if the deployment parameter (e.g., `deploySAP` or `deployMarketing`) for the workload is set to `False`.
 
-* [SAP](./README_SAP#deployment-configuration-for-sap)
+* [SAP](./README_SAP.md#deployment-configuration-for-sap)
 
-* [SFDC](./README_SFDC.md#deployment-configuration-for-salesforce)
+* [Salesforce Sales Cloud](./README_SFDC.md#deployment-configuration-for-salesforce)
 
 * [Marketing](./README_Marketing.md#deployment-configuration-for-marketing)
+
+* [Sustainability](./README_Sustainability.md#deployment-configuration-for-sustainability)
 
 
 ### \[Optional\] Configure K9  external datasets
 
-#### Configure SAP Hierarchies
+#### Configure SAP hierarchies
 
 You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/local_k9/hier_reader/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#sap-only-configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to `true`.
 
-#### Configure External Datasets for K9
+#### Configure external datasets for K9
 
 Some advanced use cases may require external datasets to complement an enterprise system of record such as SAP. In addition to external exchanges consumed from [Analytics hub](https://cloud.google.com/analytics-hub), some datasets may need custom or tailored methods to ingest data and join them with the reporting models.
 
@@ -377,7 +384,7 @@ Some advanced use cases may require external datasets to complement an enterpris
 
     **Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules (`holidays`, `pytrends`) [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**.
 
-1. **Sustainability & ESG Insights**. Cortex Data Framework combines SAP supplier performance data with advanced ESG insights to compare delivery performance, sustainability & risks more holistically across global operations. For more details, see guide [here](README_Sustainability.md).
+1. **Sustainability & ESG insights**. Cortex Data Framework combines SAP supplier performance data with advanced ESG insights to compare delivery performance, sustainability & risks more holistically across global operations. For more details, see guide [here](README_Sustainability.md).
 
 ### \[Optional\] Credly badger configuration
 
@@ -411,10 +418,13 @@ Materialized results are updated into a table. These tables can be further fine-
 The configuration files for each workload are:
 | Data Source             | Settings files                                               |
 | ------------------------| ------------------------------------------------------------ |
-| SAP                     | `src/SAP/SAP_REPORTING/reporting_settings_ecc.yaml`          |
-| Salesforce              | `src/SFDC/config/reporting_settings.yaml`                    |
-| Marketing - Google Ads  | `src/marketing/src/GoogleAds/config/reporting_settings.yaml` |
-| Marketing - CM360       | `src/marketing/src/CM360/config/reporting_settings.yaml`     |
+| SAP                                          | `src/SAP/SAP_REPORTING/reporting_settings_ecc.yaml`          |
+| Salesforce Sales Cloud                       | `src/SFDC/config/reporting_settings.yaml`                    |
+| Marketing - Google Ads                       | `src/marketing/src/GoogleAds/config/reporting_settings.yaml` |
+| Marketing - CM360                            | `src/marketing/src/CM360/config/reporting_settings.yaml`     |
+| Marketing - Meta                             | `src/marketing/src/Meta/config/reporting_settings.yaml`      |
+| Marketing - Salesforce Marketing Cloud       | `src/marketing/src/SFMC/config/reporting_settings.yaml`      |
+| Marketing - TikTok                           | `src/marketing/src/TikTok/config/reporting_settings.yaml`      |
 
 
 ###  Customizing `reporting_settings` file configuration
@@ -448,7 +458,7 @@ Following properties need to be defined for each object:
      * `partition_details`: How the table should be partitioned. **Optional.** See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
      * `cluster_details`: How the table should be clustered. **Optional.** See Appendix section [Table Partition and Cluster Settings](#table-partition-and-cluster-settings) for details on how to configure this.
 
-## Execute Deployment
+## Execute deployment
 
 This step requires `config.json` to be configured as described in the section [Configure Deployment](#configure-deployment).
 
@@ -505,8 +515,17 @@ Instructions for deploying the pre-built Looker blocks can be found [here](https
 Optionally, you may also customize the blocks by forking the GitHub repositories into your own Looker project. Instructions can be found [here](https://cloud.google.com/looker/docs/blocks).
 
 Available blocks for the Data Foundation include the following:
+
+**Operational Dashboards**
 * [SAP Operational Dashboards for Cortex](https://github.com/looker-open-source/block-cortex-sap)
-* [Salesforce Dashboards for Cortex](https://github.com/looker-open-source/block-cortex-salesforce)
+* [Salesforce Sales Cloud Dashboards for Cortex](https://github.com/looker-open-source/block-cortex-salesforce)
+
+**Marketing Dashboards**
+* [Salesforce Marketing Cloud Dashboards for Cortex](https://github.com/looker-open-source/block-cortex-sfmc)
+* [Meta Dashboards for Cortex](https://github.com/looker-open-source/block-cortex-meta)
+
+**Sustainability Dashboards**
+* [Dun & Bradstreet with SAP Dashboards for Cortex](https://lookerstudio.google.com/c/reporting/cab436f2-ff83-4cfa-b7e4-e99b9fd9a8d0/page/p_wa5lq4dsfd)
 
 ## Demand Sensing
 You can deploy the Demand Sensing use case [from the Marketplace](https://console.cloud.google.com/marketplace/product/cortex-public/cortex-demand-sensing). Learn more from the documentation.
