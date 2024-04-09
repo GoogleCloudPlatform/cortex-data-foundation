@@ -9,19 +9,19 @@
 
 This repository contains predfined analytical views and models to accelerate the build out of an enterprise wide data foundation in BigQuery. The data sources and models available are depicted in the entity-relationship diagrams below:
 
-**Operational related data sources**
+#### Operational related data sources
 -  [SAP ECC](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf))
 -  [SAP S/4](images/erd_s4.png)([PDF](docs/erd_s4.pdf))
 -  [Salesforce Sales Cloud](images/erd_sfdc.png) ([PDF](docs/erd_sfdc.pdf))
 
-**Marketing related data sources**
+#### Marketing related data sources
 -  [Salesforce Marketing Cloud](images/erd_sfmc.png) ([PDF](docs/erd_sfmc.pdf))
 -  [Google Ads](images/erd_gads.png) ([PDF](docs/erd_gads.pdf))
 -  [Google CM360 enriched with DV360](images/erd_cm360.png) ([PDF](docs/erd_cm360.pdf))
 -  [TikTok](images/erd_tiktok.png) ([PDF](docs/erd_tiktok.pdf))
 -  [Meta](images/erd_meta.png) ([PDF](docs/erd_meta.pdf))
 
-**Sustainability related data sources**
+#### Sustainability related data sources
 -  [Dun & Bradstreet with SAP](images/erd_sustainability.png) ([PDF](docs/erd_sustainability.pdf))
 # Quick demo deployment
 To explore this content you can create a **demo** instance, with automatic generation of BigQuery datasets, automatic permission granting and sample test data, with a click of a button here:
