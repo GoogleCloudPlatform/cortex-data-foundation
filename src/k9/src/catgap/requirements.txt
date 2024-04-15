@@ -30,7 +30,7 @@ apache-beam[gcp]==2.53.0 \
     --hash=sha256:acba9788bc20099bc804234176fa3f0ed89250f9b406b97dac7ba4dabd51d889 \
     --hash=sha256:f2056ef28e17c637efca33be9dade2eded03817e592bbf4443c0d164d80d2826 \
     --hash=sha256:f524792fe41984b6bc7922aeb9842e6e4e5d1e7e21dbdc3e66812e73de74c691
-    # via -r src/k9/src/catgap/requirements.in
+    # via -r requirements.in
 attrs==23.2.0 \
     --hash=sha256:935dc3b529c262f6cf76e50877d35a4bd3c1de194fd41f47a2b7ae8f19971f30 \
     --hash=sha256:99b87a485a5820b23b879f04c2305b44b951b502fd64be915879d77a7e8fc6f1
@@ -710,7 +710,7 @@ pyarrow==14.0.2 \
     --hash=sha256:f7d029f20ef56673a9730766023459ece397a05001f4e4d13805111d7c2108c0 \
     --hash=sha256:fc0de7575e841f1595ac07e5bc631084fd06ca8b03c0f2ecece733d23cd5102a
     # via
-    #   -r src/k9/src/catgap/requirements.in
+    #   -r requirements.in
     #   apache-beam
 pyarrow-hotfix==0.6 \
     --hash=sha256:79d3e030f7ff890d408a100ac16d6f00b14d44a502d7897cd9fc3e3a534e9945 \
@@ -1108,9 +1108,9 @@ six==1.16.0 \
     #   js2py
     #   oauth2client
     #   python-dateutil
-sqlparse==0.4.4 \
-    --hash=sha256:5430a4fe2ac7d0f93e66f1efc6e1338a41884b7ddf2a350cedd20ccc4d9d28f3 \
-    --hash=sha256:d446183e84b8349fa3061f0fe7f06ca94ba65b426946ffebe6e3e8295332420c
+sqlparse==0.5.0 \
+    --hash=sha256:714d0a4932c059d16189f58ef5411ec2287a4360f17cdd0edd2d09d4c5087c93 \
+    --hash=sha256:c204494cd97479d0e39f28c93d46c0b2d5959c7b9ab904762ea6c7af211c8663
     # via google-cloud-spanner
 typing-extensions==4.10.0 \
     --hash=sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475 \
