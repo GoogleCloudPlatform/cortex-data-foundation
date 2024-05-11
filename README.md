@@ -2,12 +2,12 @@
 [Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) helps you accelerate business insights and outcomes with less risk, complexity, and cost with reference architectures, packaged solution deployment content, and integration services to kickstart your data and AI cloud journey. 
 
 ## About Cortex Data Foundation
-**Cortex Data Foundation** is the core architectual component of the Cortex Framework reference architecture and provides packaged analytics artifacts which can be automatically deployed for use with [Google Cloud BigQuery](https://cloud.google.com/bigquery). 
+**Cortex Data Foundation** is the core architectural component of the Cortex Framework reference architecture and provides packaged analytics artifacts that can be automatically deployed for use with [Google Cloud BigQuery](https://cloud.google.com/bigquery). 
 
 
 ![Cortex framework](images/cortex_framework.png)
 
-This repository contains predfined analytical views and models to accelerate the build out of an enterprise wide data foundation in BigQuery. The data sources and models available are depicted in the entity-relationship diagrams below:
+This repository contains predefined analytical views and models to accelerate the build out of an enterprise wide data foundation in BigQuery. The data sources and models available are depicted in the entity-relationship diagrams below:
 
 #### Operational related data sources
 -  [SAP ECC](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf))
@@ -47,7 +47,7 @@ We recommend using the [Cloud Shell](https://shell.cloud.google.com/?fromcloudsh
    ```bash
    cd cortex-data-foundation
    ```
-   If this is not the first time you have cloned the repository, execute `git pull --recurse-submodules` to pull the latest changes. If you are already familair with the configuration and requirements, you can skip to the build command in section [Execute deployment](#execute-deployment).
+   If this is not the first time you have cloned the repository, execute `git pull --recurse-submodules` to pull the latest changes. If you are already familiar with the configuration and requirements, you can skip to the build command in section [Execute deployment](#execute-deployment).
 
 ## **Deployment steps**
 
@@ -123,9 +123,9 @@ Each workload has different ways to integrate with BigQuery. This section explai
 
 ### Configure K9 deployments
 
-The K9 deployer is responsible for ingestion, processing and modeling of components that are reusable across different data sources. For example, the time dimension is reusable across all data sources where tables may need to slice and dice analytical results based on a Gregorian calendar.
+The K9 deployer is responsible for ingestion, processing, and modeling of components that are reusable across different data sources. For example, the time dimension is reusable across all data sources where tables may need to slice and dice analytical results based on a Gregorian calendar.
 
-External data sources that can be combined across different workloads to gain enriched insights and are also reusable are part of the K9 deployer. For example, Weather data or Google Trends ingestion and processing can be combined across SAP, Salesforce and Marketing data sources. [CATGAP](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/src/catgap) is an example which combines Google Ads and SAP.
+External data sources that can be combined across different workloads to gain enriched insights and are also reusable are part of the K9 deployer. For example, Weather data or Google Trends ingestion and processing can be combined across SAP, Salesforce, and Marketing data sources. [CATGAP](https://github.com/GoogleCloudPlatform/cortex-data-foundation/tree/main/src/k9/src/catgap) is an example which combines Google Ads and SAP.
 
 ![K9 sample deployment](images/k9_datasets.png)
 
@@ -232,7 +232,7 @@ This role can be applied during the creation of the service account:
 ![Cloud Build Svc account](images/2.png "image_tooltip")
 
 
-Authorize the ID of user who will be running the deployment to impersonate the service account that was created in the previous step. Authorize your own ID so you can run an initial check as well.
+Authorize the ID of the user who will be running the deployment to impersonate the service account that was created in the previous step. Authorize your own ID so you can run an initial check as well.
 
 
 ![Authorize impersonation](images/3.png "image_tooltip")
@@ -263,7 +263,7 @@ gcloud iam service-accounts add-iam-policy-binding <SERVICE ACCOUNT>\
 
 </details>
 
-### Create a Storage bucket for storing DAG related files
+### Create a Storage bucket for storing DAG-related files
 
 A storage bucket will be required to store processing DAG scripts and other temporary files generated during deployment. These scripts will have to be manually moved into a Cloud Composer or Apache Airflow instance after deployment.
 
@@ -304,7 +304,7 @@ You will find detailed instructions and examples to configure Data Mesh in the [
 
 The behavior of the deployment is controlled by the configuration file [config.json](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/config/config.json).
 
-The file contains global configuration, configuration specific to each workload and optional Credly badger service.
+The file contains global configuration, configuration specific to each workload, and optional Credly badger service.
 
 ![Config JSON](images/config.json.png)
 
@@ -381,7 +381,7 @@ Some advanced use cases may require external datasets to complement an enterpris
     * Adjust the `FROM ` clauses containing `bigquery-public-data.geo_openstreetmap.planet_layers` in `postcode.sql`.
 
     [**Analytics hub is currently only supported in EU and US locations**](https://cloud.google.com/bigquery/docs/analytics-hub-introduction) and some datasets, such as NOAA Global Forecast, are only offered in a single multilocation.
-    If you are targeting a location different from the one available for the required dataset, we recommend creating a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to copy the new records from the Analytics hub linked dataset followed by a [transfer service](https://cloud.google.com/bigquery-transfer/docs/introduction) to copy those new records into a dataset located in the same location or region as the rest of your deployment. You will then need to adjust the SQL files .
+    If you are targeting a location different from the one available for the required dataset, we recommend creating a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to copy the new records from the Analytics hub linked dataset followed by a [transfer service](https://cloud.google.com/bigquery-transfer/docs/introduction) to copy those new records into a dataset located in the same location or region as the rest of your deployment. You will then need to adjust the SQL files.
 
     **Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules (`holidays`, `pytrends`) [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**.
 
@@ -402,7 +402,7 @@ All configuration items including a valid email address must be provided for the
 
 
 ## Check for `CORTEX_CUSTOMER` tags
-Many SAP and Salesforce customers will have specific customizations of their systems, such as additional documents in a flow or specific types of a record. These are specific to each customer and configured by functional analysts as the business needs arise. The spots on the SQL code where these specific enhancements could be done are marked with a comment starting with `## CORTEX-CUSTOMER`. You can check for these comments after cloning the repository with a command like:
+Many SAP and Salesforce customers will have specific customizations of their systems, such as additional documents in a flow or specific types of records. These are specific to each customer and configured by functional analysts as the business needs arise. The spots on the SQL code where these specific enhancements could be done are marked with a comment starting with `## CORTEX-CUSTOMER`. You can check for these comments after cloning the repository with a command like:
 
 ```bash
 grep -R CORTEX-CUSTOMER
@@ -469,7 +469,7 @@ Run the Build command with the target log bucket.
 gcloud builds submit --project <execution project, likely the source> \
     --substitutions=_GCS_BUCKET=<Bucket for logs - Cloud Build Service Account needs access to write here>
 ```
-You can follow the main Build process from the first link of logs:
+You can follow the main Build process from the first link of the logs:
 
 ![Click on Logs are available at](images/logs1.png)
 
@@ -504,7 +504,7 @@ gsutil -m cp -r  gs://<output bucket>/data/ gs://<composer sql bucket>/
 
 In addition to the `CORTEX-CUSTOMER` tags, you may need to further customize the content to add business rules, add other datasets and join them with existing views or tables, reuse the provided templates to call additional APIs, modify deployment scripts, apply further data mesh concepts, etc.  You may also need to slightly adapt some tables or landed APIs to include additional fields not included in our standard. We recommend committing all of these changes with a clear tag in the code to your own fork or clone of our git repositories.
 
-We recommend adopting a CICD pipeline that works for your organization, to keep these enhancements tested and your overall solution in a reliable, robust state. A simple pipeline can reuse our `cloudbuild*.yaml` scripts to trigger end to end deployment periodically, or based on git operations depending on your repository of choice by [automating builds](https://cloud.google.com/build/docs/automating-builds/create-manage-triggers). Using automated testing with your own sample data will help ensure the models always produce what you expect every time someone commits a change. The `config.json` file plays an important role in defining different sets of projects and datasets for development, staging and production environments.
+We recommend adopting a CICD pipeline that works for your organization, to keep these enhancements tested and your overall solution in a reliable, robust state. A simple pipeline can reuse our `cloudbuild*.yaml` scripts to trigger end-to-end deployment periodically, or based on git operations depending on your repository of choice by [automating builds](https://cloud.google.com/build/docs/automating-builds/create-manage-triggers). Using automated testing with your own sample data will help ensure the models always produce what you expect every time someone commits a change. The `config.json` file plays an important role in defining different sets of projects and datasets for development, staging, and production environments.
 
 Tagging your own changes visibly in your fork or clone of a repository together with some deployment and testing automation will be very helpful when performing upgrades. Check out this [guide for upgrade instructions](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/docs/upgrade_recommendations/upgrade_recommendations.md).
 
@@ -538,7 +538,7 @@ We strongly encourage you to fork this repository and apply your changes to the 
 
 ## Enable TURBO mode
 
-For your own customizations and a faster deployment in your own development pipelines, you can use the `turboMode` variable in `config/config.json`. When set to true, the deployment process will dynamically generate a `cloudbuild.views.yaml` file with each view in the right dependencies file (e.g., dependencies_ecc.txt or dependencies_s4.txt) as a single step of the build. This allows for a 10x faster deployment. The limitation is that if an error occurs when deploying a view, the build process will stop, and this is a slow way to find out all possible mismatches between the Cortex views and your datasource when compared to the turboMode=false option. If you are still fixing potential structure mismatches between the SELECT clauses in the views and the fields available in your replicated tables, `TURBO=false` will take longer but will attempt to generate all views even if one fails. This will help identify and fix more errors in a single run.
+For your own customizations and faster deployment in your own development pipelines, you can use the `turboMode` variable in `config/config.json`. When set to true, the deployment process will dynamically generate a `cloudbuild.views.yaml` file with each view in the right dependencies file (e.g., dependencies_ecc.txt or dependencies_s4.txt) as a single step of the build. This allows for a 10x faster deployment. The limitation is that if an error occurs when deploying a view, the build process will stop, and this is a slow way to find out all possible mismatches between the Cortex views and your datasource when compared to the turboMode=false option. If you are still fixing potential structure mismatches between the SELECT clauses in the views and the fields available in your replicated tables, `TURBO=false` will take longer but will attempt to generate all views even if one fails. This will help identify and fix more errors in a single run.
 
 # Support
 
@@ -564,7 +564,7 @@ For example, fields in table T001 are replicated using their equivalent data typ
 
 ### Change Data Capture (CDC) Processing
 
-BigQuery is an append preferred database. This means that the data is not updated or merged during replication. For example, an update to an existing record can be replicated as the same record containing the change. To avoid duplicates, a merge operation needs to be applied afterwards. This is referred to as [Change Data Capture processing](https://cloud.google.com/architecture/database-replication-to-bigquery-using-change-data-capture).
+BigQuery is an append-preferred database. This means that the data is not updated or merged during replication. For example, an update to an existing record can be replicated as the same record containing the change. To avoid duplicates, a merge operation needs to be applied afterward. This is referred to as [Change Data Capture processing](https://cloud.google.com/architecture/database-replication-to-bigquery-using-change-data-capture).
 
 The Data Foundation for SAP includes the option to create scripts for Cloud Composer or Apache Airflow to [merge](https://cloud.google.com/bigquery/docs/reference/standard-sql/dml-syntax) or “upsert” the new records resulting from updates and only keep the latest version in a new dataset. For these scripts to work the tables need to have a field with an operation flag named **operation\_flag**  **(I = insert, U = update, D = delete) **and a timestamp named recordstamp.
 
@@ -601,7 +601,7 @@ Using two different projects is optional. A single project can be used to deploy
 
 ## Setting up CDC processing
 
-During deployment, you can choose to merge changes in real time using a view in BigQuery or scheduling a merge operation in Cloud Composer (or any other instance of Apache Airflow).
+During deployment, you can choose to merge changes in real-time using a view in BigQuery or scheduling a merge operation in Cloud Composer (or any other instance of Apache Airflow).
 
 Cloud Composer can schedule the scripts to process the merge operations periodically. Data is updated to its latest version every time the merge operations execute, however, more frequent merge operations  translate into higher costs.
 
@@ -705,17 +705,17 @@ _* SFDC Raw Ingestion module uses the same Airflow connection as SFDC CDC module
 Please refer to sections for each individual data sources for details.
 
 **Notes:**
-*   Connection name suffixes indicate their intended usage. `_bq` are meant for BigQuery access, while `_dataflow` are meant to run Google Cloud DataFlow jobs.
+*   Connection name suffixes indicate their intended usage. `_bq` is meant for BigQuery access, while `_dataflow` is meant to run Google Cloud DataFlow jobs.
 *   You only need to create connections for Raw if you are using the ingestion modules provided by Cortex.
-*   If you are deploying multiple data sources, for example both SAP and Salesforce, we recommend creating all connections assuming security limitations will be applied to separate service accounts. Alternatively, modify the name of the connection in the template prior to deployment to use the same connection to write into BigQuery as shown below.
-*   We do not recommend using the default connections and service accounts in Airflow, specially in production environments. This recommendation is to comply with the [principle of least privilege ](https://cloud.google.com/iam/docs/using-iam-securely#least_privilege)
-*   If you have [Secret Manager Backend enabled for Airflow](https://cloud.google.com/composer/docs/secret-manager), you can also create these connections within Secret Manager under the same name. Connections in Secret Manager takes precedence over connections created in Airflow.
+*   If you are deploying multiple data sources, for example, both SAP and Salesforce, we recommend creating all connections assuming security limitations will be applied to separate service accounts. Alternatively, modify the name of the connection in the template prior to deployment to use the same connection to write into BigQuery as shown below.
+*   We do not recommend using the default connections and service accounts in Airflow, especially in production environments. This recommendation is to comply with the [principle of least privilege ](https://cloud.google.com/iam/docs/using-iam-securely#least_privilege)
+*   If you have [Secret Manager Backend enabled for Airflow](https://cloud.google.com/composer/docs/secret-manager), you can also create these connections within Secret Manager under the same name. Connections in Secret Manager take precedence over connections created in Airflow.
 
 The GCS bucket structure for some of the template DAG expects the folders to be in /data/bq\_data\_replication. You can modify this path prior to deployment.
 
 ![alt_text](images/20.png "image_tooltip")
 
-If you do not have an environment of Cloud Composer available yet, you can create one afterwards and move the files into the DAG bucket.
+If you do not have an environment of Cloud Composer available yet, you can create one afterward and move the files into the DAG bucket.
 
 **Note**: The scripts that process data in Airflow or Cloud Composer are purposefully generated separately from the Airflow-specific scripts. This allows you to port those scripts to another tool of choice.
 
@@ -781,14 +781,14 @@ You need to login as an administrator to your Salesforce instance to complete th
 
 1. Create or identify a profile in Salesforce that
       *   Is granted `permission for Apex REST Services & API Enabled` under **System Permissions**.
-      *   Is granted `View All` permission for all objects that you would like to replicate. For example, Account, Cases, etc. Check for restrictions or issues with your security administrator.
-      *   Is ideally **not granted any permissions related to user interface login** like Salesforce Anywhere in Lightning Experience,Salesforce Anywhere on Mobile,Lightning Experience User,Lightning Login User & etc. Check for restrictions or issues with your security administrator.
-2. Create or use identify existing user in Salesforce. You need to know the user's **user name**, **password**, and **security token**.
+      *   Is granted `View All` permission for all objects that you would like to replicate. For example, Accounts, Cases, etc. Check for restrictions or issues with your security administrator.
+      *   Is ideally **not granted any permissions related to user interface login** like Salesforce Anywhere in Lightning Experience, Salesforce Anywhere on Mobile, Lightning Experience User, Lightning Login User & etc. Check for restrictions or issues with your security administrator.
+2. Create or identify existing user in Salesforce. You need to know the user's **user name**, **password**, and **security token**.
       *   This should ideally be a user dedicated to execute this replication.
       *   The user should be assigned to the profile you have created or identified in Step 1.
       *   You can see **User Name** and reset **Password** here.
       *   You can [reset the security token](https://help.salesforce.com/s/articleView?id=sf.user_security_token.htm&type=5) if you do not have it and it is not used by another process.
-3. Create a [Connected App](https://help.salesforce.com/s/articleView?id=sf.connected_app_overview.htm&type=5). It will be the only communication channel to establish connection to Salesforce from the external world with the help of profile, Salesforce API, standard user credentials and its security token.
+3. Create a [Connected App](https://help.salesforce.com/s/articleView?id=sf.connected_app_overview.htm&type=5). It will be the only communication channel to establish the connection to Salesforce from the external world with the help of a profile, Salesforce API, standard user credentials, and its security token.
       *   Follow the instructions to [enable OAuth Settings for API Integration](https://help.salesforce.com/s/articleView?id=sf.connected_app_create_api_integration.htm&type=5).
       *   Make sure `Require Secret for Web Server Flow` and `Require Secret for Refresh Token Flow` are enabled in **API (Enabled OAuth Settings)** section.
       *   See [the documentation](https://help.salesforce.com/s/articleView?id=sf.connected_app_rotate_consumer_details.htm&type=5) on how to get your **consumer key** (which will be later used as your **Client ID**). Check with your security administrator for issues or restrictions.
@@ -801,7 +801,7 @@ You need to login as an administrator to your Salesforce instance to complete th
       *   Add the newly created Connected App from Step 3.
       *   Click on the **Save** button.
 
-Note down **User Name**, **Password**, **Secret Token** and **Client ID** from steps above.
+Note down **User Name**, **Password**, **Secret Token**, and **Client ID** from steps above.
 
 ### Setting up Google Cloud Secret Manager
 
@@ -821,7 +821,7 @@ Secret Value:
 http://<username>:<password>@https%3A%2F%2F<instance-name>.lightning.force.com?client_id=<client_id>&security_token=<secret-token>
 ```
 
-Where **User Name**, **Password**, **Secret Token** and **Client ID** were noted from the steps above.
+Where **User Name**, **Password**, **Secret Token**, and **Client ID** were noted from the steps above.
 
 See [the documentation](https://help.salesforce.com/s/articleView?id=000384755&type=1) on how to find your **Instance Name**.
 
@@ -876,7 +876,7 @@ Example:
        column: "erdat", partition_type: "time", time_grain: "day"
      }
 ```
-Use following parameters to control partitioning details for a given table:
+Use the following parameters to control partitioning details for a given table:
 
 | Property               | Description                                                            | Value           |
 | ---------------------  | ---------------------------------------------------------------------- | --------------- |
@@ -888,7 +888,7 @@ Use following parameters to control partitioning details for a given table:
 > **NOTE** See BigQuery Table Partition [documentation](https://cloud.google.com/bigquery/docs/partitioned-tables) details to understand these options and related limitations.
 
 #### Table Clustering
-Similarly, clustering can be by specifying `cluster_details`:
+Similarly, clustering can be done by specifying `cluster_details`:
 
 Example:
 ```yaml
