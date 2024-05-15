@@ -11,7 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Holiday Calendar DAG"""
+
+"""
+Holiday Calendar DAG.
+
+This loads last X years worth of holidays for specified countries into a
+BigQuery table.
+"""
 
 import holidays
 import configparser
@@ -22,10 +28,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from datetime import datetime, timedelta
 
-default_args = {
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5)
-}
+default_args = {"retries": 1, "retry_delay": timedelta(minutes=5)}
 
 
 def load_holidays():
@@ -33,11 +36,10 @@ def load_holidays():
                        "holiday_calendar.ini")
     config = configparser.ConfigParser()
     config.read(holiday_ip_path)
-    country_list = config.get("holiday", "country_list")
-    country_list = country_list.split(",")
-    years = config.get("holiday", "year_list")
-    years = years.split(",")
-    years = list(map(int, years))
+    country_list = config.get("holiday", "country_list").split(",")
+    years_to_load = int(config.get("holiday", "years_to_load"))
+    current_year = datetime.today().year
+    years = list(range(current_year - years_to_load + 1, current_year + 1))
     dataset_cdc_processed = config.get("holiday", "dataset_cdc_processed")
     location = config.get("holiday", "location").lower()
     target_table = f"{dataset_cdc_processed}.holiday_calendar"
@@ -47,8 +49,8 @@ def load_holidays():
     df = pd.DataFrame(columns=column_names)
     for country in country_list:
         for year in years:
-            temp = pd.DataFrame(holidays.country_holidays(
-                country=country, years=year).items(),
+            temp = pd.DataFrame(holidays.country_holidays(country=country,
+                                                          years=year).items(),
                                 columns=["HolidayDate", "Description"])
             temp["CountryCode"] = country
             temp["Year"] = str(year)
@@ -58,21 +60,43 @@ def load_holidays():
     df["QuarterOfYear"] = df["HolidayDate"].apply(lambda x: x.quarter)
     df["Week"] = df["HolidayDate"].apply(lambda x: x.week)
     df["HolidayDate"] = df["HolidayDate"].apply(
-                                            lambda x: x.strftime("%Y-%m-%d"))
+        lambda x: x.strftime("%Y-%m-%d"))
     # TODO (vladkol): migrate from pandas to bigquery.Client.insert_rows
     df.to_gbq(target_table,
               table_schema=[
-                  {"name": "HolidayDate", "type": "STRING"},
-                  {"name": "Description", "type": "STRING"},
-                  {"name": "CountryCode", "type": "STRING"},
-                  {"name": "Year", "type": "STRING"},
-                  {"name": "WeekDay", "type": "STRING"},
-                  {"name": "QuarterOfYear", "type": "INTEGER"},
-                  {"name": "Week", "type": "INTEGER"},],
+                  {
+                      "name": "HolidayDate",
+                      "type": "STRING"
+                  },
+                  {
+                      "name": "Description",
+                      "type": "STRING"
+                  },
+                  {
+                      "name": "CountryCode",
+                      "type": "STRING"
+                  },
+                  {
+                      "name": "Year",
+                      "type": "STRING"
+                  },
+                  {
+                      "name": "WeekDay",
+                      "type": "STRING"
+                  },
+                  {
+                      "name": "QuarterOfYear",
+                      "type": "INTEGER"
+                  },
+                  {
+                      "name": "Week",
+                      "type": "INTEGER"
+                  },
+              ],
               project_id=project_id,
               location=location,
               progress_bar=False,
-              if_exists=write_mode) # type: ignore
+              if_exists=write_mode)  # type: ignore
 
 
 with DAG(
@@ -93,4 +117,5 @@ with DAG(
     )
     stop_task = DummyOperator(task_id="stop")
 
+# pylint:disable=pointless-statement
 start_task >> t1 >> stop_task

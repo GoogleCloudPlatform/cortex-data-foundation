@@ -1,8 +1,8 @@
 # **Google Cloud Cortex Framework**
-[Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) helps you accelerate business insights and outcomes with less risk, complexity, and cost with reference architectures, packaged solution deployment content, and integration services to kickstart your data and AI cloud journey. 
+[Google Cloud Cortex Framework](https://cloud.google.com/solutions/cortex) helps you accelerate business insights and outcomes with less risk, complexity, and cost with reference architectures, packaged solution deployment content, and integration services to kickstart your data and AI cloud journey.
 
 ## About Cortex Data Foundation
-**Cortex Data Foundation** is the core architectual component of the Cortex Framework reference architecture and provides packaged analytics artifacts which can be automatically deployed for use with [Google Cloud BigQuery](https://cloud.google.com/bigquery). 
+**Cortex Data Foundation** is the core architectual component of the Cortex Framework reference architecture and provides packaged analytics artifacts which can be automatically deployed for use with [Google Cloud BigQuery](https://cloud.google.com/bigquery).
 
 
 ![Cortex framework](images/cortex_framework.png)
@@ -357,10 +357,6 @@ The following sections are specific to each workload. You do not need to configu
 
 ### \[Optional\] Configure K9  external datasets
 
-#### Configure SAP hierarchies
-
-You can use the configuration in the file [`sets.yaml`](https://github.com/GoogleCloudPlatform/cortex-reporting/blob/main/local_k9/hier_reader/sets.yaml) if you need to generate scripts to flatten hierarchies. See the [Appendix - Configuring the flattener](#sap-only-configuring-the-flattener-for-sap-hierarchies) for options. This step is only executed if the CDC generation flag is set to `true`.
-
 #### Configure external datasets for K9
 
 Some advanced use cases may require external datasets to complement an enterprise system of record such as SAP. In addition to external exchanges consumed from [Analytics hub](https://cloud.google.com/analytics-hub), some datasets may need custom or tailored methods to ingest data and join them with the reporting models.
@@ -383,7 +379,13 @@ Some advanced use cases may require external datasets to complement an enterpris
     [**Analytics hub is currently only supported in EU and US locations**](https://cloud.google.com/bigquery/docs/analytics-hub-introduction) and some datasets, such as NOAA Global Forecast, are only offered in a single multilocation.
     If you are targeting a location different from the one available for the required dataset, we recommend creating a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to copy the new records from the Analytics hub linked dataset followed by a [transfer service](https://cloud.google.com/bigquery-transfer/docs/introduction) to copy those new records into a dataset located in the same location or region as the rest of your deployment. You will then need to adjust the SQL files .
 
-    **Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules (`holidays`, `pytrends`) [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**.
+    **Important Note:** Before copying these DAGs to Cloud Composer, you will need to **add the required python modules [as dependencies](https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies#options_for_managing_python_packages)**.
+
+    Required modules
+    ```
+    pytrends~=4.9.2
+    holidays
+    ```
 
 1. **Sustainability & ESG insights**. Cortex Data Framework combines SAP supplier performance data with advanced ESG insights to compare delivery performance, sustainability & risks more holistically across global operations. For more details, see guide [here](README_Sustainability.md).
 
@@ -549,19 +551,6 @@ To file issues and feature requests against these models or deployers, create an
 
 ## Understanding Change Data Capture
 
-
-### Replicating raw data from SAP
-
-The goal of the Data Foundation is to expose data and analytics models for reporting and applications. The models consume the data replicated from an SAP ECC or SAP S/4HANA system using a preferred replication tool, like those listed in the [Data Integration Guides for SAP](https://cloud.google.com/solutions/sap/docs/sap-data-integration-guides).
-
-Data from SAP ECC or S/4HANA is expected to be replicated in raw form, that is, with the same structure as the tables in SAP and without transformations. The names of the tables in BigQuery should be lower case for cortex data model compatibility reasons.
-
-For example, fields in table T001 are replicated using their equivalent data type in BigQuery, without transformations:
-
-![alt_text](images/15.png "image_tooltip")
-
-
-
 ### Change Data Capture (CDC) Processing
 
 BigQuery is an append preferred database. This means that the data is not updated or merged during replication. For example, an update to an existing record can be replicated as the same record containing the change. To avoid duplicates, a merge operation needs to be applied afterwards. This is referred to as [Change Data Capture processing](https://cloud.google.com/architecture/database-replication-to-bigquery-using-change-data-capture).
@@ -572,10 +561,9 @@ For example, the following image shows the latest records for each partner recor
 
 ![alt_text](images/16.png "image_tooltip")
 
-
 ### Dataset structure
 
-Data from SAP or Salesforce is replicated into a BigQuery dataset  -the source or replicated dataset- and the updated or merged results are inserted into another dataset- the CDC dataset. The reporting views select data from the CDC dataset, to ensure the reporting tools and applications always have the latest version of a table.
+For all supported data sources, data from upstream systems are first replicated into a BigQuery dataset (the _source_ or _replicated dataset_), and the updated or merged results are inserted into another dataset (the _CDC dataset_). The reporting views select data from the CDC dataset, to ensure the reporting tools and applications always have the latest version of a table.
 
 The following flow depicts the CDC processing for SAP, dependent on the `operational_flag` and `recordstamp`.
 
@@ -587,7 +575,6 @@ The following flow depicts the integration from APIs into Raw and CDC processing
 
 Some replication tools can merge or upsert the records when inserting them into BigQuery, so the generation of these scripts is optional. In this case, the setup will only have a single dataset. The REPORTING  dataset will fetch updated records for reporting from that dataset.
 
-
 ## Optional - Using different projects to segregate access
 
 Some customers choose to have different projects for different functions to keep users from having excessive access to some data. The deployment allows for using two projects, one for processing replicated data, where only technical users have access to the raw data, and one for reporting, where business users can query the predefined models or views.
@@ -597,91 +584,6 @@ Some customers choose to have different projects for different functions to keep
 
 
 Using two different projects is optional. A single project can be used to deploy all datasets.
-
-
-## Setting up CDC processing
-
-During deployment, you can choose to merge changes in real time using a view in BigQuery or scheduling a merge operation in Cloud Composer (or any other instance of Apache Airflow).
-
-Cloud Composer can schedule the scripts to process the merge operations periodically. Data is updated to its latest version every time the merge operations execute, however, more frequent merge operations  translate into higher costs.
-
-![alt_text](images/19.png "image_tooltip")
-
-
-The scheduled frequency can be customized to fit the business needs.
-
-You will notice the file uses[ scheduling supported by Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.1/scheduler.html#dag-runs).
-
-The following example shows an extract from the configuration file:
-
-
-```yaml
-data_to_replicate:
-  - base_table: adrc
-    load_frequency: "@hourly"
-  - base_table: adr6
-    target_table: adr6_cdc
-    load_frequency: "@daily"
-```
-
-
-This configuration will:
-
-
-
-1. Create a copy from **`source\_project\_id.REPLICATED\_DATASET.adrc`** into **`target\_project\_id.DATASET\_WITH\_LATEST\_RECORDS.adrc`** if the latter does not exist
-2. Create a CDC script in the specified bucket
-3. Create a copy from `source\_project\_id.REPLICATED\_DATASET.adr6` into `target\_project\_id.DATASET\_WITH\_LATEST\_RECORDS.adr6\_cdc` if the latter does not exist
-4. Create a CDC script in the specified bucket
-
-**SAP only:** If you want to create DAGs or runtime views to process changes for tables that exist in SAP and are not listed in the file, add them to this file before deployment. For example, the following configuration creates a CDC script for custom table “_zztable\_customer”_ and a runtime view to scan changes in real time for another custom table called “_zzspecial\_table”_:
-
-
-```yaml
-  - base_table: zztable_customer
-    load_frequency: "@daily"
-  - base_table: zzspecial_table
-    load_frequency: "RUNTIME"
-```
-
-This will work as long as the table `DD03L` is replicated in the source dataset and the schema of the custom table is present in that table.
-
-### Sample generated template
-The following template generates the processing of changes. Modifications, such as the name of the timestamp field, or additional operations, can be done at this point:
-
-
-```sql
-MERGE `${target_table}` T
-USING (SELECT * FROM `${base_table}` WHERE recordstamp > (SELECT IF(MAX(recordstamp) IS NOT NULL, MAX(recordstamp),TIMESTAMP("1940-12-25 05:30:00+00")) FROM `${target_table}`)) S
-ON ${p_key}
-WHEN MATCHED AND S.operation_flag='D' AND S.is_deleted = true THEN
-  DELETE
-WHEN NOT MATCHED AND S.operation_flag='I' THEN
-  INSERT (${fields})
-  VALUES
-  (${fields})
-WHEN MATCHED AND S.operation_flag='U' THEN
-UPDATE SET
-    ${update_fields}
-```
-
-
-**SAP Only:** Alternatively, if your business requires near-real time insights and the replication tool supports it, the deployment tool accepts the option RUNTIME. This means a CDC script will not be generated. Instead, a  view will scan and fetch the latest available record at runtime for [immediate consistency](https://cloud.google.com/architecture/database-replication-to-bigquery-using-change-data-capture#immediate_consistency_approach).
-
-### CDC fields required for MERGE operations
-The following parameters will be required for the automated generation of change-data-capture batch processes:
-
-*   Source project + dataset: Dataset where the SAP data is streamed or replicated. For the CDC scripts to work by default, the tables need to have a timestamp field (called recordstamp) and an operation field with the following values, all set during replication:
-    *   I: for insert
-    *   U: for update
-    *   D: for deletion
-*   Target project + dataset for the CDC processing: The script generated by default will generate the tables from a copy of the source dataset if they do not exist.
-*   Replicated tables: Tables for which the scripts need to be generated
-*   Processing frequency: Following the Cron notation, how frequently the DAGs are expected to run
-*   Target GCS bucket where the CDC output files will be copied
-*   The name of the connection used by Cloud Composer
-*   Optional: If the result of the CDC processing will remain in the same dataset as the target, you can specify the name of the target table.
-
 
 ## Gathering Cloud Composer Settings
 
@@ -718,149 +620,6 @@ The GCS bucket structure for some of the template DAG expects the folders to be 
 If you do not have an environment of Cloud Composer available yet, you can create one afterwards and move the files into the DAG bucket.
 
 **Note**: The scripts that process data in Airflow or Cloud Composer are purposefully generated separately from the Airflow-specific scripts. This allows you to port those scripts to another tool of choice.
-
-## (SAP Only) Configuring the flattener for SAP hierarchies
-
-The deployment process can optionally flatten hierarchies represented as sets (e.g. transaction GS03) in SAP. The process can also generate the DAGs for these hierarchies to be refreshed periodically and automatically. This process requires configuration prior to the deployment and should be known by a Financial or Controlling consultant or power user.
-
-
-This [video](https://youtu.be/5s0DzRa_7D4) explains how to perform the configuration to flatten hierarchies.
-
-The deployment file takes the following parameters:
-
-*   Name of the set
-*   Class of the set (as listed by SAP in standard table SETCLS)
-*   Organizational Unit: Controlling Area or additional key for the set
-*   Client or Mandant
-*   Reference table for the referenced master data
-*   Reference key field for master data
-*   Additional filter conditions (where clause)
-
-The following are examples of configurations for Cost Centers and Profit Centers including the technical information. If unsure about these parameters, consult with a Finance or Controlling SAP consultant.
-
-
-```
-sets_data:
-#Cost Centers:
-# table: csks, select_fields (cost center): 'kostl', where clause: Controlling Area (kokrs), Valid to (datbi)
-- setname: 'H1'
-  setclass: '0101'
-  orgunit: '1000'
-  mandt:  '800'
-  table: 'csks'
-  key_field: 'kostl'
-  where_clause: [ kokrs = '1000', datbi >= cast('9999-12-31' as date)]
-  load_frequency: "@daily"
-#Profit Centers:
-# setclass: 0106, table: cepc, select_fields (profit center): 'cepc', where clause: Controlling Area (kokrs), Valid to (datbi)
-- setname: 'HE'
-  setclass: '0106'
-  orgunit: '1000'
-  mandt:  '800'
-  table: 'cepc'
-  key_field: 'prctr'
-  where_clause: [ kokrs = '1000', datbi >= cast('9999-12-31' as date) ]
-  load_frequency: "@monthly"
-#G/L Accounts:
-# table: ska1, select_fields (GL Account): 'saknr', where clause: Chart of Accounts (KTOPL), set will be manual. May also need to poll Financial Statement versions.
-
-```
-
-
-This configuration will generate two separate DAGs. For example, if there were two configurations for Cost Center hierarchies, one for Controlling Area 1000 and one for 2000, the DAGs would be 2 different files and separate processes but the target, flattened table would be the same.
-
-**Important:** If re-running the process and re-initializing the load, make sure the tables are truncated. The CDC and initial load processes do not clear the contents of the tables which means the flattened data will be inserted again.
-
-## Configuring Salesforce to BigQuery extraction module
-
-These are the generic steps to use the Salesforce to BigQuery extraction module provided by Data Foundation. Your requirements and flow may vary depending on your system and existing configuration. You can alternatively use other available tools.
-
-### Setting up required credentials & Connected App in Salesforce
-
-You need to login as an administrator to your Salesforce instance to complete the following:
-
-1. Create or identify a profile in Salesforce that
-      *   Is granted `permission for Apex REST Services & API Enabled` under **System Permissions**.
-      *   Is granted `View All` permission for all objects that you would like to replicate. For example, Account, Cases, etc. Check for restrictions or issues with your security administrator.
-      *   Is ideally **not granted any permissions related to user interface login** like Salesforce Anywhere in Lightning Experience,Salesforce Anywhere on Mobile,Lightning Experience User,Lightning Login User & etc. Check for restrictions or issues with your security administrator.
-2. Create or use identify existing user in Salesforce. You need to know the user's **user name**, **password**, and **security token**.
-      *   This should ideally be a user dedicated to execute this replication.
-      *   The user should be assigned to the profile you have created or identified in Step 1.
-      *   You can see **User Name** and reset **Password** here.
-      *   You can [reset the security token](https://help.salesforce.com/s/articleView?id=sf.user_security_token.htm&type=5) if you do not have it and it is not used by another process.
-3. Create a [Connected App](https://help.salesforce.com/s/articleView?id=sf.connected_app_overview.htm&type=5). It will be the only communication channel to establish connection to Salesforce from the external world with the help of profile, Salesforce API, standard user credentials and its security token.
-      *   Follow the instructions to [enable OAuth Settings for API Integration](https://help.salesforce.com/s/articleView?id=sf.connected_app_create_api_integration.htm&type=5).
-      *   Make sure `Require Secret for Web Server Flow` and `Require Secret for Refresh Token Flow` are enabled in **API (Enabled OAuth Settings)** section.
-      *   See [the documentation](https://help.salesforce.com/s/articleView?id=sf.connected_app_rotate_consumer_details.htm&type=5) on how to get your **consumer key** (which will be later used as your **Client ID**). Check with your security administrator for issues or restrictions.
-4. Assign your Connected App created in Step 3 to the profile created in Step 1.
-      *   Select **Setup** from the top right of the Salesforce home screen.
-      *   In the _Quick Find_ box, enter `profile`, then select **Profile**. Search for the profile created / identified in Step 1.
-      *   Open the profile.
-      *   Click the **Assigned Connected Apps** link.
-      *   Click **Edit**.
-      *   Add the newly created Connected App from Step 3.
-      *   Click on the **Save** button.
-
-Note down **User Name**, **Password**, **Secret Token** and **Client ID** from steps above.
-
-### Setting up Google Cloud Secret Manager
-
-The Salesforce-to-BigQuery module relies on [Google Cloud Secret Manager](https://cloud.google.com/secret-manager/docs) to work. This process is thoroughly documented [in the documentation for Cloud Composer](https://cloud.google.com/composer/docs/secret-manager)
-
-Please [create a secret](https://cloud.google.com/secret-manager/docs/create-secret) as follows:
-
-Secret Name:
-
-```
-airflow-connections-salesforce-conn
-```
-
-Secret Value:
-
-```
-http://<username>:<password>@https%3A%2F%2F<instance-name>.lightning.force.com?client_id=<client_id>&security_token=<secret-token>
-```
-
-Where **User Name**, **Password**, **Secret Token** and **Client ID** were noted from the steps above.
-
-See [the documentation](https://help.salesforce.com/s/articleView?id=000384755&type=1) on how to find your **Instance Name**.
-
-### Cloud Composer libraries for Salesforce replication
-
-To execute the Python scripts in the DAGs provided by the Data Foundation, you need to install some dependencies.
-
-For **Airflow version 1.10**, follow [the documentation]((https://cloud.google.com/composer/docs/how-to/using/installing-python-dependencies)) to install the following packages, in order:
-
-```
-tableauserverclient==0.17
-apache-airflow-backport-providers-salesforce==2021.3.3
-```
-
-For **Airflow version 2.x**, follow [the documentation](https://cloud.google.com/composer/docs/composer-2/install-python-dependencies) to install `apache-airflow-providers-salesforce~=5.2.0`.
-
-Here is a command to install **each** required package:
-
-```shell
-$ gcloud composer environments update <ENVIRONMENT_NAME> \
-    --location <LOCATION> \
-     --update-pypi-package <PACKAGE_NAME><EXTRAS_AND_VERSION>
-```
-
-For example,
-
-```shell
-$ gcloud composer environments update my-composer-instance \
-    --location us-central1 \
-     --update-pypi-package apache-airflow-backport-providers-salesforce>=2021.3.3
-```
-### Enable Secret Manager as a backend
-Enable Google Secret Manager as the security backend. See details [here](https://cloud.google.com/composer/docs/secret-manager).
-
-### Allow the Composer service account to access secrets
-Make sure your Composer service account (default: GCE service account) has `Secret Manager Secret Accessor` permission. See details [in the access control documentation](https://cloud.google.com/composer/docs/secret-manager#configure_access_control).
-
-### BigQuery connection in Airflow
-Make sure to create the connection `sfdc_cdc_bq` according to [instructions](#gathering-cloud-composer-settings).
 
 ## Table Partition and Cluster Settings
 For certain settings files (e.g. SAP CDC settings file `cdc_settings.yaml` or all Reporting settings yaml file `reporting_settings.yaml`) provide a way to create materialized tables with clusters or partitions of your choice. This is controlled by the following properties in the settings file:

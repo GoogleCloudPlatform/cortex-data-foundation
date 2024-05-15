@@ -25,9 +25,10 @@ import argparse
 import datetime
 import json
 import logging
+import string
+import sys
 import textwrap
 import typing
-import sys
 
 from pathlib import Path
 
@@ -293,22 +294,51 @@ def _create_table(bq_client: bigquery.Client, full_table_name: str,
         bq_client.delete_table(temp_table_name, not_found_ok=True)
         try:
             bq_client.get_table(temp_table_name)
-            logging.warning("⚠️ Couldn't delete temporary table `%s`."
-                            "Please delete it manually. ⚠️",
-                            temp_table_name)
+            logging.warning(
+                "⚠️ Couldn't delete temporary table `%s`."
+                "Please delete it manually. ⚠️", temp_table_name)
         except NotFound:
             logging.info("Deleted temp table = %s'", temp_table_name)
+
 
 def _generate_table_refresh_sql(bq_client: bigquery.Client,
                                 full_table_name: str, sql_str: str) -> str:
     """Returns sql for refreshing a table with results from a sql query."""
     table_schema = bq_client.get_table(full_table_name).schema
-    table_columns = [("`" + field.name + "`") for field in table_schema]
+    table_columns = [f"`{field.name}`" for field in table_schema]
 
-    table_refresh_sql = ("TRUNCATE TABLE `" + full_table_name + "`;\n" +
-                         "INSERT INTO `" + full_table_name + "` (\n" +
-                         textwrap.indent(",\n".join(table_columns), "  ") +
-                         "\n)\n" + sql_str + ";")
+    # We want to make table refresh atomic in nature. Wrapping TRUNCATE and
+    # INSERT within a transaction achieves that purpose. Without this, it leads
+    # to suboptimal customers experience when some tables miss data (albeit
+    # momentarily) during the table refresh dag execution.
+
+    # TODO: Indent the string below for readability. Handle output using dedent.
+    table_refresh_sql_text = """
+BEGIN
+    BEGIN TRANSACTION;
+
+    TRUNCATE TABLE `${full_table_name}`;
+
+    INSERT INTO `${full_table_name}`
+    (
+        ${table_columns}
+    )
+    ${select_statement}
+    ;
+
+    COMMIT TRANSACTION;
+
+    EXCEPTION WHEN ERROR THEN
+      ROLLBACK TRANSACTION;
+      RAISE USING MESSAGE = @@error.message;
+
+END;
+    """
+
+    table_refresh_sql = string.Template(table_refresh_sql_text).substitute(
+        full_table_name=full_table_name,
+        table_columns=textwrap.indent(",\n".join(table_columns), " " * 8),
+        select_statement=textwrap.indent(sql_str, " " * 4))
 
     logging.debug("Table Refresh SQL = \n%s", table_refresh_sql)
 

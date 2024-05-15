@@ -1,21 +1,24 @@
-# Sustainability & ESG Insights with Cortex Framework
+# Sustainability & ESG insights with Cortex Framework
 
-Due to an increasing demand for transparency and visibility from corporate investors and regulators on climate risk, many corporations have to start reporting on their carbon footprints. Traditionally, sustainability teams rely on spreadsheets and emails to report on their ESG data as it involves various new data sources.
+With increasing demand from customers, corporate investors, and regulators for transparent and sustainable operations, timely insights into environmental, social and governance (ESG) risks and opportunities is important.
 
-Cortex Data Framework combines supplier performance data with advanced ESG insights to compare delivery performance, sustainability & risks more holistically across global operations.
+Cortex Framework enables **vendor ESG performance** insights using Dun & Bradstreet ESG ranking data connected with SAP ERP supplier performance data to help answer questions like:
+* What is my raw material suppliers' ESG performance against industry peers?
+* What is their ability to measure and manage GHG emissions?
+* What is their adherence and commitment to environmental compliance and corporate governance?
 
-## Overview
+## Data model overview
 
+Two BigQuery views are provided for this module, in the `K9 Reporting` dataset:
 
+* `SustainableSourcing` provides ESG Insights for each vendor.
+* `SustainableVendorSourcing` provides vendor performance insights alongside ESG Insights.
+
+You can adjust the [reporting settings file](src/k9/src/sustainability/reporting/sustainability_reporting.yaml) as described in our [README](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/README.md#customizing-reporting_settings-file-configuration).
 
 ![ERD of Sustainability & ESG Insights](images/erd_sustainability.png)
 
-Two Sustainability views are provided for this module, in the `K9 Reporting` dataset:
 
-* `SustainableSourcing` provides ESG Insights for each vendor.
-* `SustainableVendorSourcing` additionally provides vendor performance insights alongside ESG Insights.
-
-You can adjust the [reporting settings file](src/k9/src/sustainability/reporting/sustainability_reporting.yaml) as described in our [README](https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/README.md#customizing-reporting_settings-file-configuration).
 
 ## Prerequisites
 
@@ -26,7 +29,7 @@ The following is required for this module to function:
 
 ## Acquiring Dun & Bradstreet data
 
-Navigate to the [BigQuery Analytics Hub](https://cloud.google.com/analytics-hub) and search for "esg ranking". There is an option to choose between four datasets: `US Full File`, `UK Full File`, `Global Full File` & `Global Financial Services`. Click on one of them, then select `Request Access` to get in touch with D&B for further instructions.
+Navigate to the [BigQuery Analytics Hub](https://cloud.google.com/analytics-hub) and search for "esg ranking". There is an option to choose between four datasets: `US Full File`, `UK Full File`, `Global Full File` & `Global Financial Services`. Click on one of them, then select `Request Access` to get in touch with D&B for further instructions. Alternatively navigate to the [Google Cloud Marketplace](https://console.cloud.google.com/marketplace/product/prod-dnb-mp-data-public/dun-bradstreet-esg-rankings) and select Dun & Bradstreet ESG Intelligence offering.
 
 ![Analytics Hub](images/analytics_hub.png)
 

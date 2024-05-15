@@ -5,76 +5,73 @@ steps:
     {%- if not build_file.wait_for_prev_step %}
     waitFor: ['-']
     {%- endif %}
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |-
-        set -e
+    script: |
+      #!/usr/bin/env bash
+      set -e
 
-        # There are 2 possible locations for create_bq_object.py depending on which
-        # repo we are working with, and we need to know which one it is in.
+      # There are 2 possible locations for create_bq_object.py depending on which
+      # repo we are working with, and we need to know which one it is in.
 
-        if [[ -f "./common/materializer/create_bq_object.py" ]]; then
-          common_base_path="."
-        elif [[ -f "./src/common/materializer/create_bq_object.py" ]]; then
-          common_base_path="./src"
-        else
-          echo "🛑 Required files for Materializer not found. Source files may be corrupt."
-          exit 1
-        fi
+      if [[ -f "./common/materializer/create_bq_object.py" ]]; then
+        common_base_path="."
+      elif [[ -f "./src/common/materializer/create_bq_object.py" ]]; then
+        common_base_path="./src"
+      else
+        echo "🛑 Required files for Materializer not found. Source files may be corrupt."
+        exit 1
+      fi
 
-        export PYTHONPATH=$$PYTHONPATH:${common_base_path}
-        {%- if build_file.sql_file  %}
-        echo "Executing {{ build_file.sql_file }}"
+      export PYTHONPATH=${PYTHONPATH}:${common_base_path}
+      {%- if build_file.sql_file  %}
+      echo "Executing {{ build_file.sql_file }}"
 
-        python ${common_base_path}/common/materializer/create_bq_object.py \
-            --module_name='{{ module_name }}' \
-            --target_dataset_type='{{ target_dataset_type }}' \
-            --target_dataset='{{ target_dataset_name }}' \
-            --jinja_data_file='generated_materializer_build_files/{{ module_name }}/bq_sql_jinja_data.json' \
-            {%- if load_test_data %}
-            --bq_object_setting='{{ build_file.bq_object_setting }}' --load_test_data
-            {%- else %}
-            --bq_object_setting='{{ build_file.bq_object_setting }}'
-            {%- endif %}
+      python ${common_base_path}/common/materializer/create_bq_object.py \
+          --module_name='{{ module_name }}' \
+          --target_dataset_type='{{ target_dataset_type }}' \
+          --target_dataset='{{ target_dataset_name }}' \
+          --jinja_data_file='generated_materializer_build_files/{{ module_name }}/bq_sql_jinja_data.json' \
+          {%- if load_test_data %}
+          --bq_object_setting='{{ build_file.bq_object_setting }}' --load_test_data
+          {%- else %}
+          --bq_object_setting='{{ build_file.bq_object_setting }}'
+          {%- endif %}
 
-        {%- elif build_file.k9_id %}
+      {%- elif build_file.k9_id %}
 
-        echo "Executing Local K9 {{ build_file.k9_id }}"
-        python ${common_base_path}/common/materializer/deploy_local_k9.py \
-            --config_file '{{ config_file }}' \
-            --data_source '{{ module_name }}' \
-            --dataset_type '{{ target_dataset_type }}' \
-            --k9_definition '{{ build_file.k9_definition }}' \
-            --k9_setting '{{ build_file.k9_settings }}' \
-            --log_bucket "${_GCS_LOGS_BUCKET}"
+      echo "Executing Local K9 {{ build_file.k9_id }}"
+      python ${common_base_path}/common/materializer/deploy_local_k9.py \
+          --config_file '{{ config_file }}' \
+          --data_source '{{ module_name }}' \
+          --dataset_type '{{ target_dataset_type }}' \
+          --k9_definition '{{ build_file.k9_definition }}' \
+          --k9_setting '{{ build_file.k9_settings }}' \
+          --log_bucket ${_GCS_LOGS_BUCKET}
 
-        {%- endif %}
+      {%- endif %}
 
 {% endfor %}
 
 {% raw %}
   - name: gcr.io/cloud-builders/gcloud
     id: 'copy_dag_files_to_gcs'
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |-
-        # Copy files to GCS target bucket if we have anything to copy.
-        if [[ $(find generated_materializer_dag_files -type f 2> /dev/null | wc -l) -gt 0 ]]
-        then
-          echo "Copying DAG files to GCS bucket..."
-          echo "gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${_GCS_TGT_BUCKET}/dags/"
-          gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${_GCS_TGT_BUCKET}/dags/
-        else
-          echo "No files to copy to GCS bucket!"
-        fi
+    script: |
+      #!/usr/bin/env bash
+      # Copy files to GCS target bucket if we have anything to copy.
+      if [[ $(find generated_materializer_dag_files -type f 2> /dev/null | wc -l) -gt 0 ]]
+      then
+        echo "Copying DAG files to GCS bucket..."
+        echo "gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${_GCS_TGT_BUCKET}/dags/"
+        gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${_GCS_TGT_BUCKET}/dags/
+      else
+        echo "No files to copy to GCS bucket!"
+      fi
 {% endraw %}
 
 timeout: 15000s
-logsBucket: "gs://$_GCS_LOGS_BUCKET"
+logsBucket: "gs://${_GCS_LOGS_BUCKET}"
 substitutions:
   _EXECUTE_SAMPLES: "false"
 options:
   substitution_option: "ALLOW_LOOSE"
   machineType: "E2_HIGHCPU_32"
+  automapSubstitutions: true

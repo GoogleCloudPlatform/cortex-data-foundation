@@ -16,7 +16,7 @@ The following data sources are available through the Marketing workload:
 
 We use Dataflow pipelines to obtain data from upstream systems. Cloud Composer is used to schedule and monitor these Dataflow pipelines.
 
-## Deployment Configuration for Marketing
+## Deployment configuration for Marketing
 
 | Parameter                                | Meaning                                   | Default Value           | Description                                                             |
 | ------------------                       | -------------                             | ---------------------   | --------------------------------------------------                      |
@@ -42,11 +42,11 @@ We use Dataflow pipelines to obtain data from upstream systems. Cloud Composer i
 | `marketing.Meta.datasets.cdc`            | CDC dataset for Meta                      |                         | CDC dataset for Meta.                                                   |
 | `marketing.Meta.datasets.raw`            | Raw dataset for Meta                      |                         | Raw dataset for Meta.                                                   |
 | `marketing.Meta.datasets.reporting`      | Reporting dataset for Meta                | `"REPORTING_Meta"`      | Reporting dataset for Meta.                                             |
-| `marketing.SFMC.deployCDC`               | Deploy CDC scripts for SFMC               | `true`                  | Generate SFMC CDC processing scripts to run as DAGs in Cloud Composer.  |
-| `marketing.SFMC.fileTransferBucket`      | Bucket with Data Extract files            | -                       | Bucket where SFMC Automation Studio Data Extract files are stored.      |
-| `marketing.SFMC.datasets.cdc`            | CDC dataset for SFMC                      |                         | CDC dataset for SFMC.                                                   |
-| `marketing.SFMC.datasets.raw`            | Raw dataset for SFMC                      |                         | Raw dataset for SFMC.                                                   |
-| `marketing.SFMC.datasets.reporting`      | Reporting dataset for SFMC                | `"REPORTING_SFMC"`      | Reporting dataset for SFMC.                                             |
+| `marketing.SFMC.deployCDC`               | Deploy CDC scripts for SFMC               | `true`                  | Generate Salesforce Marketing Cloud (SFMC) CDC processing scripts to run as DAGs in Cloud Composer.  |
+| `marketing.SFMC.fileTransferBucket`      | Bucket with Data Extract files            | -                       | Bucket where Salesforce Marketing Cloud (SFMC) Automation Studio Data Extract files are stored.      |
+| `marketing.SFMC.datasets.cdc`            | CDC dataset for SFMC                      |                         | CDC dataset for Salesforce Marketing Cloud (SFMC).                                                   |
+| `marketing.SFMC.datasets.raw`            | Raw dataset for SFMC                      |                         | Raw dataset for Salesforce Marketing Cloud (SFMC).                                                   |
+| `marketing.SFMC.datasets.reporting`      | Reporting dataset for SFMC                | `"REPORTING_SFMC"`      | Reporting dataset for Salesforce Marketing Cloud (SFMC).                                             |
 
 
 ## Configure integration for Google Ads
@@ -60,7 +60,7 @@ Cortex Data Foundation integrates with Google Ads in the following way:
 
 The ingestion templates for Google Ads use the [Google Ads API](https://developers.google.com/google-ads/api/docs/start) to retrieve reporting attributes and metrics. The current templates use [version 15](https://developers.google.com/google-ads/api/fields/v15/overview).
 
-#### API Limits:
+#### API limits:
 Relevant limits fo the API (as of this release):
 - Basic access operations/day: 15000 (paginated requests containing valid next_page_token are not counted).
 - Max page size: 10000 rows per page.
@@ -68,9 +68,9 @@ Relevant limits fo the API (as of this release):
 For more details on these API, please consult documents referred above.
 
 ### Configurations
-Following configs are required to be in place for Cortex to successfully bring data from Ads into the Cortex reporting layer.
+The following configurations are required to be in place to successfully bring data from Ads into the Cortex reporting layer.
 
-#### Configure Google Ads Account Authentication
+#### Configure Google Ads account authentication
 1.  Go to Google Cloud Console -> API & Services -> Credentials and create a new credential under “OAuth Client ID”.
     ```
     Application type: “Web Application”
@@ -80,18 +80,20 @@ Following configs are required to be in place for Cortex to successfully bring d
     For more information, see [Using OAuth 2.0 to Access Google APIs](https://developers.google.com/identity/protocols/oauth2/)
 2.  Once the above credential is configured, note the values for `Client ID` and `Client secret` - it will be used later.
 3.  Generate refresh token using "[How to refresh token](https://developers.google.com/identity/protocols/oauth2#5.-refresh-the-access-token,-if-necessary.)".
+
+    > **NOTE**: Cortex Data Foundations will automatically detect and ingest data from all customers (accounts) that are accessible to the credentials used to generate the token.
+
 4.  Now create a secret using Google Cloud Secret Manager (Security -> Secret Manager) with name “`cortex-framework-google-ads-yaml`” using the following format:
     ```
-    {"developer_token": "developer_token_value", "refresh_token": "refresh_token_value", "client_id": "client_id_value", "client_secret": "client_secret_value", "use_proto_plus": False, "login_customer_id": "ads_customer_id"}
+    {"developer_token": "developer_token_value", "refresh_token": "refresh_token_value", "client_id": "client_id_value", "client_secret": "client_secret_value", "use_proto_plus": False}
     ```
     For the values:
     * `developer_token` value : Available in Google Ads account
     * `refresh_token` value: From the step #3 above.
-    * `login_customer_id` value: Available in Google Ads account (Please note that this value should not contain dashes or hyphens)
     * `client_id` value: From the OAuth setup in step #2 above.
     * `client_secret` value: From the configurations in step #2 above.
 
-#### Cloud Composer Connections
+#### Cloud Composer connections
 Create the following connections in Cloud Composer / Airflow:
 Connection Name          | Purpose
 -------------------------|------------------------------------------------------
@@ -99,7 +101,7 @@ Connection Name          | Purpose
 `googleads_cdc_bq`       | For Raw dataset -> CDC dataset transfer
 `googleads_reporting_bq` | For CDC dataset -> Reporting dataset transfer
 
-#### Cloud Composer Service Account permissions
+#### Cloud Composer service account permissions
 The service account used in Cloud Composer (as configured in the `googleads_raw_dataflow` connection above) needs Dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account).
 
 #### Ingestion settings
@@ -160,7 +162,7 @@ Following configs are required to be in place for Cortex to successfully bring d
 #### DTv2 Files GCS Bucket
 Once the Data Transfer V2 is set up, obtain the GCS Bucket name, and make sure the GCS bucket and files under the bucket are readable by the service account running DAGs in Cloud Composer.
 
-#### Set up Cloud Composer Connections
+#### Set up Cloud Composer connections
 Create following connections in Cloud Composer / Airflow:
 Connection Name       | Purpose
 ----------------------|------------------------------------------------------
@@ -168,7 +170,7 @@ Connection Name       | Purpose
 `cm360_cdc_bq`        | For Raw dataset -> CDC dataset transfer
 `cm360_reporting_bq`  | For CDC dataset -> Reporting dataset transfer
 
-#### Cloud Composer Service Account permissions
+#### Cloud Composer service account permissions
 The service account used in Cloud Composer (as configured in the `cm360_raw_dataflow` connection above) needs Dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account).
 
 #### Ingestion settings
@@ -213,7 +215,7 @@ Cortex Data Foundation integrates with TikTok in the following way:
 2. **Raw layer to CDC layer**: Apply CDC process on raw dataset and store the output in CDC dataset. This is accomplished by Cloud Composer DAGs running BigQuery SQLs.
 3. **CDC layer to Reporting layer**: Create final reporting tables from CDC tables in the Reporting dataset. This is accomplished by either creating runtime views on top of CDC tables or running Cloud Composer DAGs for materialized data in BigQuery tables - depending on [how it's configured](./README.md#customizing-reporting_settings-file-configuration).
 
-### TikTok Reporting APIs
+### TikTok reporting APIs
 
 For TikTok, Cortex uses [TikTok Reporting APIs](https://business-api.tiktok.com/portal/docs?id=1751087777884161) as source of truth. The current version is [v1.3](https://business-api.tiktok.com/portal/docs?id=1740579480076290).
 
@@ -222,7 +224,7 @@ Cortex uses [Synchronous](https://business-api.tiktok.com/portal/docs?id=1738864
 ### Configurations
 Following configs are required to for Cortex to successfully bring data from TikTok into Cortex Reporting layer.
 
-#### Configure TikTok Account and Account Authentication
+#### Configure TikTok account and account authentication
 1. Set up a [TikTok Developer Account](https://business-api.tiktok.com/portal/docs?id=1738855176671234), if you don't have it already.
 2. Create an app for Cortex integration if you need to, as guided [here](https://business-api.tiktok.com/portal/docs?id=1738855242728450). Make sure you have selected the following two in the scopes for the app:
     * `Ad Account Management/Ad Account Information`
@@ -233,7 +235,7 @@ Following configs are required to for Cortex to successfully bring data from Tik
     `cortex_tiktok_app_secret`
     `cortex_tiktok_access_token`
 
-#### Set up Cloud Composer Connections
+#### Set up Cloud Composer connections
 Create following connections in Cloud Composer / Airflow:
 Connection Name       | Purpose
 ----------------------|------------------------------------------------------
@@ -241,7 +243,7 @@ Connection Name       | Purpose
 `tiktok_cdc_bq`       | For Raw dataset -> CDC dataset transfer
 `tiktok_reporting_bq` | For CDC dataset -> Reporting dataset transfer
 
-#### Cloud Composer Service Account permissions
+#### Cloud Composer service account permissions
 The service account used in Cloud Composer (as configured in the `tiktok_raw_dataflow` connection above) needs Dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account). Also, the same service account should also have Secret Manager Accessor access.
 
 #### Ingestion settings
@@ -289,8 +291,8 @@ Using PII information (Email, Phone, Name, Phone number etc), the LiveRamp API r
 ### LiveRamp APIs
 [LiveRamp Identity Resolution Retrieval API](https://developers.liveramp.com/rampid-api/reference/getting-started) allows businesses to programmatically resolve PII data to individuals. Cortex uses LiveRamp's [Lookup Endpoint](https://developers.liveramp.com/rampid-api/docs/the-lookup-endpoint-1) by sending hashed PII data over the API call.
 
-### Input and Output tables
-After deploying Cortex, system will create two BQ tables in relevant dataset provided in `config.json`:
+### Input and output tables
+After deploying Cortex, system will create two BigQuery tables in relevant dataset provided in `config.json`:
 
 1. `rampid_lookup_input` table
 
@@ -333,7 +335,7 @@ This is output table containing RampIds for each segment in the input record.  P
 
 ### Configurations
 
-#### Configure LiveRamp Authentication
+#### Configure LiveRamp authentication
 1. [Contact LiveRamp](https://liveramp.com/contact/) to obtain authentication credentials. This should include two fields: Client Id,  Client Secret.
 2. Create a secret using Google Cloud Secret Manager with name "cortex-framework-liveramp", and use the following as value:
 ```
@@ -344,7 +346,7 @@ This is output table containing RampIds for each segment in the input record.  P
 }
 ```
 
-#### Set up Cloud Composer Connection
+#### Set up Cloud Composer connection
 Create following connections in Cloud Composer / Airflow:
 Connection Name   | Purpose
 ------------------|------------------------------------------------------
@@ -372,7 +374,7 @@ Meta imposes a dynamic rate limit when querying the Marketing API. When the rate
 
 Meta Marketing API has 2 tiers of access, Basic and Standard. Standard tier offers much higher limit, and is recommended if you plan to use the Source to Raw ingestion extensively. For more details on these limits and how to attain a higher access tier, please consult [Meta's official documentation](https://developers.facebook.com/docs/marketing-apis/rate-limiting).
 
-If you have Standard tier access, you can lower the value of `_NEXT_REQUEST_DELAY_SEC` constant in `src/Meta/src/raw/pipelines/helpers/meta_client.py` for faster loading times.
+If you have Standard tier access, you can lower the value of `next_request_delay_sec` setting in `src/Meta/src/raw/pipelines/config.ini` for faster loading times.
 
 #### Setting up access and generating access token
 Following steps are required in [Meta Business Manager](https://business.facebook.com/) and [Developer Console](https://developers.facebook.com/) to successfully bring data from Meta into the Cortex.
@@ -393,11 +395,11 @@ Following steps are required in [Meta Business Manager](https://business.faceboo
 
 ### Configurations
 
-#### Setting up Meta Access Token
+#### Setting up Meta access token
 Follow [Cloud Composer documentation](https://cloud.google.com/composer/docs/secret-manager) to enable Secret Manager in Cloud Composer.
 Then, create a secret named `cortex_meta_access_token`, and store the token you've generated in the previous step as content.
 
-#### Cloud Composer Connections
+#### Cloud Composer connections
 Create the following connections in Cloud Composer / Airflow:
 Connection Name          | Purpose
 -------------------------|------------------------------------------------------
@@ -405,7 +407,7 @@ Connection Name          | Purpose
 `meta_cdc_bq`       | For Raw dataset -> CDC dataset transfer
 `meta_reporting_bq` | For CDC dataset -> Reporting dataset transfer
 
-#### Cloud Composer Service Account permissions
+#### Cloud Composer service account permissions
 The service account used in Cloud Composer (as configured in the `meta_raw_dataflow` connection above) needs Dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account).
 
 The service account also require `Secret Manager Secret Accessor` permission. See details [in the access control documentation](https://cloud.google.com/composer/docs/secret-manager#configure_access_control).
@@ -413,7 +415,7 @@ The service account also require `Secret Manager Secret Accessor` permission. Se
 #### Raw DAG settings
 `src/Meta/src/raw/pipelines/config.ini` controls some behavior of the Cloud Composer DAG, as well as how Meta Marketing APIs are consumed. You can find descriptions for each parameter in the file.
 
-#### Request Parameters
+#### Request parameters
 Directory `src/Meta/config/request_parameters` contains an API request specification file for each entity that's extracted from Meta Marketing API.
 
 Each request file contains a list of fields to fetch from Meta Marketing API, one field per row. Consult [Meta Marketing API Reference](https://developers.facebook.com/docs/marketing-api/reference/v19.0) for detailed specifications.
@@ -478,7 +480,7 @@ This is accomplished by Cloud Composer DAGs running BigQuery SQLs.
 This is accomplished by either creating runtime views on top of CDC tables or running
 Cloud Composer DAGs for materialized data in BigQuery tables - depending on [how it's configured](./README.md#customizing-reporting_settings-file-configuration).
 
-### SFMC Data Extraction using Automation Studio
+### Salesforce Marketing Cloud (SFMC) Data Extraction using Automation Studio
 
 [SFMC Automation Studio](https://help.salesforce.com/s/articleView?id=sf.mc_as_automation_studio.htm) allows consumers of SFMC to export their SFMC data to various storage systems.
 Cortex Data Foundation looks for a set of files created with Automation Studio in a GCS bucket.
@@ -494,7 +496,7 @@ Here is the high-level instruction to set up these data extract and export proce
     [Set up a GCS bucket](https://help.salesforce.com/s/articleView?id=sf.mc_overview_set_up_google_cloud_location.htm) that will be used to store files exported from SFMC. Use this bucket name for
     `marketing.SFMC.fileTransferBucket` config parameter.
 
-2. Create Data Extensions.
+2. Create data extensions.
 
     For [each entity](#raw-table-schema) we want to extract data for, create a [Data Extension in Email Studio](https://help.salesforce.com/s/articleView?id=sf.mc_es_create_data_extension.htm&type=5).
     This is needed to identify the data sources from the SFMC internal database.
@@ -519,7 +521,7 @@ Here is the high-level instruction to set up these data extract and export proce
       Domain
     ```
 
-3. Create SQL Query Activities.
+3. Create SQL query activities.
 
     For each entity, create a [SQL Query Activity](https://help.salesforce.com/s/articleView?id=sf.mc_as_use_the_sql_query_activity.htm&type=5). This activity is connected to its corresponding
     data extension created earlier.
@@ -532,7 +534,7 @@ Here is the high-level instruction to set up these data extract and export proce
     *  Select correct data extension as target.
     *  Select “Overwrite” as Data Action.
 
-    Example Query:
+    Example query:
     ```sql
     SELECT
       AccountID,
@@ -551,7 +553,7 @@ Here is the high-level instruction to set up these data extract and export proce
     ```
 
 
-4. Create Data Extract Activities.
+4. Create data extract activities.
 
     Create a [Data Extract Activity ](https://help.salesforce.com/s/articleView?id=sf.mc_as_use_a_data_extract_activity.htm&language=en_us&type=5) for each entity. This activity gets the data
     from the Salesforce Data Extension and extracts it to a csv file.
@@ -561,7 +563,7 @@ Here is the high-level instruction to set up these data extract and export proce
     * Set Extract Type to `Data Extension Extract`.
     * Select "Has column Headers" and "Text Qualified" options.
 
-5. Create File Conversion Activities to convert format from UTF-16 to UTF-8.
+5. Create file conversion activities to convert format from UTF-16 to UTF-8.
 
     By default Salesforce exports CSV files in UTF-16. In this step we convert it to UTF-8 format.
 
@@ -572,7 +574,7 @@ Here is the high-level instruction to set up these data extract and export proce
     * Set Extract Type to `File Convert`
     * Select `UTF8` form the dropdown at `Convert To`.
 
-6. Create File Transfer Activities.
+6. Create file transfer activities.
 
     Create a [File Transfer Activity](https://help.salesforce.com/s/articleView?id=sf.mc_as_using_the_file_transfer_activity.htm&type=5) for each entity.  These activities will move
     the extracted csv files from the Salesforce Safehouse to Google Cloud Buckets.
@@ -587,7 +589,7 @@ Here is the high-level instruction to set up these data extract and export proce
 
 ### Configurations
 
-#### Cloud Composer Connections
+#### Cloud Composer connections
 Create the following connections in Cloud Composer / Airflow:
 Connection Name     | Purpose
 --------------------|------------------------------------------------------
@@ -595,7 +597,7 @@ Connection Name     | Purpose
 `sfmc_cdc_bq`       | For Raw dataset -> CDC dataset transfer
 `sfmc_reporting_bq` | For CDC dataset -> Reporting dataset transfer
 
-#### Cloud Composer Service Account permissions
+#### Cloud Composer service account permissions
 The service account used in Cloud Composer (as configured in the `sfmc_raw_dataflow` connection above) needs Dataflow related permissions. For more, please check [Dataflow documentation](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions#df-service-account).
 
 

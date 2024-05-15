@@ -12,8 +12,6 @@
 #-- See the License for the specific language governing permissions and
 #-- limitations under the License.
 
--- ## EXPERIMENTAL
-
 CREATE TABLE IF NOT EXISTS `{{ project_id_src }}.{{ k9_datasets_processing }}.dun_bradstreet_esg`
 (
   duns BIGINT,

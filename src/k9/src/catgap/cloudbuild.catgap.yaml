@@ -23,13 +23,11 @@
 
 steps:
   - name: 'gcr.io/kittycorn-public/deploy-kittycorn:v2.0'
-    entrypoint: /bin/bash
-    args:
-    - -c
-    - |
+    script: |
+      #!/bin/bash
       set -e
       echo "Deploying CATGAP."
-      export PYTHONPATH=$$PYTHONPATH:./
+      export PYTHONPATH=${PYTHONPATH}:./
       python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./requirements.txt" 1>/dev/null
       python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./catgap_pipeline/requirements.txt" 1>/dev/null
       python3 ./catgap_dag_generator.py --beam-sdk-version "2.53.0"
@@ -37,9 +35,10 @@ steps:
       echo "CATGAP pipeline template has been deployed."
       # Copy generated DAG python to the Target GCS bucket
       echo "Copying DAG files to gs://${_TGT_BUCKET}/dags."
-      gsutil -m cp './generated_dag/catgap_dag.py' gs://'${_TGT_BUCKET}'/dags/CATGAP/
+      gsutil -m cp './generated_dag/catgap_dag.py' gs://${_TGT_BUCKET}/dags/CATGAP/
       echo "✅ DAG files have been copied."
 
-logsBucket: "gs://$_GCS_BUCKET"
+logsBucket: "gs://${_GCS_BUCKET}"
 options:
   substitution_option: "ALLOW_LOOSE"
+  automapSubstitutions: true
