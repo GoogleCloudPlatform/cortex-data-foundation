@@ -36,6 +36,8 @@ DATASETS = [
         (["deploySAP"], "SAP.datasets.raw", "SAP Raw", False),
         (["deploySAP"], "SAP.datasets.cdc", "SAP CDC Processed",
             False),
+        (["deploySAP"], "SAP.datasets.ml", "SAP ML models",
+            True),
         (["deploySAP"], "SAP.datasets.reporting", "SAP Reporting",
             True),
         (["deploySFDC"], "SFDC.datasets.raw", "Salesforce Raw", False),

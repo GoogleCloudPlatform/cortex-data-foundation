@@ -12,8 +12,6 @@
 #-- See the License for the specific language governing permissions and
 #-- limitations under the License.
 
--- ## EXPERIMENTAL
-
 SELECT
   lfa1.MANDT AS Client_MANDT,
   lfa1.LIFNR AS VendorAccountNumber_LIFNR,
@@ -23,18 +21,20 @@ SELECT
   PARSE_DATE('%Y%m%d', CAST(esg_score.load_date AS STRING)) AS LoadDate,
   IF(
     LEAD(PARSE_DATE('%Y%m%d', CAST(esg_score.load_date AS STRING)))
-    OVER (
-      PARTITION BY esg_score.duns
-      ORDER BY PARSE_DATE('%Y%m%d', CAST(esg_score.load_date AS STRING)) ASC
-    ) IS NULL,
-    CURRENT_DATE(),
-    DATE_SUB(
-      LEAD(PARSE_DATE('%Y%m%d', CAST(esg_score.load_date AS STRING)))
       OVER (
         PARTITION BY esg_score.duns
         ORDER BY PARSE_DATE('%Y%m%d', CAST(esg_score.load_date AS STRING)) ASC
-      ),
-      INTERVAL 1 DAY)
+      )
+    IS NULL,
+    CURRENT_DATE(),
+    DATE_SUB(
+      LEAD(PARSE_DATE('%Y%m%d', CAST(esg_score.load_date AS STRING)))
+        OVER (
+          PARTITION BY esg_score.duns
+          ORDER BY PARSE_DATE('%Y%m%d', CAST(esg_score.load_date AS STRING)) ASC
+        ),
+      INTERVAL 1 DAY
+    )
   ) AS EndDate,
   esg_score.INDUSTRY_SECTOR_CATEGORY AS Industry,
   esg_score.MAJOR_INDUSTRY_CATEGORY AS SectorCategory,
@@ -71,10 +71,13 @@ SELECT
   esg_score.GOVERNANCE_RANKING_SCORE AS GovernanceRanking,
   esg_score.THEME39_SCORE AS BusinessEthicsScore,
   esg_score.THEME38_SCORE AS BoardAccountabilityScore,
-  esg_score.VAR1 AS BusinessTransparencyScore,
-  esg_score.VAR2 AS CorporateComplianceBehaviorsScore,
-  esg_score.VAR3 AS GovernanceRelatedCertificationsScore,
-  esg_score.VAR4 AS ShareholderRightsScore,
+  -- The following scores has type STRING in the data dictionary
+  -- but denotes scores between 0-100 both by definition and from
+  -- sample data. Hence the casting to INT.
+  SAFE_CAST(esg_score.VAR1 AS INT64) AS BusinessTransparencyScore,
+  SAFE_CAST(esg_score.VAR2 AS INT64) AS CorporateComplianceBehaviorsScore,
+  SAFE_CAST(esg_score.VAR3 AS INT64) AS GovernanceRelatedCertificationsScore,
+  SAFE_CAST(esg_score.VAR4 AS INT64) AS ShareholderRightsScore,
   esg_score.THEME40_SCORE AS BusinessResilienceAndSustainabilityScore
 FROM
   `{{ project_id_src }}.{{ dataset_cdc_processed }}.lfa1` AS lfa1

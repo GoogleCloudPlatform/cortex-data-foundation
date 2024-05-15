@@ -1,3 +1,44 @@
+## May 2024 - Release 5.4.1
+### Marketing
+*   Table schema directory location re-aligned for Google Ads, CM360 and TikTok: moved from `src/marketing/src/SOURCE/src/table_schema` to  `src/marketing/src/SOURCE/config/table_schema` matching other Marketing sources.
+
+#### Google Ads
+*   `Keywords` view renamed to `KeywordStats`
+*   Added new Reporting views to support Campaign level metrics by country: `CampaignStats`, `CampaignStatsByUserCountry`, `GeoTargetConstant`, new experimental views `CampaignDailyAgg`, `CampaignDailyAggByUserCountry`.
+*   Auto discovery enabled for all accessible customer IDs, therefore `login_customer_id` no longer needs to be explicitly specified in the Secret Manager configuration. See the [Marketing Readme](README_Marketing.md#configure-google-ads-account-authentication) for more information.
+*   Improved readability for Raw View queries.
+
+#### Meta
+*   Updated Source->Raw request specification format to YAML. Required fields can now be specified in a readable format.
+*   Max load days and per request delay can be configured in `src/marketing/src/Meta/src/raw/pipelines/config.ini`.
+*   Added table annotations for Reporting views.
+*   Fixed a bug for Source->Raw load date range causing data to be backfilled multiple times in edge cases.
+
+### SAP Finance
+*   Includes performance optimizations of the hierarchy flattener code for Financial Statement Version, Profit Center and Cost Center hierarchies.
+
+### K9
+
+#### Sustainability
+*   Converted scores to INTEGER type from STRING based on source definition.
+*   Sustainability views are now GA.
+
+#### Holiday Calendar
+*    Holiday calendar updated to correctly load data for most recent years.
+
+### Salesforce Sales Cloud (SFDC)
+*   Added support for [Polymorphic fields](https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_relationships_and_polymorph_keys.htm).
+*   Text encoding is now configurable in `src/SFDC/src/raw_dag_generator/dependencies/config.ini`, with default: utf-8.
+
+### Readme Updates
+*   Moved SAP and Salesforce Sales Cloud (SFDC) content from main README to their respective README files.
+*   Added Google BigQuery Connector for SAP configuration considerations to [README_SAP](README_SAP.md#prerequisites-for-sap-replication).
+
+### Misc Technical Notes
+*   Reporting table refresh operation is now atomic, which ensures data is available in reporting during table refresh.
+
+
+
 ## March 2024 - Release 5.4
 ### Coming Soon
 The following changes are on our roadmap and are planned to happen **no sooner than two releases** from now. For any questions, please reach out to cortex-support@google.com.
