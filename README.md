@@ -196,20 +196,41 @@ These permissions may vary depending on the setup of the project. Consider the f
 
 ### Configure the Cloud Build account
 
-In the source project, navigate to the [Cloud Build](https://console.cloud.google.com/cloud-build/settings/service-account) and locate the account that will execute the deployment process.
+You need to grant the Cloud Build service account permissions to deploy Cortex.
 
-![cloud build service account](images/5.png "image_tooltip")
+Cloud Build uses a service account to execute builds on your behalf. [Cloud Build service account](https://cloud.google.com/build/docs/cloud-build-service-account) describes how Cloud Build uses the default service account.
 
-Locate the build account in [IAM](https://pantheon.corp.google.com/iam-admin/iam) (make sure it says _cloudbuild_):
+To grant the required permissions, perform the following steps:
 
-![Cloud build service account in IAM](images/6.png "image_tooltip")
+1. Find the default Cloud Build service account by opening [Cloud Shell](https://shell.cloud.google.com/?show=terminal) and executing the following gcloud command:
+    ```bash
+    gcloud builds get-default-service-account --project <execution project id>
+    ```
 
-Grant the following permissions to the Cloud Build service account in both the source and target projects if they are different:
+2.  You should see a response formatted as either:
 
-- BigQuery Data Editor
-- BigQuery Job User
+    `serviceAccountEmail: projects/<project number>/serviceAccounts/<project number>-compute@developer.gserviceaccount.com`
 
-\[Optional\] If changing the default values for Data Mesh in `config/config.json` to implement features beyond descriptions, the executing account (Cloud Build service account) will need to have the following permissions:
+    or
+
+    `serviceAccountEmail: projects/<project number>/serviceAccounts/<project number>@cloudbuild.gserviceaccount.com`
+
+     Note the last part, `<project number>-compute@developer.gserviceaccount.com` or `<project number>@cloudbuild.gserviceaccount.com`, This is your default Cloud Build service account.
+
+
+3. Locate this service account in [IAM](https://console.cloud.google.com/iam-admin/iam):
+    ![Cloud build service account in IAM](images/6.png "Cloud Build service account")
+
+    or
+
+    ![Cloud build compute service account in IAM](images/cloudbuild_compute_sa.png "Cloud Build Compute service account")
+
+4. Grant the following permissions to the Cloud Build service account in the source project (and the target project if deploying to a separate target):
+
+    - BigQuery Data Editor
+    - BigQuery Job User
+
+\[Optional\] If changing the default values for Data Mesh in `config/config.json` to implement features beyond descriptions, the executing account (Cloud Build service account) will need to have the following additional permissions:
 - Policy Tag Admin
 - Data Catalog TagTemplate Owner
 - Dataplex Editor

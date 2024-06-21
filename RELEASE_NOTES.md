@@ -1,3 +1,14 @@
+## June 2024 - Release 5.4.2
+The Cloud Build default service account behavior has changed and will now default to one of two types of service accounts:
+*   The legacy Cloud Build service account `<project number>@cloudbuild.gserviceaccount.com`.
+*   The project's compute service account `<project number>-compute@developer.gserviceaccount.com`.
+
+This release updates the [Quick demo deployment](README.md#quick-demo-deployment) to use either default account.
+
+The guidance in [Configure the Cloud Build account](README.md#configure-the-cloud-build-account) has also been updated with the latest instructions to determine your Cloud Build default account.
+
+Additional details about the Cloud Build change can be found at [Cloud Build Service Account Change](https://cloud.google.com/build/docs/cloud-build-service-account-updates).
+
 ## May 2024 - Release 5.4.1
 ### Marketing
 *   Table schema directory location re-aligned for Google Ads, CM360 and TikTok: moved from `src/marketing/src/SOURCE/src/table_schema` to  `src/marketing/src/SOURCE/config/table_schema` matching other Marketing sources.

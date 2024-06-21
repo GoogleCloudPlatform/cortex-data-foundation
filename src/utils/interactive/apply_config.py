@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,21 +17,36 @@
 import logging
 import typing
 
+from google.api_core import retry
+from google.api_core.exceptions import Conflict
+from google.api_core.exceptions import Forbidden
+from google.api_core.exceptions import Unauthorized
+from google import auth as gauth
+from google.auth.transport import requests
+from google.cloud import bigquery
+from google.cloud import storage
+from google.cloud.bigquery.enums import EntityTypes
 import googleapiclient.discovery
 from googleapiclient.errors import HttpError
-from google.api_core.exceptions import Unauthorized, Forbidden, Conflict
-from google.cloud import bigquery, storage
-from google.cloud.bigquery.enums import EntityTypes
 
 
+_RETRY_TIMEOUT_SEC = 60.0  # Timeout for API retries
 SOURCE_PROJECT_APIS = ["cloudresourcemanager", "storage-component",
                         "bigquery", "cloudbuild"]
 TARGET_PROJECT_APIS = ["storage-component", "bigquery"]
 PROJECT_ROLES = ["roles/bigquery.user"]
 
 
+
+@retry.Retry(predicate=retry.if_exception_type(KeyError, HttpError),
+    timeout=_RETRY_TIMEOUT_SEC)
 def get_cloud_build_account(project_id: str) -> str:
-    """Retrieves GCP project Cloud Build account principal by project name/id.
+    """
+    Retrieves GCP project Cloud Build account principal by project name/id.
+
+    Since this gets called soon after the Cloud Build API is enabled,
+    the @retry.Retry dectorator is called to ensure the API is available before
+    this function proceeds with retrieving the serivce account.
 
     Args:
         project_id (str): project id
@@ -39,11 +54,18 @@ def get_cloud_build_account(project_id: str) -> str:
     Returns:
         str: Cloud Build account principal
     """
-    crm = googleapiclient.discovery.build("cloudresourcemanager", "v1",
-                                          cache_discovery=False)
-    project = crm.projects().get(projectId=project_id).execute()
-    project_number = project["projectNumber"]
-    return f"{project_number}@cloudbuild.gserviceaccount.com"
+
+    # Get default Cloud Build account
+    cloudbuild_account_url =(
+        "https://cloudbuild.googleapis.com/v1/projects/"
+        f"{project_id}/locations/global/defaultServiceAccount")
+
+    credentials,_ = gauth.default(quota_project_id=project_id)
+    session = requests.AuthorizedSession(credentials)
+    response_json = session.get(cloudbuild_account_url).json()
+    sa_email = response_json["serviceAccountEmail"]
+
+    return sa_email.split("/")[-1]
 
 
 def add_bq_roles(client: bigquery.Client, dataset: bigquery.Dataset,
@@ -228,7 +250,7 @@ def add_bucket_roles(client: storage.Client, bucket: storage.Bucket,
             else:
                 if service_account_name not in role_binding["members"]:
                     modified = True
-                    role_binding["members"].append(service_account_name)
+                    role_binding["members"].add(service_account_name)
 
         if modified:
             try:
