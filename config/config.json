@@ -1,17 +1,16 @@
 {
     "testData": true,
     "deploySAP": true,
-    "deploySFDC": true,
-    "deployMarketing": true,
+    "deploySFDC": false,
+    "deployMarketing": false,
     "deployDataMesh": true,
     "turboMode": true,
-    "projectIdSource": "",
-    "projectIdTarget": "",
-    "targetBucket": "",
-    "location": "US",
+    "projectIdSource": "prj-orica-cortex-staging",
+    "projectIdTarget": "prj-orica-cortex-staging",
+    "targetBucket": "cortex-dags-orica",
+    "location": "us-central1",
     "languages": [
-        "E",
-        "S"
+        "E"
     ],
     "currencies": [
         "USD"
@@ -19,8 +18,8 @@
     "testDataProject": "kittycorn-public",
     "k9": {
         "datasets": {
-            "processing": "K9_PROCESSING",
-            "reporting": "K9_REPORTING"
+            "processing": "k9_processing_test",
+            "reporting": "k9_reporting_test"
         }
     },
     "DataMesh": {
@@ -32,12 +31,12 @@
     "SAP": {
         "deployCDC": true,
         "datasets": {
-            "cdc": "",
-            "raw": "",
-            "ml": "ML_MODELS",
-            "reporting": "REPORTING"
+            "cdc": "cdc_cortex_test",
+            "raw": "raw_cortex_test",
+            "ml": "ml_models_cortex_test",
+            "reporting": "reporting_cortex_test"
         },
-        "SQLFlavor": "ecc",
+        "SQLFlavor": "s4",
         "mandt": "100"
     },
     "SFDC": {

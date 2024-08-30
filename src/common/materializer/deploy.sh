@@ -175,8 +175,8 @@ failure=0
 echo "Executing generated gcloud build files...."
 for build_file_name in "${GENERATED_FILES_PARENT_DIR}"/"${MODULE_NAME}"/cloudbuild.materializer.*.yaml; do
   [[ -e "$build_file_name" ]] || break
-  echo -e "gcloud builds submit . --config=\"${build_file_name}\" --substitutions=_GCS_LOGS_BUCKET=\"${GCS_LOGS_BUCKET}\",_GCS_TGT_BUCKET=\"${GCS_TGT_BUCKET}\" "
-  gcloud builds submit . --config="${build_file_name}" --substitutions=_GCS_LOGS_BUCKET="${GCS_LOGS_BUCKET}",_GCS_TGT_BUCKET="${GCS_TGT_BUCKET}"
+  echo -e "gcloud builds submit . --config=\"${build_file_name}\" --substitutions=_GCS_LOGS_BUCKET=\"${GCS_LOGS_BUCKET}\",_GCS_TGT_BUCKET=\"${GCS_TGT_BUCKET}\",_CUSTOM_SERVICE_ACCOUNT=${_CUSTOM_SERVICE_ACCOUNT} "
+  gcloud builds submit . --config="${build_file_name}" --substitutions=_GCS_LOGS_BUCKET="${GCS_LOGS_BUCKET}",_GCS_TGT_BUCKET="${GCS_TGT_BUCKET}",_CUSTOM_SERVICE_ACCOUNT="${_CUSTOM_SERVICE_ACCOUNT}"
   # shellcheck disable=SC2181
   if [ $? -ne 0 ]; then
     failure=1

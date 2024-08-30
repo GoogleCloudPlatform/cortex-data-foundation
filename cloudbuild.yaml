@@ -84,7 +84,7 @@ steps:
         cp -f ${_CONFIG_FILE} src/SAP/SAP_CDC/config/config.json
         gcloud builds submit ./src/SAP/SAP_CDC \
           --config=./src/SAP/SAP_CDC/cloudbuild.cdc.yaml \
-          --substitutions=_GCS_BUCKET=${_GCS_BUCKET}
+          --substitutions=_GCS_BUCKET=${_GCS_BUCKET},_CUSTOM_SERVICE_ACCOUNT=${_CUSTOM_SERVICE_ACCOUNT}
       else
         echo "==Skipping CDC for SAP=="
       fi
@@ -99,7 +99,7 @@ steps:
         cp -f ${_CONFIG_FILE} src/SAP/SAP_REPORTING/config/config.json
         gcloud builds submit ./src/SAP/SAP_REPORTING \
           --config=./src/SAP/SAP_REPORTING/cloudbuild.reporting.yaml \
-          --substitutions=_GCS_BUCKET=${_GCS_BUCKET}
+          --substitutions=_GCS_BUCKET=${_GCS_BUCKET},_CUSTOM_SERVICE_ACCOUNT=${_CUSTOM_SERVICE_ACCOUNT}
       else
         echo "==Skipping Reporting for SAP=="
       fi
@@ -125,7 +125,7 @@ steps:
         if [[ ${_DEPLOY_SAP_} == "true" && ${_SQL_FLAVOUR_} != "union" ]]; then
           gcloud builds submit ./src/SAP/SAP_ML_MODELS \
             --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
-            --substitutions=_PJID_SRC=${_PJID_SRC_},_PJID_TGT=${_PJID_TGT_},_DS_RAW=${_DS_RAW_},_DS_CDC=${_DS_CDC_},_DS_REPORTING=${_DS_REPORTING_},_DS_MODELS=${_DS_MODELS_},_SQL_FLAVOUR=${_SQL_FLAVOUR_},_LOCATION=${_LOCATION_},_MANDT=${_MANDT_},_GCS_BUCKET=${_GCS_BUCKET}
+            --substitutions=_PJID_SRC=${_PJID_SRC_},_PJID_TGT=${_PJID_TGT_},_DS_RAW=${_DS_RAW_},_DS_CDC=${_DS_CDC_},_DS_REPORTING=${_DS_REPORTING_},_DS_MODELS=${_DS_MODELS_},_SQL_FLAVOUR=${_SQL_FLAVOUR_},_LOCATION=${_LOCATION_},_MANDT=${_MANDT_},_GCS_BUCKET=${_GCS_BUCKET},_CUSTOM_SERVICE_ACCOUNT=${_CUSTOM_SERVICE_ACCOUNT}
         else
           echo "==Skipping ML for SAP=="
         fi
@@ -143,7 +143,7 @@ steps:
         cp -f ${_CONFIG_FILE} src/SFDC/config/config.json
         gcloud builds submit ./src/SFDC \
           --config=./src/SFDC/cloudbuild.sfdc.yaml \
-          --substitutions=_GCS_BUCKET=${_GCS_BUCKET}
+          --substitutions=_GCS_BUCKET=${_GCS_BUCKET},_CUSTOM_SERVICE_ACCOUNT=${_CUSTOM_SERVICE_ACCOUNT}
       else
         echo "==Skipping SFDC=="
       fi
@@ -200,7 +200,7 @@ steps:
         cp -f ${_CONFIG_FILE} src/marketing/config/config.json
         gcloud builds submit ./src/marketing \
           --config=./src/marketing/cloudbuild.marketing.yaml \
-          --substitutions=_GCS_LOGS_BUCKET=${_GCS_BUCKET}
+          --substitutions=_GCS_LOGS_BUCKET=${_GCS_BUCKET},_CUSTOM_SERVICE_ACCOUNT=${_CUSTOM_SERVICE_ACCOUNT}
       else
         echo "==Skipping Marketing=="
       fi

@@ -41,7 +41,7 @@ set +e
 echo -e "\n\033[0;32m\033[1mPlease wait while Data Foundation is being deployed...\033[0m\n"
 gcloud builds submit --config=cloudbuild.yaml --suppress-logs \
     --project "${cloud_build_project}" \
-    --substitutions=_GCS_BUCKET="${_GCS_BUCKET}" . \
+    --substitutions=_GCS_BUCKET="${_GCS_BUCKET}",_CUSTOM_SERVICE_ACCOUNT="${_CUSTOM_SERVICE_ACCOUNT}" . \
     && _SUCCESS="true"
 if [[ "${_SUCCESS}" != "true" ]]; then
     echo -e "\n🛑 Data Foundation deployment has failed. 🛑"
