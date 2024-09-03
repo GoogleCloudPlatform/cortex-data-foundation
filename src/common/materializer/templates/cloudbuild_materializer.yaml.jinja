@@ -69,6 +69,7 @@ steps:
 
 timeout: 15000s
 logsBucket: "gs://${_GCS_LOGS_BUCKET}"
+serviceAccount: "${_CUSTOM_SERVICE_ACCOUNT}"
 substitutions:
   _EXECUTE_SAMPLES: "false"
 options:

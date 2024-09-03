@@ -41,7 +41,7 @@ steps:
       python3 src/k9/src/deploy_k9.py \
               --config-file ${_CONFIG_FILE} \
               --stage pre \
-              --logs-bucket ${_GCS_BUCKET}
+              --logs-bucket ${_GCS_BUCKET} 
 
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: 'sap-test-harness'
@@ -125,6 +125,7 @@ steps:
         if [[ ${_DEPLOY_SAP_} == "true" && ${_SQL_FLAVOUR_} != "union" ]]; then
           gcloud builds submit ./src/SAP/SAP_ML_MODELS \
             --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
+            --service-account=${_CUSTOM_SERVICE_ACCOUNT} \
             --substitutions=_PJID_SRC=${_PJID_SRC_},_PJID_TGT=${_PJID_TGT_},_DS_RAW=${_DS_RAW_},_DS_CDC=${_DS_CDC_},_DS_REPORTING=${_DS_REPORTING_},_DS_MODELS=${_DS_MODELS_},_SQL_FLAVOUR=${_SQL_FLAVOUR_},_LOCATION=${_LOCATION_},_MANDT=${_MANDT_},_GCS_BUCKET=${_GCS_BUCKET},_CUSTOM_SERVICE_ACCOUNT=${_CUSTOM_SERVICE_ACCOUNT}
         else
           echo "==Skipping ML for SAP=="
@@ -214,7 +215,7 @@ steps:
       python3 src/k9/src/deploy_k9.py \
               --config-file ${_CONFIG_FILE} \
               --stage post \
-              --logs-bucket ${_GCS_BUCKET}
+              --logs-bucket ${_GCS_BUCKET} \
 
   - name: gcr.io/kittycorn-public/credly:latest
     id: 'credly-badge'
@@ -238,6 +239,7 @@ steps:
       fi
 
 logsBucket: "gs://${_GCS_BUCKET}"
+serviceAccount: "${_CUSTOM_SERVICE_ACCOUNT}"
 timeout: 32400s
 substitutions:
   _CONFIG_FILE: "config/config.json"
