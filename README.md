@@ -7,7 +7,7 @@
 
 ![Cortex framework](images/cortex_framework.png)
 
-This repository contains predfined analytical views and models to accelerate the build out of an enterprise wide data foundation in BigQuery. The data sources and models available are depicted in the entity-relationship diagrams below:
+This repository contains predefined analytical views and models to accelerate the build out of an enterprise wide data foundation in BigQuery. The data sources and models available are depicted in the entity-relationship diagrams below:
 
 #### Operational related data sources
 -  [SAP ECC](images/erd_ecc.png) ([PDF](docs/erd_ecc.pdf))
