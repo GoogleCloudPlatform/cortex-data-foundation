@@ -1,0 +1,13 @@
+SourceField,TargetField,DataType
+stat_time_day,stat_time_day,DATE
+campaign_name,campaign_name,STRING
+campaign_id,campaign_id,STRING
+adgroup_name,adgroup_name,STRING
+adgroup_id,adgroup_id,STRING
+advertiser_id,advertiser_id,STRING
+advertiser_name,advertiser_name,STRING
+country_code,country_code,STRING
+reach,reach,INT64
+frequency,frequency,FLOAT64
+timezone,timezone,STRING
+display_timezone,display_timezone,STRING

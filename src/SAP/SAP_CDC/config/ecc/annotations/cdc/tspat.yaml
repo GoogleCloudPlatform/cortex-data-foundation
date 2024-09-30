@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tspat"
+description: "Organizational Unit: Sales Divisions: Texts"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spart"
+    description: "Division"
+  - name: "spras"
+    description: "Language Key"
+  - name: "vtext"
+    description: "Name"

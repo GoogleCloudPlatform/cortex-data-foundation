@@ -1,0 +1,330 @@
+# Copyright 2024 Google LLC
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+source_to_raw_tables:
+  - base_table: ad_account
+    load_frequency: "0 0 * * *"
+    entity_type: "adaccount"
+    object_endpoint: "me/adaccounts"
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+    # CORTEX-CUSTOMER:
+    # Optionally add clustering config for each table if required.
+    # cluster_details: {
+    #   columns: []
+    # }
+  - base_table: adset
+    object_endpoint: adsets
+    load_frequency: "0 0 * * *"
+    entity_type: "dimension"
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ads
+    object_endpoint: ads
+    load_frequency: "0 1 * * *"
+    entity_type: "dimension"
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign
+    object_endpoint: campaigns
+    load_frequency: "0 1 * * *"
+    entity_type: "dimension"
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: custom_audience
+    object_endpoint: customaudiences
+    load_frequency: "0 2 * * *"
+    entity_type: "dimension"
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_creative
+    object_endpoint: adcreatives
+    load_frequency: "0 2 * * *"
+    entity_type: "dimension"
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights
+    object_endpoint: campaigns
+    object_id_column: campaign_id
+    load_frequency: "0 3 * * *"
+    entity_type: "fact"
+    action_breakdowns: action_reaction
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_country
+    object_endpoint: campaigns
+    object_id_column: campaign_id
+    load_frequency: "0 3 * * *"
+    entity_type: "fact"
+    breakdowns: country
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_age_and_gender
+    object_endpoint: campaigns
+    object_id_column: campaign_id
+    load_frequency: "0 4 * * *"
+    entity_type: "fact"
+    breakdowns: age,gender
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_placement
+    object_endpoint: campaigns
+    object_id_column: campaign_id
+    load_frequency: "0 4 * * *"
+    entity_type: "fact"
+    breakdowns: publisher_platform,platform_position
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_platform
+    object_endpoint: campaigns
+    object_id_column: campaign_id
+    load_frequency: "0 5 * * *"
+    entity_type: "fact"
+    breakdowns: publisher_platform
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights
+    object_endpoint: adsets
+    object_id_column: adset_id
+    load_frequency: "0 5 * * *"
+    entity_type: "fact"
+    action_breakdowns: action_reaction
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_placement
+    object_endpoint: adsets
+    object_id_column: adset_id
+    load_frequency: "0 6 * * *"
+    entity_type: "fact"
+    breakdowns: publisher_platform,platform_position
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_platform
+    object_endpoint: adsets
+    object_id_column: adset_id
+    load_frequency: "0 6 * * *"
+    entity_type: "fact"
+    breakdowns: publisher_platform
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_age_and_gender
+    object_endpoint: adsets
+    object_id_column: adset_id
+    load_frequency: "0 7 * * *"
+    entity_type: "fact"
+    breakdowns: age,gender
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_country
+    object_endpoint: adsets
+    object_id_column: adset_id
+    load_frequency: "0 7 * * *"
+    entity_type: "fact"
+    breakdowns: country
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights
+    object_endpoint: ads
+    object_id_column: ad_id
+    load_frequency: "0 8 * * *"
+    entity_type: "fact"
+    action_breakdowns: action_reaction
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_country
+    object_endpoint: ads
+    object_id_column: ad_id
+    load_frequency: "0 8 * * *"
+    entity_type: "fact"
+    breakdowns: country
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_age_and_gender
+    object_endpoint: ads
+    object_id_column: ad_id
+    load_frequency: "0 9 * * *"
+    entity_type: "fact"
+    breakdowns: age,gender
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_placement
+    object_endpoint: ads
+    object_id_column: ad_id
+    load_frequency: "0 9 * * *"
+    entity_type: "fact"
+    breakdowns: publisher_platform,platform_position
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_platform
+    object_endpoint: ads
+    object_id_column: ad_id
+    load_frequency: "0 10 * * *"
+    entity_type: "fact"
+    breakdowns: publisher_platform
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+
+raw_to_cdc_tables:
+  - base_table: ad_account
+    load_frequency: "0 1 * * *"
+    row_identifiers: [account_id]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+    # CORTEX-CUSTOMER:
+    # Optionally add clustering config for each table if required.
+    # cluster_details: {
+    #   columns: []
+    # }
+  - base_table: adset
+    load_frequency: "0 1 * * *"
+    row_identifiers: [id]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ads
+    load_frequency: "0 2 * * *"
+    row_identifiers: [id]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign
+    load_frequency: "0 2 * * *"
+    row_identifiers: [id]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: custom_audience
+    load_frequency: "0 3 * * *"
+    row_identifiers: [id]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_creative
+    load_frequency: "0 3 * * *"
+    row_identifiers: [id]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights
+    load_frequency: "0 4 * * *"
+    row_identifiers: [campaign_id,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_country
+    load_frequency: "0 4 * * *"
+    row_identifiers: [campaign_id,country,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_age_and_gender
+    load_frequency: "0 5 * * *"
+    row_identifiers: [campaign_id,age,gender,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_placement
+    load_frequency: "0 5 * * *"
+    row_identifiers: [campaign_id,platform_position,publisher_platform,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: campaign_insights_by_platform
+    load_frequency: "0 6 * * *"
+    row_identifiers: [campaign_id,publisher_platform,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights
+    load_frequency: "0 6 * * *"
+    row_identifiers: [adset_id,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_placement
+    load_frequency: "0 7 * * *"
+    row_identifiers: [adset_id,platform_position,publisher_platform,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_platform
+    load_frequency: "0 7 * * *"
+    row_identifiers: [adset_id,publisher_platform,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_age_and_gender
+    load_frequency: "0 8 * * *"
+    row_identifiers: [adset_id,age,gender,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: adset_insights_by_country
+    load_frequency: "0 8 * * *"
+    row_identifiers: [adset_id,country,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights
+    load_frequency: "0 9 * * *"
+    row_identifiers: [ad_id,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_country
+    load_frequency: "0 9 * * *"
+    row_identifiers: [ad_id,country,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_age_and_gender
+    load_frequency: "0 10 * * *"
+    row_identifiers: [ad_id,age,gender,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_placement
+    load_frequency: "0 10 * * *"
+    row_identifiers: [ad_id,platform_position,publisher_platform,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }
+  - base_table: ad_insights_by_platform
+    load_frequency: "0 11 * * *"
+    row_identifiers: [ad_id,publisher_platform,report_date]
+    partition_details: {
+      column: "report_date", partition_type: "time", time_grain: "day"
+    }

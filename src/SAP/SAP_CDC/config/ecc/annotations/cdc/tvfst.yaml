@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tvfst"
+description: "Billing : Blocking Reason Texts"
+fields:
+  - name: "faksp"
+    description: "Block"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"
+  - name: "vtext"
+    description: "Billing block desc."

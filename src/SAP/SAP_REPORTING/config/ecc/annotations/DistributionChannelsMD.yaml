@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DistributionChannelsMD"
+description: "Distribution Channel Details"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "DistributionChannel_VTWEG"
+    description: "Distribution Channel"
+  - name: "Language_SPRAS"
+    description: "Language Key"
+  - name: "DistributionChannelName_VTEXT"
+    description: "Name"

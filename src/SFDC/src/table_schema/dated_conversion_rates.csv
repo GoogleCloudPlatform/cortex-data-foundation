@@ -1,0 +1,11 @@
+SourceField,TargetField,DataType
+Id,DatedConversionRateId,STRING
+IsoCode,IsoCode,STRING
+StartDate,StartDate,DATE
+NextStartDate,NextStartDate,DATE
+ConversionRate,ConversionRate,FLOAT64
+CreatedDate,CreatedDatestamp,TIMESTAMP
+CreatedById,CreatedById,STRING
+LastModifiedDate,LastModifiedDatestamp,TIMESTAMP
+LastModifiedById,LastModifiedById,STRING
+SystemModstamp,SystemModstamp,TIMESTAMP

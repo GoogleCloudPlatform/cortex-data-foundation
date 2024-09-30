@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Regions_T005S"
+description: "Regions (T005S)"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "CountryKey_LAND1"
+    description: "Country Key"
+  - name: "Region_BLAND"
+    description: "Region"
+  - name: "ProvincialTaxCode_FPRCD"
+    description: "Provincial tax code"
+  - name: "StateOfManufacture_HERBL"
+    description: "State of manufacture"

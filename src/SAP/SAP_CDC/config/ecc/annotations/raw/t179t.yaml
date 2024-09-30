@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t179t"
+description: "Materials: Product hierarchies: Texts"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "prodh"
+    description: "Product Hierarchy"
+  - name: "spras"
+    description: "Language Key"
+  - name: "vtext"
+    description: "Description"

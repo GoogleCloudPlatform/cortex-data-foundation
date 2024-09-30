@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.t023t"
+description: "Material Group Descriptions"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "matkl"
+    description: "Material Group"
+  - name: "spras"
+    description: "Language Key"
+  - name: "wgbez"
+    description: "Material Group Desc."
+  - name: "wgbez60"
+    description: "Material grp desc. 2"

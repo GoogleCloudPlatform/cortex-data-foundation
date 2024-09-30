@@ -1,0 +1,7 @@
+SourceField,TargetField,DataType
+Advertiser ID,advertiser_id,INT64
+Campaign ID,campaign_id,INT64
+Campaign,campaign,STRING
+Campaign Start Date,campaign_start_date,DATE
+Campaign End Date,campaign_end_date,DATE
+Billing Invoice Code,billing_invoice_code,STRING

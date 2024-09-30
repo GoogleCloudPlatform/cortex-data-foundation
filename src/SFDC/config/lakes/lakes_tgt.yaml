@@ -1,0 +1,16 @@
+# Lakes dataclass.
+project: {{ project_id_tgt }}
+lakes:
+  - display_name: "sfdc"
+    ## CORTEX-CUSTOMER: Update to specific region if deployment is multiregion.
+    region: "{{ location }}"
+    description: "Cortex Salesforce datasets"
+    zones:
+      - display_name: "reporting-sfdc"
+        description: "Cortex Salesforce Reporting dataset"
+        zone_type: CURATED
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "reporting-bq-dataset"
+            asset_name: "{{ sfdc_datasets_reporting }}"

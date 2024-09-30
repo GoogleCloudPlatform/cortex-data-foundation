@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SlowMovingThreshold"
+description: "Slow Moving Threshold view for inventory."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Supply Chain"
+      - display_name: "domain"
+        value: "Procurement"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "MaterialType_MTART"
+    description: "Material Type"
+  - name: "ThresholdValue"
+    description: "Threshold Value"

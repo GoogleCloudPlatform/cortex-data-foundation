@@ -1,0 +1,16 @@
+# Lakes dataclass.
+project: {{ project_id_tgt }}
+lakes:
+  - display_name: "marketing-tiktok"
+    ## CORTEX-CUSTOMER: Update to specific region if deployment is multiregion.
+    region: "{{ location }}"
+    description: "Cortex Marketing TikTok datasets"
+    zones:
+      - display_name: "reporting-marketing-tiktok"
+        description: "Cortex Marketing TikTok Reporting dataset"
+        zone_type: CURATED
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "reporting-bq-dataset"
+            asset_name: "{{ marketing_tiktok_datasets_reporting }}"

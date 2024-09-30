@@ -1,0 +1,41 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+sets_data:
+#Cost Centers:
+# table: csks, select_fields (cost center): 'kostl', where clause: Controling Area (kokrs), Valid to (datbi)
+#- setname: 'H1'
+- setname: 'DAIRYFOODS'
+  setclass: '0101'
+  orgunit: 'C001'
+  mandt:  '100'
+  table: 'csks'
+  key_field: 'kostl'
+  where_clause: [ kokrs = 'C001', datbi >= cast('9999-12-31' as date)]
+  load_frequency: "@daily"
+#Profit Centers:
+# setclass: 0106, table: cepc, select_fields (profit center): 'cepc', where clause: Controling Area (kokrs), Valid to (datbi)
+#- Sample Trx: kch4
+- setname: 'DAIRYFOODS'
+  setclass: '0106'
+  orgunit: 'C001'
+  mandt:  '100'
+  table: 'cepc'
+  key_field: 'prctr'
+  where_clause: [ kokrs = 'C001', datbi >= cast('9999-12-31' as date)]
+  load_frequency: "@daily"
+
+#G/L Accounts:
+# table: ska1, select_fields (GL Account): 'saknr', where clause: Chart of Accounts (KTOPL), set will be manual. May also need to poll Finanscial Statement versions.
+

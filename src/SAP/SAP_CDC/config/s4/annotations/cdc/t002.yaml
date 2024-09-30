@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.t002"
+description: "Language Keys (Component BC-I18)"
+fields:
+  - name: "lahq"
+    description: "Degree of Translation of Lang."
+  - name: "laiso"
+    description: "Language Code"
+  - name: "laspez"
+    description: "Language specifications"
+  - name: "spras"
+    description: "Language Key"

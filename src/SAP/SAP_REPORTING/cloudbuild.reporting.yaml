@@ -1,0 +1,139 @@
+#-- Copyright 2023 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--     https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+steps:
+  # init_deployment_config.py leaves the validated config.json file in workspace/config so it's available for other build steps
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "init_deploy_config"
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      echo "Initial configuration ${_CONFIG_FILE}:"
+      cat ${_CONFIG_FILE}
+
+      python3 common/init_deployment_config.py \
+        --config-file ${_CONFIG_FILE} \
+        --sub-validator ""
+
+      echo "Processed configuration:"
+      cat ${_CONFIG_FILE}
+      echo -e "\n--------------------------------"
+
+  # Generate required K9 Processing tables in case they don't exist, so as not to break Reporting.
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "generate_k9_placeholder"
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/bin/bash
+      echo "Creating placeholder K9 Processing tables in case they do not exist."
+      set -e
+      export PYTHONPATH=${PYTHONPATH}:./src
+
+      if [[ ${_TGT_BUCKET} != "" ]]
+      then
+        _TGT_BUCKET_=${_TGT_BUCKET}
+      else
+        _TGT_BUCKET_=$(jq -r ."targetBucket" ${_CONFIG_FILE})
+      fi
+
+      common/materializer/deploy.sh \
+          --gcs_logs_bucket ${_GCS_BUCKET} \
+          --gcs_tgt_bucket ${_TGT_BUCKET_} \
+          --module_name "k9" \
+          --target_type "processing" \
+          --config_file ${_CONFIG_FILE} \
+          --materializer_settings_file config/k9_placeholder_settings.yaml
+      echo "✅ Placeholder K9 Processing tables have been created if they did not exist."
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "generate_prereqs"
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      if [[ ${_TGT_BUCKET} != "" ]]
+      then
+        _TGT_BUCKET_=${_TGT_BUCKET}
+      else
+        _TGT_BUCKET_=$(jq -r ."targetBucket" ${_CONFIG_FILE})
+      fi
+
+      bq_object_settings_file="config/reporting_settings_common_prereqs.yaml"
+
+      # Execute the common report generation script.
+      common/materializer/deploy.sh \
+          --gcs_logs_bucket ${_GCS_BUCKET} \
+          --gcs_tgt_bucket ${_TGT_BUCKET_} \
+          --module_name "SAP" \
+          --target_type "Reporting" \
+          --config_file ${_CONFIG_FILE} \
+          --materializer_settings_file ${bq_object_settings_file} \
+          --k9_manifest ${_K9_MANIFEST_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "reporting"
+    waitFor: ["generate_k9_placeholder", "generate_prereqs"]
+    script: |
+      #!/usr/bin/env bash
+
+      set -e
+      _SQL_FLAVOUR_=$(jq -r ."SAP.SQLFlavor" ${_CONFIG_FILE})
+
+      if [[ ${_TGT_BUCKET} != "" ]]
+      then
+        _TGT_BUCKET_=${_TGT_BUCKET}
+      else
+        _TGT_BUCKET_=$(jq -r ."targetBucket" ${_CONFIG_FILE})
+      fi
+
+      # Reporting setting file is sql flavor specific.
+      bq_object_settings_file="reporting_settings_${_SQL_FLAVOUR_}.yaml"
+
+      # Execute the common report generation script.
+      common/materializer/deploy.sh \
+          --gcs_logs_bucket ${_GCS_BUCKET} \
+          --gcs_tgt_bucket ${_TGT_BUCKET_} \
+          --module_name "SAP" \
+          --target_type "Reporting" \
+          --config_file ${_CONFIG_FILE} \
+          --materializer_settings_file ${bq_object_settings_file} \
+          --k9_manifest ${_K9_MANIFEST_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: 'datamesh'
+    waitFor: ['reporting']
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" ]]; then
+        _SQL_FLAVOR_=$(jq -r ."SAP.SQLFlavor" ${_CONFIG_FILE})
+
+        python3 common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories config/${_SQL_FLAVOR_}/tag_templates \
+            --policy-directories config/${_SQL_FLAVOR_}/policy_taxonomies \
+            --lake-directories config/${_SQL_FLAVOR_}/lakes \
+            --annotation-directories config/${_SQL_FLAVOR_}/annotations
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+logsBucket: "gs://${_GCS_BUCKET}"
+timeout: 18000s
+substitutions:
+  _CONFIG_FILE: "config/config.json"
+  _K9_MANIFEST_FILE: "k9_manifest.yaml"
+options:
+  substitution_option: "ALLOW_LOOSE"
+  automapSubstitutions: true

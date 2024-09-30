@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tj02t"
+description: "System status texts"
+fields:
+  - name: "istat"
+    description: "System status"
+  - name: "spras"
+    description: "Language Key"
+  - name: "txt04"
+    description: "Status"
+  - name: "txt30"
+    description: "Status"

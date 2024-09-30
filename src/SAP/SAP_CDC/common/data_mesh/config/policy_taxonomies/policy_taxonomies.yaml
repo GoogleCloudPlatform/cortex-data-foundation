@@ -1,0 +1,33 @@
+# PolicyTaxonomies dataclass.
+# TODO: clean up with recommended taxonomies.
+project: {{ project_id_tgt }}
+taxonomies:
+  - display_name: "data_sensitivity"
+    description: "pii data taxonomy"
+    policy_tags:
+      - display_name: "geolocation"
+        description: "physical location"
+        ## CORTEX-CUSTOMER: Add readers who can see the plain text data.
+        # See the link below for how to specify members:
+        # https://github.com/googleapis/python-grpc-google-iam-v1/blob/98deb9f3664dd00ef2feedf1632eb689ef7fcbf2/google/iam/v1/policy.proto#L162
+        unmasked_readers: []
+        data_policies:
+          - display_name: "hash_mask"
+            masking_rule: SHA256
+            ## CORTEX-CUSTOMER: Add readers who can see the masked data.
+            # See the link below for how to specify members:
+            # https://github.com/googleapis/python-grpc-google-iam-v1/blob/98deb9f3664dd00ef2feedf1632eb689ef7fcbf2/google/iam/v1/policy.proto#L162
+            masked_readers: []
+        child_policy_tags:
+          - display_name: "lat_long"
+            description: "lat & long"
+          - display_name: "address"
+            description: "physical address"
+  # Another taxonomy.
+  - display_name: "data_origin"
+    description: "data origin taxonomy"
+    policy_tags:
+      - display_name: "user"
+        description: "User data"
+      - display_name: "employee"
+        description: "Employee data"

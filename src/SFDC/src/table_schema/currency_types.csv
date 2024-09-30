@@ -1,0 +1,12 @@
+SourceField,TargetField,DataType
+Id,CurrencyTypeId,STRING
+IsoCode,IsoCode,STRING
+ConversionRate,ConversionRate,FLOAT64
+DecimalPlaces,DecimalPlaces,INT64
+IsActive,IsActive,BOOL
+IsCorporate,IsCorporate,BOOL
+CreatedDate,CreatedDatestamp,TIMESTAMP
+CreatedById,CreatedById,STRING
+LastModifiedDate,LastModifiedDatestamp,TIMESTAMP
+LastModifiedById,LastModifiedById,STRING
+SystemModstamp,SystemModstamp,TIMESTAMP

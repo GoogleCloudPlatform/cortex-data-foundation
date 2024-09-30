@@ -1,0 +1,8 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorLeadTimeOverview"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Supply Chain"
+      - display_name: "domain"
+        value: "Vendor Performance"

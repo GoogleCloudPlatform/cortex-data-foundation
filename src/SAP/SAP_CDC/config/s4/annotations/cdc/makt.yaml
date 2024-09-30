@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.makt"
+description: "Material Descriptions"
+fields:
+  - name: "maktg"
+    description: "Material description"
+  - name: "maktx"
+    description: "Material Description"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "matnr"
+    description: "Material"
+  - name: "spras"
+    description: "Language Key"

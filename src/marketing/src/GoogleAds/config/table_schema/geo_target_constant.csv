@@ -1,0 +1,9 @@
+SourceField,ResponseField,TargetField,DataType
+geo_target_constant.id,id,id,INT64
+geo_target_constant.canonical_name,canonical_name,canonical_name,STRING
+geo_target_constant.country_code,country_code,country_code,STRING
+geo_target_constant.name,name,name,STRING
+geo_target_constant.parent_geo_target,parent_geo_target,parent_geo_target,STRING
+geo_target_constant.resource_name,resource_name,resource_name,STRING
+geo_target_constant.status,status,status,STRING
+geo_target_constant.target_type,target_type,target_type,STRING

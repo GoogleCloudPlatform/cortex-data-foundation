@@ -1,0 +1,33 @@
+source_to_raw_tables:
+  - base_table: auction_ad_performance
+    load_frequency: "@daily"
+    schema_file: auction_ad_performance.csv
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: auction_adgroup_performance
+    load_frequency: "@daily"
+    schema_file: auction_adgroup_performance.csv
+    partition_details: {
+      column: "recordstamp", partition_type: "time", time_grain: "day"
+    }
+
+raw_to_cdc_tables:
+  - base_table: auction_ad_performance
+    raw_table: auction_ad_performance
+    load_frequency: "@daily"
+    schema_file: auction_ad_performance.csv
+    row_identifiers: [advertiser_id,campaign_id,adgroup_id,ad_id,stat_time_day,country_code]
+    partition_details: {
+      column: "stat_time_day", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["country_code"]}
+  - base_table: auction_adgroup_performance
+    raw_table: auction_adgroup_performance
+    load_frequency: "@daily"
+    schema_file: auction_adgroup_performance.csv
+    row_identifiers: [advertiser_id,campaign_id,adgroup_id,stat_time_day,country_code]
+    partition_details: {
+      column: "stat_time_day", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["country_code"]}

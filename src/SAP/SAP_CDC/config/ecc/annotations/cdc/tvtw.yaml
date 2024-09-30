@@ -1,0 +1,9 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tvtw"
+description: "Organizational Unit: Distribution Channels"
+fields:
+  - name: "hide"
+    description: "Hide Value in Input Help"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "vtweg"
+    description: "Distribution Channel"

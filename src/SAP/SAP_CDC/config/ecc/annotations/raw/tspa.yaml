@@ -1,0 +1,9 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tspa"
+description: "Organizational Unit: Sales Divisions"
+fields:
+  - name: "hide"
+    description: "Hide Value in Input Help"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spart"
+    description: "Division"

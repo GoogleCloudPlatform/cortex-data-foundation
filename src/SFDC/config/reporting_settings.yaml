@@ -1,0 +1,104 @@
+# This settings file drives how the BQ objects (tables/views/functions) for
+# Reporting datasets are created.
+#
+# There are two sections:
+#
+#  1. "bq_independent_objects":
+#     All BiqQuery objects that can be created in independentally, without any
+#     other depedencies.
+#     NOTE: When "turbo_mode" is enabled, these BQ objects are created in
+#           parallel.
+#
+#  2. "bq_dependent_objects":
+#      All BiqQuery objects that need to be created in a specific order due to
+#      depedencies.
+#      NOTE: "turbo_mode" does not apply to this section - i.e. each object
+#             will be created one after another.
+#
+#  At least one of the two sections need to be present.
+
+bq_independent_objects:
+
+  - sql_file: src/reporting/ddls/CurrencyTypesMD.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/DatedConversionRatesMD.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/RecordTypesMD.sql
+    type: view
+
+bq_dependent_objects:
+
+  - sql_file: src/reporting/ddls/AccountsMD.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/ContactsMD.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/Cases.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/Events.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/Leads.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/Opportunities.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/Tasks.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/UsersMD.sql
+    type: view
+
+  - sql_file: src/reporting/ddls/CurrencyConversion.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+
+  - sql_file: src/reporting/ddls/CaseManagement.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+      partition_details: {
+        column: "CaseCreatedDatestamp",
+        partition_type: "time",
+        time_grain: "day"
+      }
+      cluster_details: {columns: ["CaseOwnerId", "AccountId"]}
+
+  - sql_file: src/reporting/ddls/LeadsCaptureConversions.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+      partition_details: {
+        column: "LeadCreatedDatestamp",
+        partition_type: "time",
+        time_grain: "day"
+      }
+      cluster_details: {columns: ["LeadSource","LeadOwnerId", "OpportunityOwnerId"]}
+
+  - sql_file: src/reporting/ddls/OpportunityPipeline.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+      partition_details: {
+        column: "OpportunityCreatedDatestamp",
+        partition_type: "time",
+        time_grain: "day"
+      }
+      cluster_details: {columns: ["OpportunityStageName", "OpportunityOwnerId", "AccountId"]}
+
+  - sql_file: src/reporting/ddls/SalesActivities.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+      partition_details: {
+        column: "ActivityCreatedDatestamp",
+        partition_type: "time",
+        time_grain: "day"
+      }
+      cluster_details: {columns: ["AccountId", "WhoId", "LeadOwnerId", "OpportunityOwnerId"]}

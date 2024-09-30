@@ -1,0 +1,14 @@
+SourceField,TargetField,DataType
+Id,RecordTypeId,STRING
+Name,Name,STRING
+DeveloperName,DeveloperName,STRING
+NamespacePrefix,NamespacePrefix,STRING
+Description,Description,STRING
+BusinessProcessId,BusinessProcessId,STRING
+SobjectType,SobjectType,STRING
+IsActive,IsActive,BOOL
+CreatedById,CreatedById,STRING
+CreatedDate,CreatedDatestamp,TIMESTAMP
+LastModifiedById,LastModifiedById,STRING
+LastModifiedDate,LastModifiedDatestamp,TIMESTAMP
+SystemModstamp,SystemModstamp,TIMESTAMP

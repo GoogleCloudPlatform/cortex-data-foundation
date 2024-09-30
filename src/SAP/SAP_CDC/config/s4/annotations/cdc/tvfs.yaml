@@ -1,0 +1,7 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tvfs"
+description: "Billing: Reasons for Blocking"
+fields:
+  - name: "faksp"
+    description: "Billing Block"
+  - name: "mandt"
+    description: "Client (Mandant)"

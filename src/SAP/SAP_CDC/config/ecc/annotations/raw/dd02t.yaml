@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.dd02t"
+description: "SAP DD: SAP Table Texts"
+fields:
+  - name: "as4local"
+    description: "Activation Status"
+  - name: "as4vers"
+    description: "Version"
+  - name: "ddlanguage"
+    description: "Lang."
+  - name: "ddtext"
+    description: "Short Description"
+  - name: "tabname"
+    description: "Table Name"

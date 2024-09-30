@@ -1,0 +1,106 @@
+SourceField,TargetField,DataType
+Activity ID,activity_id,INT64
+Event Time,event_time,INT64
+Event Type,event_type,STRING
+Event Sub-Type,event_subtype,STRING
+User ID,user_id,STRING
+Advertiser ID,advertiser_id,INT64
+Campaign ID,campaign_id,INT64
+Floodlight Configuration,floodlight_configuration,INT64
+Ad ID,ad_id,INT64
+Rendering ID,rendering_id,INT64
+Creative Version,creative_version,INT64
+Site ID (CM360),site_id_cm360,INT64
+Placement ID,placement_id,INT64
+Country Code,country_code,STRING
+State/Region,state_region,STRING
+Browser/Platform ID,browser_platform_id,INT64
+Browser/Platform Version,browser_platform_version,STRING
+Operating System ID,operating_system_id,INT64
+Other Data,other_data,STRING
+ORD Value,ord_value,STRING
+Interaction Time,interaction_time,STRING
+Conversion ID,conversion_id,INT64
+Segment Value 1,segment_value_1,INT64
+Total Conversions,total_conversions,INT64
+Total Revenue,total_revenue,FLOAT64
+Partner1 ID,partner1_id,STRING
+Partner2 ID,partner2_id,STRING
+DV360 Auction ID,dv360_auction_id,STRING
+DV360 Request Time,dv360_request_time,INT64
+DV360 Advertiser ID,dv360_advertiser_id,INT64
+DV360 Insertion Order ID,dv360_insertion_order_id,INT64
+DV360 Line Item ID,dv360_line_item_id,INT64
+DV360 Campaign ID,dv360_campaign_id,INT64
+DV360 Creative ID,dv360_creative_id,INT64
+DV360 Bid Price (USD),dv360_bid_price_usd,INT64
+DV360 Bid Price (Partner Currency),dv360_bid_price_partner_currency,INT64
+DV360 Bid Price (Advertiser Currency),dv360_bid_price_advertiser_currency,INT64
+DV360 URL,dv360_url,STRING
+DV360 Site ID,dv360_site_id,INT64
+DV360 Language,dv360_language,STRING
+DV360 Adx Page Categories,dv360_adx_page_categories,STRING
+DV360 Matching Targeted Keywords,dv360_matching_targeted_keywords,STRING
+DV360 Exchange ID,dv360_exchange_id,INT64
+DV360 Attributed Inventory Source External ID,dv360_attributed_inventory_source_external_id,STRING
+DV360 Attributed Inventory Source Is Public,dv360_attributed_inventory_source_is_public,BOOL
+DV360 Ad Position,dv360_ad_position,INT64
+DV360 Country Code,dv360_country_code,STRING
+DV360 Designated Market Area (DMA) ID,dv360_designated_market_area_dma_id,INT64
+DV360 ZIP/Postal Code,dv360_zip_postal_code,STRING
+DV360 State/Region ID,dv360_state_region_id,INT64
+DV360 City ID,dv360_city_id,INT64
+DV360 Operating System ID,dv360_operating_system_id,INT64
+DV360 Browser/Platform ID,dv360_browser_platform_id,INT64
+DV360 Browser Timezone Offset Minutes,dv360_browser_timezone_offset_minutes,INT64
+DV360 Net Speed,dv360_net_speed,INT64
+DV360 Matching Targeted Segments,dv360_matching_targeted_segments,STRING
+DV360 ISP ID,dv360_isp_id,INT64
+DV360 Device Type,dv360_device_type,INT64
+DV360 Mobile Make ID,dv360_mobile_make_id,INT64
+DV360 Mobile Model ID,dv360_mobile_model_id,INT64
+DV360 Media Cost (USD),dv360_media_cost_usd,INT64
+DV360 Media Cost (Partner Currency),dv360_media_cost_partner_currency,INT64
+DV360 Media Cost (Advertiser Currency),dv360_media_cost_advertiser_currency,INT64
+DV360 Revenue (USD),dv360_revenue_usd,INT64
+DV360 Revenue (Partner Currency),dv360_revenue_partner_currency,INT64
+DV360 Revenue (Advertiser Currency),dv360_revenue_advertiser_currency,INT64
+DV360 Total Media Cost (USD),dv360_total_media_cost_usd,INT64
+DV360 Total Media Cost (Partner Currency),dv360_total_media_cost_partner_currency,INT64
+DV360 Total Media Cost (Advertiser Currency),dv360_total_media_cost_advertiser_currency,INT64
+DV360 CPM Fee 1 (USD),dv360_cpm_fee_1_usd,INT64
+DV360 CPM Fee 1 (Partner Currency),dv360_cpm_fee_1_partner_currency,INT64
+DV360 CPM Fee 1 (Advertiser Currency),dv360_cpm_fee_1_advertiser_currency,INT64
+DV360 CPM Fee 2 (USD),dv360_cpm_fee_2_usd,INT64
+DV360 CPM Fee 2 (Partner Currency),dv360_cpm_fee_2_partner_currency,INT64
+DV360 CPM Fee 2 (Advertiser Currency),dv360_cpm_fee_2_advertiser_currency,INT64
+DV360 CPM Fee 3 (USD),dv360_cpm_fee_3_usd,INT64
+DV360 CPM Fee 3 (Partner Currency),dv360_cpm_fee_3_partner_currency,INT64
+DV360 CPM Fee 3 (Advertiser Currency),dv360_cpm_fee_3_advertiser_currency,INT64
+DV360 CPM Fee 4 (USD),dv360_cpm_fee_4_usd,INT64
+DV360 CPM Fee 4 (Partner Currency),dv360_cpm_fee_4_partner_currency,INT64
+DV360 CPM Fee 4 (Advertiser Currency),dv360_cpm_fee_4_advertiser_currency,INT64
+DV360 CPM Fee 5 (USD),dv360_cpm_fee_5_usd,INT64
+DV360 CPM Fee 5 (Partner Currency),dv360_cpm_fee_5_partner_currency,INT64
+DV360 CPM Fee 5 (Advertiser Currency),dv360_cpm_fee_5_advertiser_currency,INT64
+DV360 Media Fee 1 (USD),dv360_media_fee_1_usd,INT64
+DV360 Media Fee 1 (Partner Currency),dv360_media_fee_1_partner_currency,INT64
+DV360 Media Fee 1 (Advertiser Currency),dv360_media_fee_1_advertiser_currency,INT64
+DV360 Media Fee 2 (USD),dv360_media_fee_2_usd,INT64
+DV360 Media Fee 2 (Partner Currency),dv360_media_fee_2_partner_currency,INT64
+DV360 Media Fee 2 (Advertiser Currency),dv360_media_fee_2_advertiser_currency,INT64
+DV360 Media Fee 3 (USD),dv360_media_fee_3_usd,INT64
+DV360 Media Fee 3 (Partner Currency),dv360_media_fee_3_partner_currency,INT64
+DV360 Media Fee 3 (Advertiser Currency),dv360_media_fee_3_advertiser_currency,INT64
+DV360 Media Fee 4 (USD),dv360_media_fee_4_usd,INT64
+DV360 Media Fee 4 (Partner Currency),dv360_media_fee_4_partner_currency,INT64
+DV360 Media Fee 4 (Advertiser Currency),dv360_media_fee_4_advertiser_currency,INT64
+DV360 Media Fee 5 (USD),dv360_media_fee_5_usd,INT64
+DV360 Media Fee 5 (Partner Currency),dv360_media_fee_5_partner_currency,INT64
+DV360 Media Fee 5 (Advertiser Currency),dv360_media_fee_5_advertiser_currency,INT64
+DV360 Data Fees (USD),dv360_data_fees_usd,INT64
+DV360 Data Fees (Partner Currency),dv360_data_fees_partner_currency,INT64
+DV360 Data Fees (Advertiser Currency),dv360_data_fees_advertiser_currency,INT64
+DV360 Billable Cost (USD),dv360_billable_cost_usd,INT64
+DV360 Billable Cost (Partner Currency),dv360_billable_cost_partner_currency,INT64
+DV360 Billable Cost (Advertiser Currency),dv360_billable_cost_advertiser_currency,INT64

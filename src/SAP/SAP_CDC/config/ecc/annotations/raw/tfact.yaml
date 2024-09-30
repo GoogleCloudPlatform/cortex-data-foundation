@@ -1,0 +1,9 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tfact"
+description: "Factory calendar texts"
+fields:
+  - name: "ident"
+    description: "Factory Calendar ID"
+  - name: "ltext"
+    description: "Text"
+  - name: "spras"
+    description: "Language Key"

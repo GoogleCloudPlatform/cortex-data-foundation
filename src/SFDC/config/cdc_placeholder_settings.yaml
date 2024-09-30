@@ -1,0 +1,14 @@
+# This settings file drives how placeholder BQ objects (tables/views/functions) for
+# CDC datasets are created.
+#
+# These are scripts that ensures that necessary dependency tables are created in CDC
+# in case they do not exist for whatever reason, so Reporting views do not break.
+# This is only executed if _DEPLOY_CDC=true.
+
+bq_independent_objects:
+
+  - sql_file: src/cdc_placeholders/ddls/currency_types.sql
+    type: script
+
+  - sql_file: src/cdc_placeholders/ddls/dated_conversion_rates.sql
+    type: script

@@ -1,0 +1,45 @@
+{
+    "testData": true,
+    "deploySAP": true,
+    "deployDataMesh": true,
+    "turboMode": true,
+    "projectIdSource": "",
+    "projectIdTarget": "",
+    "location": "US",
+    "targetBucket": "",
+    "languages": [
+        "E",
+        "S"
+    ],
+    "currencies": [
+        "USD"
+    ],
+    "k9": {
+        "datasets": {
+            "processing": "K9_PROCESSING"
+        }
+    },
+    "DataMesh": {
+        "deployDescriptions": true,
+        "deployLakes": false,
+        "deployCatalog": false,
+        "deployACLs": false
+    },
+    "SAP": {
+        "deployCDC": true,
+        "datasets": {
+            "cdc": "",
+            "raw": "",
+            "ml": "ML_MODELS",
+            "reporting": "REPORTING",
+            "cdcECC": "",
+            "rawECC": "",
+            "cdcS4": "",
+            "rawS4": ""
+        },
+        "SQLFlavor": "ecc",
+        "mandt": "100",
+        "mandtECC": "100",
+        "mandtS4": "100"
+    }
+}

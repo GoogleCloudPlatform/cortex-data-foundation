@@ -1,0 +1,3 @@
+SourceField,TargetField,DataType
+State/Region,state_region,STRING
+State/Region Full Name,state_region_full_name,STRING

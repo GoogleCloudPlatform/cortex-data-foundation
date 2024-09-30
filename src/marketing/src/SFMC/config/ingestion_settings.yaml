@@ -1,0 +1,114 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# CORTEX-CUSTOMER: Consider updating file_pattern below based on your configured
+# file pattern from SFMC Automation Studio should it be different.
+
+source_to_raw_tables:
+  - base_table: bounce
+    load_frequency: "@daily"
+    file_pattern: "bounce_[0-9]*.csv"
+    partition_details: {
+      column: "RecordStamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: click
+    load_frequency: "@daily"
+    file_pattern: "click_[0-9]*.csv"
+    partition_details: {
+      column: "RecordStamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: job
+    load_frequency: "@daily"
+    file_pattern: "job_[0-9]*.csv"
+    partition_details: {
+      column: "RecordStamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: open
+    load_frequency: "@daily"
+    file_pattern: "open_[0-9]*.csv"
+    partition_details: {
+      column: "RecordStamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: sent
+    load_frequency: "@daily"
+    file_pattern: "sent_[0-9]*.csv"
+    partition_details: {
+      column: "RecordStamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: subscribers
+    load_frequency: "@daily"
+    file_pattern: "subscribers_[0-9]*.csv"
+    partition_details: {
+      column: "RecordStamp", partition_type: "time", time_grain: "day"
+    }
+  - base_table: unsubscribe
+    load_frequency: "@daily"
+    file_pattern: "unsubscribe_[0-9]*.csv"
+    partition_details: {
+      column: "RecordStamp", partition_type: "time", time_grain: "day"
+    }
+    # CORTEX-CUSTOMER:
+    # Optionally add clustering config with following structure.
+    # cluster_details: {
+    #   columns: []
+    # }
+raw_to_cdc_tables:
+  - base_table: bounce
+    load_frequency: "@daily"
+    raw_table: bounce
+    partition_details: {
+      column: "EventDate", partition_type: "time", time_grain: "day"
+    }
+    row_identifiers: ["SubscriberKey", "JobID"]
+  - base_table: click
+    load_frequency: "@daily"
+    raw_table: click
+    partition_details: {
+      column: "EventDate", partition_type: "time", time_grain: "day"
+    }
+    row_identifiers: ["SubscriberKey", "JobID", "EventDate"]
+  - base_table: job
+    load_frequency: "@daily"
+    raw_table: job
+    row_identifiers: ["JobID"]
+  - base_table: open
+    load_frequency: "@daily"
+    raw_table: open
+    partition_details: {
+      column: "EventDate", partition_type: "time", time_grain: "day"
+    }
+    row_identifiers: ["SubscriberKey", "JobID", "EventDate"]
+  - base_table: sent
+    load_frequency: "@daily"
+    raw_table: sent
+    partition_details: {
+      column: "EventDate", partition_type: "time", time_grain: "day"
+    }
+    row_identifiers: ["SubscriberKey", "JobID"]
+  - base_table: subscribers
+    load_frequency: "@daily"
+    raw_table: subscribers
+    row_identifiers: ["SubscriberKey"]
+  - base_table: unsubscribe
+    load_frequency: "@daily"
+    raw_table: unsubscribe
+    partition_details: {
+      column: "EventDate", partition_type: "time", time_grain: "day"
+    }
+    row_identifiers: ["SubscriberKey", "JobID", "EventDate"]
+    # CORTEX-CUSTOMER:
+    # Optionally add clustering config with following structure.
+    # cluster_details: {
+    #   columns: []
+    # }

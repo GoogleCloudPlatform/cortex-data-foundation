@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tka02"
+description: "Controlling area assignment"
+fields:
+  - name: "bukrs"
+    description: "Company Code"
+  - name: "gsber"
+    description: "Business Area"
+  - name: "kokrs"
+    description: "Controlling Area"
+  - name: "mandt"
+    description: "Client (Mandant)"

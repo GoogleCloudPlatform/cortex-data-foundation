@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t881t"
+description: "FI-SL Ledger text"
+fields:
+  - name: "langu"
+    description: "Language Key"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "name"
+    description: "Ledger Name"
+  - name: "rldnr"
+    description: "Ledger"

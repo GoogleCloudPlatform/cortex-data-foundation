@@ -1,0 +1,22 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.OneTouchOrder"
+description: "Find if a sales order and its delviery were created and not updated. This view depends on the RAW datasets to contain history. Comment it out from SalesOrders* if the RAW dataset is not available. Replace or update with CDPOS if this history is required."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Sales"
+      - display_name: "domain"
+        value: "Order to Cash"
+fields:
+  - name: "VBAPClient_MANDT"
+    description: "Client (Mandant)"
+  - name: "VBAPSalesDocument_VBELN"
+    description: "VBAP Sales Document"
+  - name: "VBAPSalesDocument_Item_POSNR"
+    description: "VBAP Sales Document"
+  - name: "VBAPTotalOrder_KWMENG"
+    description: "VBAP Total Order"
+  - name: "ActualBilledQuantity_FKIMG"
+    description: "Actual Billed Quantity"
+  - name: "OneTouchOrderCount"
+    description: "One Touch Order Count"

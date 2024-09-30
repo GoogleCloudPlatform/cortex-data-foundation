@@ -1,0 +1,9 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.finsc_ledger_rep"
+description: "Unified Journal Entry Ledger (Auxiliary table for Reporting)"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "rldnr"
+    description: "Ledger"
+  - name: "rldnr_pers"
+    description: "Source Ledger"

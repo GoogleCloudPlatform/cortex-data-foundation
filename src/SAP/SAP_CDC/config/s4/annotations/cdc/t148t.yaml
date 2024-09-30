@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.t148t"
+description: "Special Stock Descriptions"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "sobkz"
+    description: "Special Stock"
+  - name: "sotxt"
+    description: "Special stock descr."
+  - name: "spras"
+    description: "Language Key"

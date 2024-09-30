@@ -1,0 +1,11 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Utility"
+fields:
+  - name: "CURRKEY"
+    description: "CURRKEY"
+  - name: "CURRFIX"
+    description: "CURRFIX"

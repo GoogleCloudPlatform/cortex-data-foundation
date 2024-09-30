@@ -1,0 +1,57 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This settings file drives how the BQ objects (tables/views/functions) for
+# Reporting datasets are created.
+#
+# There are two sections:
+#
+#  1. "bq_independent_objects":
+#     All BigQuery objects that can be created independently, without any
+#     other dependencies.
+#     NOTE: When "turbo_mode" is enabled, these BQ objects are created in
+#           parallel.
+#
+#  2. "bq_dependent_objects":
+#      All BigQuery objects that need to be created in a specific order due to
+#      dependencies.
+#      NOTE: "turbo_mode" does not apply to this section - i.e. each object
+#             will be created one after another.
+#
+#  At least one of the two sections needs to be present.
+
+bq_independent_objects:
+  # SFMC Reporting Layer 1
+  - sql_file: src/SFMC/src/reporting/ddls/Bounce.sql
+    type: view
+  - sql_file: src/SFMC/src/reporting/ddls/Click.sql
+    type: view
+  - sql_file: src/SFMC/src/reporting/ddls/Job.sql
+    type: view
+  - sql_file: src/SFMC/src/reporting/ddls/Open.sql
+    type: view
+  - sql_file: src/SFMC/src/reporting/ddls/Sent.sql
+    type: view
+  - sql_file: src/SFMC/src/reporting/ddls/Subscribers.sql
+    type: view
+  - sql_file: src/SFMC/src/reporting/ddls/Unsubscribe.sql
+    type: view
+
+bq_dependent_objects:
+  # SFMC Reporting Layer 2
+  - sql_file: src/SFMC/src/reporting/ddls/JobAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+      cluster_details: {columns: ["SchedDate"]}

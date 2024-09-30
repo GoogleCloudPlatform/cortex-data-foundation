@@ -1,0 +1,24 @@
+# Lakes dataclass.
+project: {{ project_id_src }}
+lakes:
+  - display_name: "marketing-googleads"
+    ## CORTEX-CUSTOMER: Update to specific region if deployment is multiregion.
+    region: "{{ location }}"
+    description: "Cortex Marketing Google Ads datasets"
+    zones:
+      - display_name: "raw-marketing-googleads"
+        description: "Cortex Marketing Google Ads Raw dataset"
+        zone_type: RAW
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "raw-bq-dataset"
+            asset_name: "{{ marketing_googleads_datasets_raw }}"
+      - display_name: "cdc-marketing-googleads"
+        description: "Cortex Marketing Google Ads CDC dataset"
+        zone_type: CURATED
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "cdc-bq-dataset"
+            asset_name: "{{ marketing_googleads_datasets_cdc }}"

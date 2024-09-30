@@ -1,0 +1,15 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SalesOrderDetails_SAMPLE"
+description: "View for sample Looker Studio report. If interested in the report, please contact cortex-support@google.com."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Sales"
+      - display_name: "domain"
+        value: "Order to Cash"
+fields:
+  - name: "Customer"
+    ## CORTEX-CUSTOMER: Update policy tag example to fit your use case.
+    policy_tag_id:
+      display_name: "low"
+      taxonomy: "data_sensitivity"

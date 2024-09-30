@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t157e"
+description: "Text Table: Reason for Movement"
+fields:
+  - name: "bwart"
+    description: "Movement type"
+  - name: "grtxt"
+    description: "Reason for Movement"
+  - name: "grund"
+    description: "Reason for Movement"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"

@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.t006t"
+description: "Dimension Texts"
+fields:
+  - name: "dimid"
+    description: "Dimension"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"
+  - name: "txdim"
+    description: "Dimension text"

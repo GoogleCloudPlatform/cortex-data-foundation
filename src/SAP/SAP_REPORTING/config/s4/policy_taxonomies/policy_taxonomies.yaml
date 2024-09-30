@@ -1,0 +1,13 @@
+project: {{ project_id_tgt }}
+## CORTEX-CUSTOMER: Update policy taxonomies to fit your use case.
+taxonomies:
+  - display_name: "data_sensitivity"
+    description: "pii data taxonomy"
+    policy_tags:
+      - display_name: "low"
+        description: "PII data with low sensitivity"
+        # unmasked_readers: ["group:low_pii_unmasked_readers@example.com"]
+        data_policies:
+          - display_name: "hash_mask"
+            masking_rule: SHA256
+            # masked_readers: ["group:low_pii_masked_readers@example.com"]

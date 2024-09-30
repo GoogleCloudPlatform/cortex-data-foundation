@@ -1,0 +1,5 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tbdls"
+description: "Logical system"
+fields:
+  - name: "logsys"
+    description: "Logical system"

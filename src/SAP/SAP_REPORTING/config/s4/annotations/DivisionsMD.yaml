@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DivisionsMD"
+description: "Divisions Master Data"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "Division_SPART"
+    description: "Division"
+  - name: "LanguageKey_SPRAS"
+    description: "Language Key"
+  - name: "DivisionName_VTEXT"
+    description: "Division Name"

@@ -1,0 +1,6 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tcurx"
+description: "Decimal Places in Currencies"
+fields:
+  - name: "currdec"
+    description: "Decimals"
+  - name: "currkey"

@@ -1,0 +1,8 @@
+# This settings file ensures the existence of required K9 dependencies by
+# creating the K9 Processing dataset plus any placeholders for all
+# required tables / views, in case any does not yet exist.
+
+bq_independent_objects:
+
+  - sql_file: placeholders/calendar_date_dim.sql
+    type: script

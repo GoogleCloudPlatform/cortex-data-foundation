@@ -1,0 +1,9 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t179"
+description: "Materials: Product Hierarchies"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "prodh"
+    description: "Product Hierarchy"
+  - name: "stufe"
+    description: "Level number"

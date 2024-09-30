@@ -1,0 +1,9 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.AccountsPayableOverview"
+description: "Overview view for Accounts Payable. This view mimics the logic in Looker and is not meant to be deployed."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Finance"
+      - display_name: "domain"
+        value: "Accounts Payable"

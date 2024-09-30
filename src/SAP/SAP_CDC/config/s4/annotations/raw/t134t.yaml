@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t134t"
+description: "Material Type Descriptions"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "mtart"
+    description: "Material type"
+  - name: "mtbez"
+    description: "Material Type Desc."
+  - name: "spras"
+    description: "Language Key"

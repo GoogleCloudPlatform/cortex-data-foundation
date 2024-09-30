@@ -1,0 +1,314 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+data_to_replicate:
+{% if sql_flavour.upper() == 'S4' %}
+  - base_table: acdoca
+    load_frequency: "@hourly"
+    cluster_details: {columns: ["rclnt", "rbukrs"]}
+  - base_table: finsc_ld_cmp
+    load_frequency: "@daily"
+  - base_table: finsc_ledger_rep
+    load_frequency: "@daily"
+  - base_table: matdoc
+    load_frequency: "@hourly"
+  - base_table: prcd_elements
+    load_frequency: "@hourly"
+  - base_table: ckmlhd
+    load_frequency: "@daily"
+  - base_table: ckmlcr
+    load_frequency: "@daily"
+  - base_table: hrrp_node
+    load_frequency: "@monthly"
+  - base_table: hrrp_directory
+    load_frequency: "@monthly"
+  - base_table: hrrp_nodet
+    load_frequency: "@monthly"
+  - base_table: sethanahier0101
+    load_frequency: "@monthly"
+  - base_table: sethanahier0106
+    load_frequency: "@monthly"
+  - base_table: finsc_ledger
+    load_frequency: "@yearly"
+  - base_table: finsc_ledger_t
+    load_frequency: "@yearly"
+{% endif %}
+{% if sql_flavour.upper() == 'ECC' %}
+  - base_table: anla
+    load_frequency: "@hourly"
+  - base_table: ankt
+    load_frequency: "@hourly"
+  - base_table: faglflexa
+    load_frequency: "@hourly"
+  - base_table: konv
+    load_frequency: "@daily"
+    partition_details: {
+      column: "kdatu", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["stunr"]}
+  - base_table: mseg
+    load_frequency: "@hourly"
+  - base_table: prps
+    load_frequency: "@hourly"
+  - base_table: vbuk
+    load_frequency: "@hourly"
+  - base_table: vbup
+    load_frequency: "@hourly"
+  - base_table: msfd
+    load_frequency: "@weekly"
+  - base_table: fagl_011pc
+    load_frequency: "@monthly"
+  - base_table: fagl_011qt
+    load_frequency: "@monthly"
+  - base_table: fagl_011zc
+    load_frequency: "@monthly"
+{% endif %}
+  - base_table: adr6
+    load_frequency: "@daily"
+  - base_table: adrc
+    load_frequency: "@daily"
+  - base_table: adrct
+    load_frequency: "@daily"
+  - base_table: bkpf
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "budat", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["bukrs", "gjahr"]}
+  - base_table: afko
+    load_frequency: "@hourly"
+  - base_table: afpo
+    load_frequency: "@hourly"
+  - base_table: aufk
+    load_frequency: "@hourly"
+  - base_table: bseg
+    load_frequency: "@hourly"
+    cluster_details: {columns: ["mandt", "bukrs", "gjahr"]}
+  - base_table: but000
+    load_frequency: "@daily"
+  - base_table: but020
+    load_frequency: "@daily"
+  - base_table: cepc
+    load_frequency: "@daily"
+  - base_table: cepct
+    load_frequency: "@daily"
+  - base_table: csks
+    load_frequency: "@daily"
+  - base_table: cskt
+    load_frequency: "@daily"
+  - base_table: ekbe
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "budat", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["mandt", "vgabe", "ebeln", "bwart"]}
+  - base_table: ekes
+    load_frequency: "@hourly"
+  - base_table: eket
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "eindt", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["mandt", "ebeln"]}
+  - base_table: ekkn
+    load_frequency: "@hourly"
+  - base_table: ekko
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "bedat", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["mandt", "ebeln"]}
+  - base_table: ekpo
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "aedat", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["mandt", "ebeln"]}
+  - base_table: jest
+    load_frequency: "@daily"
+  - base_table: kna1
+    load_frequency: "@daily"
+  - base_table: lfa1
+    load_frequency: "@daily"
+  - base_table: likp
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "erdat", partition_type: "time", time_grain: "month"
+    }
+    cluster_details: {columns: ["vkorg"]}
+  - base_table: lips
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "erdat", partition_type: "time", time_grain: "month"
+    }
+  - base_table: makt
+    load_frequency: "@daily"
+    cluster_details: {columns: ["spras"]}
+  - base_table: mara
+    load_frequency: "@daily"
+  - base_table: marc
+    load_frequency: "@hourly"
+  - base_table: mard
+    load_frequency: "@hourly"
+  - base_table: mast
+    load_frequency: "@monthly"
+  - base_table: mbew
+    load_frequency: "@daily"
+  - base_table: mbewh
+    load_frequency: "@daily"
+  - base_table: mcha
+    load_frequency: "@daily"
+  - base_table: rbco
+    load_frequency: "@hourly"
+  - base_table: rbkp
+    load_frequency: "@hourly"
+  - base_table: rseg
+    load_frequency: "@hourly"
+  - base_table: setleaf
+    load_frequency: "@monthly"
+  - base_table: setnode
+    load_frequency: "@monthly"
+  - base_table: setheadert
+    load_frequency: "@monthly"
+  - base_table: setheader
+    load_frequency: "@monthly"
+  - base_table: ska1
+    load_frequency: "@daily"
+  - base_table: skat
+    load_frequency: "@daily"
+  - base_table: stas
+    load_frequency: "@monthly"
+  - base_table: stko
+    load_frequency: "@monthly"
+  - base_table: stpo
+    load_frequency: "@monthly"
+  - base_table: t001
+    load_frequency: "@once"
+  - base_table: t001k
+    load_frequency: "@once"
+  - base_table: t001l
+    load_frequency: "@once"
+  - base_table: t001w
+    load_frequency: "@once"
+  - base_table: t002
+    load_frequency: "@once"
+  - base_table: t005
+    load_frequency: "@yearly"
+  - base_table: t005k
+    load_frequency: "@yearly"
+  - base_table: t005s
+    load_frequency: "@yearly"
+  - base_table: t005t
+    load_frequency: "@yearly"
+  - base_table: t006
+    load_frequency: "@yearly"
+  - base_table: t006a
+    load_frequency: "@once"
+  - base_table: t006t
+    load_frequency: "@once"
+  - base_table: t009
+    load_frequency: "@once"
+  - base_table: t009b
+    load_frequency: "@once"
+  - base_table: t023
+    load_frequency: "@once"
+  - base_table: t023t
+    load_frequency: "@once"
+  - base_table: t024
+    load_frequency: "@once"
+  - base_table: t024e
+    load_frequency: "@once"
+  - base_table: t134
+    load_frequency: "@once"
+  - base_table: t134t
+    load_frequency: "@once"
+  - base_table: t148t
+    load_frequency: "@once"
+  - base_table: t156t
+    load_frequency: "@once"
+  - base_table: t157e
+    load_frequency: "@once"
+  - base_table: t161
+    load_frequency: "@once"
+  - base_table: t161t
+    load_frequency: "@once"
+  - base_table: t179
+    load_frequency: "@once"
+  - base_table: t179t
+    load_frequency: "@once"
+  - base_table: t881
+    load_frequency: "@once"
+  - base_table: t881t
+    load_frequency: "@once"
+  - base_table: tcurc
+    load_frequency: "@once"
+  - base_table: tcurf
+    load_frequency: "@once"
+  - base_table: tcurr
+    load_frequency: "@daily"
+  - base_table: tcurt
+    load_frequency: "@daily"
+  - base_table: tcurx
+    load_frequency: "@daily"
+  - base_table: tspa
+    load_frequency: "@yearly"
+  - base_table: tspat
+    load_frequency: "@yearly"
+  - base_table: tj02t
+    load_frequency: "@yearly"
+  - base_table: tka02
+    load_frequency: "@yearly"
+  - base_table: tvarvc
+    load_frequency: "@daily"
+  - base_table: tvfst
+    load_frequency: "@yearly"
+  - base_table: tvko
+    load_frequency: "@yearly"
+  - base_table: tvkot
+    load_frequency: "@yearly"
+  - base_table: tvlst
+    load_frequency: "@yearly"
+  - base_table: tvtw
+    load_frequency: "@yearly"
+  - base_table: tvtwt
+    load_frequency: "@yearly"
+  - base_table: vbak
+    load_frequency: "@hourly"
+    partition_details: {
+      column: "audat", partition_type: "time", time_grain: "day"
+    }
+    cluster_details: {columns: ["vkorg"]}
+  - base_table: vbap
+    load_frequency: "@hourly"
+    cluster_details: {columns: ["werks", "lgort"]}
+  - base_table: vbep
+    load_frequency: "@hourly"
+  - base_table: vbfa
+    load_frequency: "@hourly"
+  - base_table: vbpa
+    load_frequency: "@hourly"
+  - base_table: vbrk
+    load_frequency: "@hourly"
+  - base_table: vbrp
+    load_frequency: "@hourly"
+  - base_table: mch1
+    load_frequency: "@daily"
+  - base_table: mska
+    load_frequency: "@weekly"
+  - base_table: mslb
+    load_frequency: "@weekly"
+  - base_table: msku
+    load_frequency: "@weekly"
+  - base_table: mkol
+    load_frequency: "@weekly"

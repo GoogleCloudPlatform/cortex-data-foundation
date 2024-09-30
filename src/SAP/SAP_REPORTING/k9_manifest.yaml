@@ -1,0 +1,42 @@
+dawgs:
+  # - id: # unique k9 id (required)
+  #
+  #   path: # k9 path, relative to k9/src directory (required)
+  #
+  #   entry_point: bash or python file, path relative to relative to k9/src directory,
+  #       The script should accept 2 parameters - config.json path and logs bucket name.
+  #       Current directory will be Data Foundation repo root.
+  #       If no entry_point specified:
+  #           1. All files will be processed with jinja.
+  #           2. All sql files will be executed in alphabetical order.
+  #           3. All files will be recursively copied to the target DAGs bucket
+  #             "dag/{workload}/{dataset_type}/{id}" folder. (id is k9s id)
+  #         !!! "reporting" subfolder will be excluded !!!
+  #
+  #   test_data: # name(s) of test data table(s), multiple names must be comma-separated.
+  #
+
+  - id: currency_conversion
+    path: local_k9/currency_conversion
+
+  - id: hier_reader
+    path: local_k9/hier_reader
+    entry_point: deploy_hier_reader.py
+
+  - id: inventory_snapshots
+    path: local_k9/inventory_snapshots
+
+  - id: prod_hierarchy_texts
+    path: local_k9/prod_hierarchy_texts
+
+  - id: fsv_hierarchy
+    path: local_k9/fsv_hierarchy
+
+  - id: financial_statement
+    path: local_k9/financial_statement
+
+  - id: costcenter_hierarchy
+    path: local_k9/costcenter_hierarchy
+
+  - id: profitcenter_hierarchy
+    path: local_k9/profitcenter_hierarchy

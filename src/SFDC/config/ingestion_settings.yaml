@@ -1,0 +1,85 @@
+salesforce_to_raw_tables:
+  - base_table: accounts
+    load_frequency: "@daily"
+    api_name: Account
+  - base_table: cases
+    load_frequency: "@daily"
+    api_name: Case
+  - base_table: contacts
+    load_frequency: "@daily"
+    api_name: Contact
+## CORTEX-CUSTOMER Please remove entries for currency_types and dated_conversion_rates objects below if
+## Advanced Currency Management is not enabled within your source Salesforce system.
+## See https://help.salesforce.com/s/articleView?id=sf.administration_about_advanced_currency_management.htm
+  - base_table: currency_types
+    load_frequency: "@daily"
+    api_name: CurrencyType
+  - base_table: dated_conversion_rates
+    load_frequency: "@daily"
+    api_name: DatedConversionRate
+  - base_table: events
+    load_frequency: "@daily"
+    api_name: Event
+  - base_table: leads
+    load_frequency: "@daily"
+    api_name: Lead
+  - base_table: opportunities
+    load_frequency: "@daily"
+    api_name: Opportunity
+  - base_table: record_types
+    load_frequency: "@once"
+    api_name: RecordType
+  - base_table: tasks
+    load_frequency: "@daily"
+    api_name: Task
+  - base_table: users
+    load_frequency: "@daily"
+    api_name: User
+raw_to_cdc_tables:
+  - base_table: accounts
+    raw_table: accounts
+    api_name: Account
+    load_frequency: "@daily"
+  - base_table: cases
+    raw_table: cases
+    api_name: Case
+    load_frequency: "@daily"
+  - base_table: contacts
+    raw_table: contacts
+    api_name: Contact
+    load_frequency: "@daily"
+## CORTEX-CUSTOMER Please remove entries for currency_types and dated_conversion_rates objects below if
+## Advanced Currency Management is not enabled within your source Salesforce system.
+## See https://help.salesforce.com/s/articleView?id=sf.administration_about_advanced_currency_management.htm
+  - base_table: currency_types
+    raw_table: currency_types
+    api_name: CurrencyType
+    load_frequency: "@daily"
+  - base_table: dated_conversion_rates
+    raw_table: dated_conversion_rates
+    api_name: DatedConversionRate
+    load_frequency: "@daily"
+  - base_table: events
+    raw_table: events
+    api_name: Event
+    load_frequency: "@daily"
+  - base_table: leads
+    raw_table: leads
+    api_name: Lead
+    load_frequency: "@daily"
+  - base_table: opportunities
+    raw_table: opportunities
+    api_name: Opportunity
+    load_frequency: "@daily"
+  - base_table: record_types
+    raw_table: record_types
+    api_name: RecordType
+    load_frequency: "@once"
+  - base_table: tasks
+    raw_table: tasks
+    api_name: Task
+    load_frequency: "@daily"
+  - base_table: users
+    raw_table: users
+    api_name: User
+    load_frequency: "@daily"

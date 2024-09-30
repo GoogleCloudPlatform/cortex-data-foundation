@@ -1,0 +1,5 @@
+SourceField,TargetField,DataType
+Site ID (CM360),site_id_cm360,INT64
+Site (CM360),site_cm360,STRING
+Site ID (Site Directory),site_id_site_directory,INT64
+Site (Site Directory),site_site_directory,STRING

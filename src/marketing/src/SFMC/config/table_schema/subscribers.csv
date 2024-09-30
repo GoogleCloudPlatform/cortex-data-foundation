@@ -1,0 +1,12 @@
+SourceField,TargetField,DataType
+SubscriberID,SubscriberID,INT64
+DateUndeliverable,DateUndeliverable,TIMESTAMP
+DateJoined,DateJoined,TIMESTAMP
+DateUnsubscribed,DateUnsubscribed,TIMESTAMP
+Domain,Domain,STRING
+EmailAddress,EmailAddress,STRING
+BounceCount,BounceCount,INT64
+SubscriberKey,SubscriberKey,STRING
+SubscriberType,SubscriberType,STRING
+Status,Status,STRING
+Locale,Locale,STRING

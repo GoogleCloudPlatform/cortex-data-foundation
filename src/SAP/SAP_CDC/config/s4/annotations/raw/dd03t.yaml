@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.dd03t"
+description: "DD: Texts for fields (language dependent)"
+fields:
+  - name: "as4local"
+    description: "Activation Status"
+  - name: "ddlanguage"
+    description: "Lang."
+  - name: "ddtext"
+    description: "Short Description"
+  - name: "fieldname"
+    description: "Field Name"
+  - name: "tabname"
+    description: "Table Name"

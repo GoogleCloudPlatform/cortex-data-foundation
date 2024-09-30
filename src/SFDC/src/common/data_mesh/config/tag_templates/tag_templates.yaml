@@ -1,0 +1,17 @@
+# CatalogTagTemplates dataclass.
+# TODO: clean up with recommended templates.
+project: {{ project_id_tgt }}
+templates:
+  - display_name: "data_governance"
+    level: ASSET
+    fields:
+      - display_name: "retention_date"
+        field_type: TIMESTAMP
+  - display_name: "pii"
+    level: FIELD
+    fields:
+      - display_name: "has_pii"
+        field_type: BOOL
+      - display_name: "pii_type"
+        field_type:
+          enum_allowed_values: ["EMAIL", "ADDRESS", "SSN"]
