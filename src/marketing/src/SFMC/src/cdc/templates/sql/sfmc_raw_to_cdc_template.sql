@@ -28,7 +28,7 @@ USING (
       SELECT
         -- Cast RAW layer fields.
         {% for column, target_data_type in sfmc_column_type_mapping.items() -%}
-        {%- if target_data_type == "SYSTEM_FIELD" -%}
+        {%- if column in system_fields.keys() -%}
           {{ column }}
         {%- elif  target_data_type == 'TIMESTAMP' -%}
           SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S', {{ column }}, '{{ source_timezone }}') AS {{ column }}

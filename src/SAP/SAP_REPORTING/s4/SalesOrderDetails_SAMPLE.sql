@@ -20,14 +20,20 @@ SELECT DISTINCT
   SalesOrders.SalesOrderValueLineItemSourceCurrency AS SalesOrderValueLocalCurrency,
   SalesOrders.NetValueOfTheSalesOrderInDocumentCurrency_NETWR * CurrencyConversion.ExchangeRate_UKURS AS SalesOrderNetValueTargetCurrency,
   SalesOrders.SalesOrderValueLineItemSourceCurrency * CurrencyConversion.ExchangeRate_UKURS AS SalesOrderValueTargetCurrency,
-  IF(SalesOrders.RejectionReason_ABGRU IS NOT NULL,
-     'Canceled',
-     IF(Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG = SalesOrders.CumulativeOrderQuantity_KWMENG
-        AND SalesOrders.CumulativeOrderQuantity_KWMENG = Billing.ActualBilledQuantity_FKIMG,
-        'Closed',
-        'Open')) AS OrderStatus,
-  (Deliveries.DeliveryBlock_documentHeader_LIFSK IS NOT NULL
-    OR Deliveries.BillingBlockInSdDocument_FAKSK IS NOT NULL) AS IsOrderBlocked,
+  IF(
+    SalesOrders.RejectionReason_ABGRU IS NOT NULL,
+    'Canceled',
+    IF(
+      Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG = SalesOrders.CumulativeOrderQuantity_KWMENG
+      AND SalesOrders.CumulativeOrderQuantity_KWMENG = Billing.ActualBilledQuantity_FKIMG,
+      'Closed',
+      'Open'
+    )
+  ) AS OrderStatus,
+  (
+    Deliveries.DeliveryBlock_documentHeader_LIFSK IS NOT NULL
+    OR Deliveries.BillingBlockInSdDocument_FAKSK IS NOT NULL
+  ) AS IsOrderBlocked,
   SalesOrders.DocumentCategory_VBTYP = 'C' AS IsIncomingOrder,
   SAFE_DIVIDE(1, CurrencyConversion.ExchangeRate_UKURS) AS ExchangeRate
 
@@ -83,11 +89,12 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CurrencyConversion` 
     AND SalesOrders.CurrencyHdr_WAERK = CurrencyConversion.FromCurrency_FCURR
     AND SalesOrders.DocumentDate_AUDAT = CurrencyConversion.ConvDate
     ##CORTEX-CUSTOMER Modify target currency based on your requirement
-    AND CurrencyConversion.ToCurrency_TCURR {{ currency }}
+    AND CurrencyConversion.ToCurrency_TCURR IN UNNEST({{ sap_currencies }})
     ##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
     AND CurrencyConversion.ExchangeRateType_KURST = 'M'
 ##CORTEX-CUSTOMER Modify the below baseline filters based on requirement
 WHERE
-  ( SalesOrders.Client_MANDT = '{{ mandt }}'
-    AND MaterialsMD.Language_SPRAS {{ language }} )
-
+  (
+    SalesOrders.Client_MANDT = '{{ mandt }}'
+    AND MaterialsMD.Language_SPRAS IN UNNEST({{ sap_languages }})
+  )

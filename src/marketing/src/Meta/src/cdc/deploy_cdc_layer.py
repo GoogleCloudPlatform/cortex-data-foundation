@@ -15,19 +15,21 @@
 
 import argparse
 from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import shutil
 import sys
 
-from google.cloud.bigquery import Client
-from google.cloud.bigquery import Table
-
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
+from common.py_libs.bq_helper import create_table_from_schema
 from common.py_libs.bq_helper import table_exists
-from common.py_libs.bq_materializer import add_cluster_to_table_def
-from common.py_libs.bq_materializer import add_partition_to_table_def
 from common.py_libs.dag_generator import generate_file_from_template
 from common.py_libs.jinja import apply_jinja_params_dict_to_file
+from common.py_libs.schema_reader import read_bq_schema
+from common.py_libs.schema_reader import read_field_type_mapping
+
 from src.cdc.constants import CDC_OUTPUT_DIR
 from src.cdc.constants import CDC_SQL_OUTPUT_DIR
 from src.cdc.constants import CDC_SQL_TEMPLATE_PATH
@@ -39,11 +41,11 @@ from src.constants import CDC_PROJECT
 from src.constants import POPULATE_TEST_DATA
 from src.constants import RAW_DATASET
 from src.constants import RAW_PROJECT
+from src.constants import SCHEMA_BQ_DATATYPE_FIELD
 from src.constants import SCHEMA_DIR
+from src.constants import SCHEMA_TARGET_FIELD
 from src.constants import SETTINGS
-from src.py_libs.utils import read_cdc_bq_schema
-from src.py_libs.utils import read_field_type_mapping
-
+from src.constants import SYSTEM_FIELDS
 
 def _create_output_dir_structure() -> None:
     """Creates directory for CDC files."""
@@ -83,9 +85,9 @@ def main():
 
     _create_output_dir_structure()
 
-    today = datetime.utcnow().date()
+    dag_start_date = datetime.now(timezone.utc).date()
 
-    bq_client = Client(project=CDC_PROJECT)
+    bq_client = cortex_bq_client.CortexBQClient(project=CDC_PROJECT)
 
     if not "raw_to_cdc_tables" in SETTINGS:
         logging.warning(
@@ -121,21 +123,21 @@ def main():
         if table_exists(bq_client=bq_client, full_table_name=full_table_name):
             logging.warning("❗ Table already exists.")
         else:
-            logging.info("Creating table %s...", table_name)
+            logging.info("Creating table %s...", full_table_name)
 
-            schema = read_cdc_bq_schema(table_mapping_path)
+            schema = read_bq_schema(
+                mapping_file=table_mapping_path,
+                schema_target_field=SCHEMA_TARGET_FIELD,
+                schema_bq_datatype_field=SCHEMA_BQ_DATATYPE_FIELD,
+                system_fields=SYSTEM_FIELDS)
 
-            table = Table(full_table_name, schema=schema)
+            create_table_from_schema(bq_client=bq_client,
+                         full_table_name=full_table_name,
+                         schema=schema,
+                         partition_details=partition_details,
+                         cluster_details=cluster_details)
 
-            if partition_details:
-                table = add_partition_to_table_def(table, partition_details)
-
-            if cluster_details:
-                table = add_cluster_to_table_def(table, cluster_details)
-
-            bq_client.create_table(table)
-
-            logging.info("Table %s processed successfully.", table_name)
+            logging.info("Table %s processed successfully.", full_table_name)
 
         logging.info("Generating DAG Python file...")
 
@@ -147,8 +149,14 @@ def main():
             "dataset": CDC_DATASET,
             "load_frequency": load_frequency,
             "table_name": table_name,
-            "start_date": today,
+            "start_date": dag_start_date,
+            "runtime_labels_dict": "" # A place holder for labels dict string
         }
+
+        # If telemetry opted in, convert CORTEX JOB LABEL dict to string
+        # And assign to substitution
+        if bq_client.allow_telemetry:
+            subs["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
 
         table_name_as_identifier = table_name.replace(".", "_")
         dag_py_file = (f"{CDC_PROJECT}_{CDC_DATASET}"
@@ -170,7 +178,12 @@ def main():
             "source_table": table_name,
         }
 
-        field_type_mapping = read_field_type_mapping(table_mapping_path)
+        field_type_mapping = read_field_type_mapping(
+                                    mapping_file = table_mapping_path,
+                                    schema_target_field = SCHEMA_TARGET_FIELD,
+                                    schema_bq_datatype_field =\
+                                          SCHEMA_BQ_DATATYPE_FIELD,
+                                    system_fields=SYSTEM_FIELDS)
 
         jinja_dict = template_vals | {
             "meta_field_type_mapping": field_type_mapping

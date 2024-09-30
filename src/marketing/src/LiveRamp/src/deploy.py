@@ -17,17 +17,18 @@ to BigQuery dataset.
 """
 
 import argparse
-import datetime
+from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import shutil
 import sys
 
-from google.cloud.bigquery import Client
-
+from common.py_libs import cortex_bq_client
 from common.py_libs.bq_helper import table_exists
 from common.py_libs.dag_generator import generate_file_from_template
 from common.py_libs.jinja import apply_jinja_params_dict_to_file
+
 from src.constants import DAG_TEMPLATE_FILE
 from src.constants import DATASET
 from src.constants import DDL_SQL_FILES
@@ -46,6 +47,7 @@ def _generate_dag_from_template(template_file: Path,
     Args:
         template_file (Path): Path of the template file.
         generation_target_directory (Path): Directory where files are generated.
+        subs (dict): DAG template substitutions.
     """
     output_dag_py_file = Path(generation_target_directory,
                               "marketing_liveramp_extract_to_bq.py")
@@ -82,10 +84,9 @@ def main(parsed_args):
 
     _create_output_dir_structure()
 
-    now = datetime.datetime.utcnow()
-    now_date = datetime.datetime(now.year, now.month, now.day)
+    dag_start_date = datetime.now(timezone.utc).date()
 
-    bq_client = Client()
+    bq_client = cortex_bq_client.CortexBQClient()
 
     # Get table name and SQL file for current table.
     for sql_file in DDL_SQL_FILES:
@@ -120,7 +121,7 @@ def main(parsed_args):
     py_subs = {
         "project_id": PROJECT,
         "dataset": DATASET,
-        "start_date": now_date
+        "start_date": dag_start_date
     }
 
     logging.info("Generating DAG...")

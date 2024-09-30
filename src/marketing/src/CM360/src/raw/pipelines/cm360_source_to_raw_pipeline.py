@@ -17,7 +17,7 @@ Data loading pipeline for Marketing data. It processes DataTransfer export CSVs.
 Filtering based on latest load timestamp provides incremental load.
 Result is landing in the defined BigQuery table.
 """
-import argparse
+
 from datetime import datetime
 from datetime import timezone
 import logging
@@ -37,7 +37,7 @@ from helpers.pipeline_utils import yield_dict_rows_from_compressed_csv
 _EPOCH_BEGINNING_TIMESTAMP: float = 0
 
 
-class ArgumentOptions(PipelineOptions):
+class CM360RawLayerOptions(PipelineOptions):
     """Arguments for raw extraction pipeline."""
 
     @classmethod
@@ -62,13 +62,17 @@ class ArgumentOptions(PipelineOptions):
                             required=True,
                             type=str,
                             help="Target BQ table name.")
+        parser.add_argument("--pipeline_logging_level",
+                            required=True,
+                            type=str,
+                            help="Logging level of pipeline.")
 
 
-arg_parser = argparse.ArgumentParser()
-_, beam_args = arg_parser.parse_known_args()
+args = PipelineOptions().view_as(CM360RawLayerOptions)
 
-beam_options = PipelineOptions(beam_args)
-args = PipelineOptions().view_as(ArgumentOptions)
+logger = logging.getLogger(__name__)
+level = getattr(logging, args.pipeline_logging_level)
+logger.setLevel(level)
 
 mapping = create_column_mapping(args.mapping_file)
 table_schema = create_bigquery_schema_from_mapping(mapping)
@@ -84,11 +88,12 @@ max_recordstamp: Optional[float] = get_max_recordstamp(bq_client,
                                                        target_table)
 latest_recordstamp = max_recordstamp or _EPOCH_BEGINNING_TIMESTAMP
 
-logging.info("The latest recordstamp %s for %s.%s", latest_recordstamp,
+logger.info("The latest recordstamp %s for %s.%s", latest_recordstamp,
              target_dataset, target_table)
 
 # yapf: disable
-with beam.Pipeline(options=beam_options) as pipeline:
+# pylint: disable = no-value-for-parameter, unsupported-binary-operation
+with beam.Pipeline(options=args) as pipeline:
     raw_files = (
         pipeline
         | fileio.MatchFiles(args.input_file_pattern)

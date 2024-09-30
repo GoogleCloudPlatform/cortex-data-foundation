@@ -33,10 +33,11 @@
         "deployLiveRamp": true,
         "deployMeta": true,
         "deploySFMC": true,
+        "deployDV360": true,
+        "deployGA4": true,
         "dataflowRegion": "",
         "GoogleAds": {
             "deployCDC": true,
-            "lookbackDays": 180,
             "datasets": {
                 "cdc": "",
                 "raw": "",
@@ -80,6 +81,22 @@
                 "cdc": "",
                 "raw": "",
                 "reporting": "REPORTING_SFMC"
+            }
+        },
+        "DV360": {
+            "deployCDC": true,
+            "datasets": {
+                "raw": "",
+                "cdc": "",
+                "reporting": "REPORTING_DV360"
+            }
+        },
+        "GA4": {
+            "datasets": {
+                "cdc": [
+                    {"property_id": 0, "name": ""}
+                ],
+                "reporting": "REPORTING_GA4"
             }
         }
     }

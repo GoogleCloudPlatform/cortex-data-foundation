@@ -1,0 +1,107 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This cloudbuild file generates all the necessary objects (DAG files, Bigquery
+# tables and views etc) for a Cortex Oracle EBS deployment.
+
+# Input parameters:
+#   _GCS_LOGS_BUCKET : An existing GCS bucket where build logs will be written.
+
+---
+steps:
+  # Validate configs.
+  # init_deployment_config.py leaves the validated config.json file in workspace/config so it's available for other build steps
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "init_deploy_config"
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      echo "Initial configuration ${_CONFIG_FILE}:"
+      cat "${_CONFIG_FILE}"
+
+      # Save absolute config file path to .env file
+      # that can be accessed by all Cloud Build steps since exported env
+      # variables do not persist between steps.
+
+      realpath "${_CONFIG_FILE}" > /workspace/config_file_full_path.env
+
+      python3 src/common/init_deployment_config.py \
+          --config-file ${_CONFIG_FILE} \
+          --sub-validator "src"
+
+      echo "Processed configuration:"
+      cat ${_CONFIG_FILE}
+      echo -e "\n--------------------------------"
+
+  # Deploy reporting layer DAGs and tables.
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: ebs_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+
+      export PYTHONPATH=$PYTHONPATH:src/
+
+      _TGT_BUCKET=$(jq -r ."targetBucket" ${_CONFIG_FILE})
+
+      declare -a _WORKER_POOL_OPTIONS
+
+      if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--worker_pool_name "${_WORKER_POOL_NAME}")
+      fi
+
+      if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+      fi
+
+      echo "Deploying Oracle EBS Reporting layer..."
+      src/common/materializer/deploy.sh \
+          --gcs_logs_bucket ${_GCS_LOGS_BUCKET} \
+          --gcs_tgt_bucket ${_TGT_BUCKET} \
+          --module_name OracleEBS \
+          --config_file ${_CONFIG_FILE} \
+          --target_type "Reporting" \
+          --materializer_settings_file config/reporting_settings.yaml \
+          "${_WORKER_POOL_OPTIONS[@]}"
+
+  # Deploy Data Mesh.
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "ebs_datamesh"
+    waitFor: ["ebs_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories config/tag_templates \
+            --policy-directories config/policy_taxonomies \
+            --lake-directories config/lakes \
+            --annotation-directories config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+logsBucket: gs://${_GCS_LOGS_BUCKET}
+serviceAccount: "${_BUILD_ACCOUNT}"
+substitutions:
+  _CONFIG_FILE: config/config.json
+options:
+  substitution_option: ALLOW_LOOSE
+  automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"

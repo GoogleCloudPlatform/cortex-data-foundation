@@ -21,6 +21,11 @@ Options
 -l | location                   : Dataset Location (Default: US)
 -m | mandt                      : SAP Mandante
 -f | sql-flavour                : SQL Flavor Selection, ECC or S4. (Default: ECC)
+-p | worker-pool-name           : Set worker pool for cloud build. Optional
+-g | region                     : Set region for worker pool. Required if worker-pool-name present.
+-u | build-account              : Set user specified cloud build service account.
+-c | gcs-bucket                 : GCS bucket for the cloud build account. Required if build-account present
+
 
 HELP_USAGE
 
@@ -103,7 +108,7 @@ bq_safe_mk() {
 #--------------------
 
 set -o errexit -o noclobber -o nounset -o pipefail
-params="$(getopt -o ha:b:x:y:r:s:l:m:f: -l help,source-project:,target-project:,cdc-processed-dataset:,raw-landing-dataset:,target-reporting-dataset:,target-models-dataset:,location:,mandt:,sql-flavour: --name "$0" -- "$@")"
+params="$(getopt -o ha:b:x:y:r:s:l:m:f:c:v:p:g -l help,source-project:,target-project:,cdc-processed-dataset:,raw-landing-dataset:,target-reporting-dataset:,target-models-dataset:,location:,mandt:,sql-flavour:,gcs-bucket:,build-account:,worker-pool-name:,region: --name "$0" -- "$@")"
 eval set -- "$params"
 
 while true; do
@@ -149,6 +154,22 @@ while true; do
       sql_flavour=$2
       shift 2
       ;;
+    -c | --gcs-bucket)
+      _GCS_BUCKET=$2
+      shift 2
+      ;;
+    -u | --build-account)
+      _BUILD_ACCOUNT=$2
+      shift 2
+      ;;
+    -p | --worker-pool-name)
+      _WORKER_POOL_NAME=$2
+      shift 2
+      ;;
+    -g | --region)
+      _CLOUD_BUILD_REGION=$2
+      shift 2
+      ;;
     --)
       shift
       break
@@ -189,8 +210,23 @@ bq_safe_mk "${dataset_models_tgt}"
 
 for file_entry in $(cat ./dependencies.txt); do
   echo "Creating ${file_entry} on ${dataset_reporting_tgt}"
-  gcloud builds submit --config=pipeline/cloudbuild.view.yaml --substitutions=_SQL_FILE="${file_entry}",_PJID_SRC="${project_id_src}",_PJID_TGT="${project_id_tgt}",_DS_CDC="${dataset_cdc_processed}",_DS_RAW="${dataset_raw_landing}",_DS_REPORTING="${dataset_reporting_tgt}",_DS_MODELS="${dataset_models_tgt}",_MANDT="${mandt}",_LOCATION="${location}",_SQL_FLAVOUR="${sql_flavour}" .
+  if [[ -n ""${_BUILD_ACCOUNT} ]]; then
+    _CLOUD_BUILD_OPTIONS=",_BUILD_ACCOUNT=${_BUILD_ACCOUNT},_GCS_BUCKET=${_GCS_BUCKET}"
+  elif [[ -n ""${_GCS_BUCKET} ]]; then
+    _CLOUD_BUILD_OPTIONS=",_GCS_BUCKET=${_GCS_BUCKET}"
+  else
+    _CLOUD_BUILD_OPTIONS=""
+  fi
+  if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+    _WORKER_POOL_OPTIONS=",_WORKER_POOL_NAME=${_WORKER_POOL_NAME},_CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION} --region ${_CLOUD_BUILD_REGION}"
+  elif [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+    _WORKER_POOL_OPTIONS=",_CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION} --region ${_CLOUD_BUILD_REGION}"
+  else
+    _WORKER_POOL_OPTIONS=""
+  fi
 
+  gcloud builds submit --config=pipeline/cloudbuild.view.yaml \
+    --substitutions=_SQL_FILE="${file_entry}",_PJID_SRC="${project_id_src}",_PJID_TGT="${project_id_tgt}",_DS_CDC="${dataset_cdc_processed}",_DS_RAW="${dataset_raw_landing}",_DS_REPORTING="${dataset_reporting_tgt}",_DS_MODELS="${dataset_models_tgt}",_MANDT="${mandt}",_LOCATION="${location}",_SQL_FLAVOUR="${sql_flavour}"${_CLOUD_BUILD_OPTIONS}${_WORKER_POOL_OPTIONS} .
   if [ $? = 1 ]; then
     success=1
   fi

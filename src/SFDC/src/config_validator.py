@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Processes and validates SAP Reporting config.json.
+Processes and validates SFDC reporting config.json.
 """
 
 import logging
@@ -29,61 +29,60 @@ def validate(cfg: dict) -> Union[dict, None]:
 
     Returns:
         dict: Processed config dictionary.
+        None: In case of validation failure
     """
 
-    if not cfg.get("deploySFDC", False):
+    if not cfg.get("deploySFDC"):
         logging.info("SFDC is not being deployed. Skipping validation.")
         return cfg
 
     logging.info("Validating SFDC configuration.")
 
-    sfdc = cfg.get("SFDC", None)
+    sfdc = cfg.get("SFDC")
     if not sfdc:
         logging.error("🛑 Missing 'SFDC' values in the config file. 🛑")
         return None
 
-    deploy_cdc = sfdc.get("deployCDC")
-    if deploy_cdc is None:
-        logging.error("🛑 Missing 'SFDC/deployCDC' values "
-                      "in the config file. 🛑")
+    missing_sfdc_attrs = []
+    for attr in ("deployCDC", "currencies", "datasets"):
+        if sfdc.get(attr) is None or sfdc.get(attr) == "":
+            missing_sfdc_attrs.append(attr)
+
+    if missing_sfdc_attrs:
+        logging.error("🛑 Missing 'SFDC values: %s' in the config file. 🛑",
+                      missing_sfdc_attrs)
         return None
 
     datasets = sfdc.get("datasets")
-    if not datasets:
-        logging.error("🛑 Missing 'SFDC/datasets' values in the config file. 🛑")
-        return None
 
-    cfg["SFDC"]["createMappingViews"] = sfdc.get("createMappingViews", True)
-    cfg["SFDC"]["datasets"]["cdc"] = datasets.get("cdc", "")
-    if not cfg["SFDC"]["datasets"]["cdc"]:
+    sfdc["createMappingViews"] = sfdc.get("createMappingViews", True)
+    cdc = datasets.get("cdc")
+    if not cdc:
         logging.error("🛑 Missing 'SFDC/datasets/cdc' values "
                       "in the config file. 🛑")
         return None
-    cfg["SFDC"]["datasets"]["raw"] = datasets.get("raw", "")
-    if not cfg["SFDC"]["datasets"]["raw"]:
+
+    raw = datasets.get("raw")
+    if not raw:
         logging.error("🛑 Missing 'SFDC/datasets/raw' values "
                       "in the config file. 🛑")
         return None
-    cfg["SFDC"]["datasets"]["reporting"] = datasets.get("reporting",
-                                                        "REPORTING_SFDC")
 
-    datasets = sfdc.get("datasets")
+    reporting = datasets.get("reporting", "REPORTING_SFDC")
+    datasets["reporting"] = reporting
+
     source = cfg["projectIdSource"]
     target = cfg["projectIdTarget"]
     location = cfg["location"]
     datasets = [
-        resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["raw"]}',
-            True, True, location),
-        resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["cdc"]}',
-            True, True, location),
-        resource_validation_helper.DatasetConstraints(
-            f'{target}.{datasets["reporting"]}',
-            False, True, location)
-        ]
-    if not resource_validation_helper.validate_resources([],
-                                                            datasets):
+        resource_validation_helper.DatasetConstraints(f"{source}.{raw}", True,
+                                                      True, location),
+        resource_validation_helper.DatasetConstraints(f"{source}.{cdc}", True,
+                                                      True, location),
+        resource_validation_helper.DatasetConstraints(f"{target}.{reporting}",
+                                                      False, True, location)
+    ]
+    if not resource_validation_helper.validate_resources([], datasets):
         return None
 
     logging.info("✅ SFDC configuration is good.")

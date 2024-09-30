@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CostCenterHierarchiesMD"
-description: "Text for Cost Center Hierarchy"
+description: "CostCenterHierarchiesMD view represents the master data of Cost Center Hierarchies table and provides description of hierarchy nodes of cost center hierarchy and has the granularity of Client(System), Set Class, organizational unit of sub-class, set name and Language key."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,14 +7,14 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "SetClass_SETCLASS"
-    description: "Set class"
+    description: "Set class, PK"
   - name: "OrganizationalUnit_SUBCLASS"
-    description: "Organizational Unit"
+    description: "Organizational Unit as Set Subclass, PK"
   - name: "SetName_SETNAME"
-    description: "Set Name"
+    description: "Set Name, PK"
   - name: "LanguageKey_LANGU"
-    description: "Language Key"
+    description: "Language Key, PK"
   - name: "ShortDescriptionOfSet_DESCRIPT"
-    description: "Description"
+    description: "Short Description of Sets"

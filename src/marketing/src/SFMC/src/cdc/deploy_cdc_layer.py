@@ -18,13 +18,20 @@ Generates all necessary assets for the CDC layer of Salesforce Marketing Cloud.
 
 import argparse
 from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import sys
 
-from google.cloud.bigquery import Client
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
+from common.py_libs.bq_helper import table_exists
+from common.py_libs.bq_helper import create_table_from_schema
+from common.py_libs.dag_generator import generate_file_from_template
+from common.py_libs.schema_reader import read_bq_schema
+
 from src.cdc.constants import CDC_SQL_SCRIPTS_OUTPUT_DIR
-from src.cdc.constants import CDC_SQL_TEMPLATE
+from src.cdc.constants import CDC_SQL_TEMPLATE_PATH
 from src.cdc.constants import DAG_TEMPLATE_PATH
 from src.cdc.constants import OUTPUT_DIR_FOR_CDC
 from src.cdc.constants import SOURCE_TIMEZONE
@@ -33,16 +40,14 @@ from src.constants import CDC_PROJECT
 from src.constants import POPULATE_TEST_DATA
 from src.constants import RAW_DATASET
 from src.constants import RAW_PROJECT
+from src.constants import SCHEMA_BQ_DATATYPE_FIELD
 from src.constants import SCHEMA_DIR
+from src.constants import SCHEMA_TARGET_FIELD
 from src.constants import SETTINGS
-from src.py_libs.utils import populate_test_data
-from src.py_libs.utils import create_bq_schema
-from src.py_libs.utils import create_table
+from src.constants import SYSTEM_FIELDS
 from src.py_libs.utils import generate_template_file
+from src.py_libs.utils import populate_test_data
 from src.py_libs.utils import repr_schema
-
-from common.py_libs.bq_helper import table_exists
-from common.py_libs.dag_generator import generate_file_from_template
 
 
 def _parse_args(args):
@@ -74,8 +79,8 @@ def main(debug: bool):
     # Creates directory for CDC files.
     OUTPUT_DIR_FOR_CDC.mkdir(exist_ok=True, parents=True)
 
-    now_date = datetime.utcnow().date()
-    client = Client(project=CDC_PROJECT)
+    dag_start_date = datetime.now(timezone.utc).date()
+    client = cortex_bq_client.CortexBQClient(project=CDC_PROJECT)
 
     if not "raw_to_cdc_tables" in SETTINGS:
         logging.warning(
@@ -119,16 +124,18 @@ def main(debug: bool):
         else:
             logging.info("Creating schema...")
 
-            schema = create_bq_schema(table_mapping_path, "cdc")
+            schema = read_bq_schema(
+                mapping_file=table_mapping_path,
+                schema_target_field=SCHEMA_TARGET_FIELD,
+                schema_bq_datatype_field=SCHEMA_BQ_DATATYPE_FIELD,
+                system_fields=SYSTEM_FIELDS)
 
             logging.debug("CDC Table schema: %s\n", repr_schema(schema))
             logging.info("Creating table...")
 
-            create_table(client=client,
+            create_table_from_schema(bq_client=client,
+                         full_table_name=full_table_name,
                          schema=schema,
-                         project=CDC_PROJECT,
-                         dataset=CDC_DATASET,
-                         table_name=table_name,
                          partition_details=partition_details,
                          cluster_details=cluster_details)
 
@@ -141,9 +148,15 @@ def main(debug: bool):
             "cdc_dataset": CDC_DATASET,
             "load_frequency": load_frequency,
             "table_name": table_name,
-            "start_date": now_date,
+            "start_date": dag_start_date,
             "cdc_sql_path": Path("cdc_sql_scripts", f"{table_name}.sql"),
+            "runtime_labels_dict": "" # A place holder for label dict string
         }
+
+        # If telemetry opted in, convert CORTEX JOB LABEL dict to string
+        # And assign to substitution
+        if client.allow_telemetry:
+            subs["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
 
         dag_py_file = (f"{CDC_PROJECT}_{CDC_DATASET}"
                        f"_raw_to_cdc_{table_name}.py")
@@ -156,9 +169,7 @@ def main(debug: bool):
         # DAG SQL file generation
         row_identifiers = cdc_table_settings["row_identifiers"]
         raw_table = cdc_table_settings.get("raw_table")
-        sql_template_file = "sfmc_raw_to_cdc_template.sql"
         table_mapping_path = Path(SCHEMA_DIR, schema_file_name)
-        template_file_path = Path(CDC_SQL_TEMPLATE, sql_template_file)
         generated_sql_path = Path(CDC_SQL_SCRIPTS_OUTPUT_DIR,
                                   f"{table_name}.sql")
 
@@ -170,10 +181,10 @@ def main(debug: bool):
             "target_ds": CDC_DATASET,
             "target_table": table_name,
             "source_table": raw_table,
-            "source_timezone": SOURCE_TIMEZONE,
+            "source_timezone": SOURCE_TIMEZONE
         }
 
-        generate_template_file(template_file_path, table_mapping_path,
+        generate_template_file(CDC_SQL_TEMPLATE_PATH, table_mapping_path,
                                generated_sql_path, template_vals)
 
         logging.info("Generated DAG SQL file: %s", generated_sql_path)

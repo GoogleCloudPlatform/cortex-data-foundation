@@ -52,7 +52,7 @@ SELECT
   CalendarDateDim_BUDAT.CalWeek AS WeekOfPostingDate_BUDAT,
   CalendarDateDim_BUDAT.CalQuarter AS QuarterOfPostingDate_BUDAT,
   CAST(FORMAT_DATE('%Y%m%d', CalendarDateDim_BUDAT.WeekEndDate) AS INT64) AS WeekEndDateOfPostingDate_BUDAT_MKPF,
- --##CORTEX-CUSTOMER If you prefer to use currency conversion, uncomment below
+  --##CORTEX-CUSTOMER If you prefer to use currency conversion, uncomment below
   -- currency_conversion.UKURS AS ExchangeRate_UKURS,
   -- currency_conversion.TCURR AS TargetCurrency_TCURR,
   -- currency_conversion.conv_date AS Conversion_date,
@@ -347,7 +347,7 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS
 --     ON matdoc.MANDT = currency_conversion.MANDT
 --       AND matdoc.WAERS = currency_conversion.FCURR
 --       AND matdoc.BUDAT = currency_conversion.conv_date
---       AND currency_conversion.TCURR {{ currency }}
+--       AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
 --##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
 --       AND currency_conversion.KURST = 'M'
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDim_BUDAT

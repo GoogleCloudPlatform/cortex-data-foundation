@@ -96,7 +96,7 @@ LEFT JOIN
 --   konv.MANDT = currency_conversion.MANDT
 --   AND COALESCE(konv.WAERS, '') = currency_conversion.FCURR
 --   AND konv.KDATU = currency_conversion.conv_date
---   AND currency_conversion.TCURR {{ currency }}
+--   AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
 --##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
 --   AND currency_conversion.KURST = 'M'
 LEFT JOIN

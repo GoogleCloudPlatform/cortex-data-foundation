@@ -1,0 +1,9 @@
+project: {{ project_id_tgt }}
+templates:
+  - display_name: "line_of_business"
+    level: ASSET
+    fields:
+      - display_name: "group"
+        field_type: STRING
+      - display_name: "domain"
+        field_type: STRING

@@ -7,13 +7,6 @@
     "projectIdTarget": "",
     "location": "US",
     "targetBucket": "",
-    "languages": [
-        "E",
-        "S"
-    ],
-    "currencies": [
-        "USD"
-    ],
     "k9": {
         "datasets": {
             "processing": "K9_PROCESSING"
@@ -27,6 +20,17 @@
     },
     "SAP": {
         "deployCDC": true,
+        "SQLFlavor": "ecc",
+        "mandt": "100",
+        "mandtECC": "100",
+        "mandtS4": "100",
+        "languages": [
+            "E",
+            "S"
+        ],
+        "currencies": [
+            "USD"
+        ],
         "datasets": {
             "cdc": "",
             "raw": "",
@@ -36,10 +40,6 @@
             "rawECC": "",
             "cdcS4": "",
             "rawS4": ""
-        },
-        "SQLFlavor": "ecc",
-        "mandt": "100",
-        "mandtECC": "100",
-        "mandtS4": "100"
+        }
     }
 }

@@ -1,0 +1,22 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.FiscalDateMD"
+description: "Dimension table containing fiscal date attributes."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "FISCAL_DATE"
+    description: "Accounting date"
+  - name: "PERIOD_TYPE"
+    description: "Accounting period type"
+  - name: "PERIOD_SET_NAME"
+    description: "Accounting calendar name"
+  - name: "PERIOD_NAME"
+    description: "Accounting period name"
+  - name: "PERIOD_NUM"
+    description: "Period number"
+  - name: "QUARTER_NUM"
+    description: "Quarter number"
+  - name: "YEAR_NUM"
+    description: "Year number"

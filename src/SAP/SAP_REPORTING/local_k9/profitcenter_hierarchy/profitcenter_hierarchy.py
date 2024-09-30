@@ -13,84 +13,74 @@
 # limitations under the License.
 """DAG to generate flattened profit center hierarchy tables."""
 
+import ast
+
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
+
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
+
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
 
 default_args = {
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
 }
-## This DAG creates following two tables
-## and deletes hierarchy from a specific node(if needed).
-## 1-flattened profit center table.
-## 2-profit center and node mapping.
-with DAG(
-        'profit_center',
-        default_args=default_args,
-        schedule_interval='@monthly',
-        start_date=datetime(2023, 11, 27),
-        catchup=False,
-        max_active_runs=1
-) as dag:
-    start_task = DummyOperator(task_id='start')
 
-    if AIRFLOW_VERSION.startswith('1.'):
-        ## This task creates the flattened profit center table.
-        profitcenter_flattened = BigQueryOperator(
-            task_id='profitcenter_flattened',
-            sql='profitcenter_hierarchy.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            bigquery_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
-         ## This task deletes the hierarchy from a specific node.
-        delete_profitcenter_node = BigQueryOperator(
-            task_id='delete_profitcenter_node',
-            sql='profitcenter_node_deletion.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            bigquery_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
-        ## This task creates the profit center mapping table.
-        profitcenter_mapping = BigQueryOperator(
-            task_id='profitcenter_mapping',
-            sql='profitcenter_node_mapping.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            bigquery_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
+# This DAG creates following two tables
+# and deletes hierarchy from a specific node(if needed).
+# 1-flattened profit center table.
+# 2-profit center and node mapping.
+with DAG(dag_id="profit_center",
+         default_args=default_args,
+         schedule_interval="@monthly",
+         start_date=datetime(2023, 11, 27),
+         catchup=False,
+         max_active_runs=1) as dag:
 
-        stop_task = DummyOperator(task_id='stop')
-    else:
-        ## This task creates the flattened profit center table.
-        profitcenter_flattened = BigQueryOperator(
-            task_id='profitcenter_flattened',
-            sql='profitcenter_hierarchy.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            gcp_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
-         ## This task deletes the hierarchy from a specific node.
-        delete_profitcenter_node = BigQueryOperator(
-            task_id='delete_profitcenter_node',
-            sql='profitcenter_node_deletion.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            gcp_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
-        ## This task creates the profit center mapping table.
-        profitcenter_mapping = BigQueryOperator(
-            task_id='profitcenter_mapping',
-            sql='profitcenter_node_mapping.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            gcp_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
+    start_task = EmptyOperator(task_id="start")
 
-        stop_task = DummyOperator(task_id='stop')
-  # pylint:disable=pointless-statement
-    (start_task >> profitcenter_flattened >> delete_profitcenter_node
-      >> profitcenter_mapping >> stop_task)
+    # This task creates the flattened profit center table.
+    profitcenter_flattened = BigQueryInsertJobOperator(
+        task_id="profitcenter_flattened",
+        gcp_conn_id="sap_reporting_bq",
+        configuration={
+            "query": {
+                "query": "profitcenter_hierarchy.sql",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        })
+
+    # This task deletes the hierarchy from a specific node.
+    delete_profitcenter_node = BigQueryInsertJobOperator(
+        task_id="delete_profitcenter_node",
+        gcp_conn_id="sap_reporting_bq",
+        configuration={
+            "query": {
+                "query": "profitcenter_node_deletion.sql",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        })
+
+    # This task creates the profit center mapping table.
+    profitcenter_mapping = BigQueryInsertJobOperator(
+        task_id="profitcenter_mapping",
+        gcp_conn_id="sap_reporting_bq",
+        configuration={
+            "query": {
+                "query": "profitcenter_node_mapping.sql",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        })
+
+    stop_task = EmptyOperator(task_id="stop")
+
+    # pylint:disable=pointless-statement
+    (start_task >> profitcenter_flattened >> delete_profitcenter_node >>
+     profitcenter_mapping >> stop_task)  # type: ignore

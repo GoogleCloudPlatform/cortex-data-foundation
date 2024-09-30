@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import sys
 import yaml
 from pathlib import Path
 
-from google.cloud import bigquery
-
+from common.py_libs import cortex_bq_client
 from common.py_libs.bq_helper import table_exists, create_table
-from common.py_libs.dag_generator import generate_file_from_template
 from common.py_libs.configs import load_config_file
+from common.py_libs.dag_generator import generate_file_from_template
+
 
 # NOTE: All paths here are relative to the root directory, unless specified
 # otherwise.
@@ -165,7 +165,7 @@ def main():
 
     logging.info("Processing tables...")
 
-    bq_client = bigquery.Client()
+    bq_client = cortex_bq_client.CortexBQClient()
 
     table_configs = configs["salesforce_to_raw_tables"]
     for table_config in table_configs:

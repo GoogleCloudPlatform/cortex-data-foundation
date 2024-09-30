@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,22 +17,20 @@
 from google.cloud import bigquery
 
 from common.py_libs import bq_helper
-
-
-TEST_HARNESS_VERSION="5_4"
-
+from common.py_libs import constants
 
 def get_test_harness_dataset(workload_path: str,
                             target_dataset_type: str,
                             location: str,
-                            version: str = TEST_HARNESS_VERSION) -> str:
+                            version: str = constants.TEST_HARNESS_VERSION,
+                            ) -> str:
 
     """Generates test harness dataset name.
 
     Args:
         workload_path (str): workload path, such as "SAP", "SFDC",
-                             "marketing.GoogleAds", "marketing.CM360" or "k9",
-                             case-insensitive.
+                             "marketing.GoogleAds", "marketing.CM360",
+                             "OracleEBS", or "k9", case-insensitive.
         target_dataset_type (str): dataset type as normally used in config.json,
                             such as "rawECC", "raw", "cdcS4", "cdc",
                             "processing", etc., case-insensitive.
@@ -58,7 +56,8 @@ def load_dataset_test_data(bq_client: bigquery.Client,
                            target_dataset_name: str,
                            target_project: str,
                            location: str,
-                           source_version: str = TEST_HARNESS_VERSION):
+                           source_version: str = constants.TEST_HARNESS_VERSION,
+                           ) -> None:
     """Loads workload dataset test data by copying dataset from
        the test harness. Skips existing tables in target dataset.
 
@@ -66,8 +65,8 @@ def load_dataset_test_data(bq_client: bigquery.Client,
         bq_client (bigquery.Client): BigQuery client.
         test_harness_project_id (str): Test harness source project id.
         workload_path (str): workload path, such as "SAP", "SFDC",
-                             "marketing.GoogleAds", "marketing.CM360" or "k9",
-                             case-insensitive.
+                             "marketing.GoogleAds", "marketing.CM360",
+                             "OracleEBS", or "k9", case-insensitive.
         target_dataset_type (str): dataset type as normally used in config.json,
                                    such as "rawECC", "raw", "cdcS4", "cdc",
                                    "processing", etc., case-insensitive.

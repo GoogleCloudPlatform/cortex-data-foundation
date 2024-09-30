@@ -3,7 +3,7 @@ WITH
     SELECT LanguageKey_SPRAS
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Languages_T002`
-    WHERE LanguageKey_SPRAS {{ language }}
+    WHERE LanguageKey_SPRAS IN UNNEST({{ sap_languages }})
   ),
 
   CurrencyConversion AS (
@@ -12,7 +12,7 @@ WITH
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CurrencyConversion`
     WHERE
-      ToCurrency_TCURR {{ currency }}
+      ToCurrency_TCURR IN UNNEST({{ sap_currencies }})
       --##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
       AND ExchangeRateType_KURST = 'M'
   ),
@@ -49,10 +49,12 @@ WITH
       PurchaseOrders.WeekOfPurchasingDocumentDate_BEDAT,
       COALESCE(
         (PurchaseOrders.UnderdeliveryToleranceLimit_UNTTO * PurchaseOrders.POQuantity_MENGE) / 100,
-        0) AS UnderdeliveryToleranceLimit,
+        0
+      ) AS UnderdeliveryToleranceLimit,
       COALESCE(
         (PurchaseOrders.OverdeliveryToleranceLimit_UEBTO * PurchaseOrders.POQuantity_MENGE) / 100,
-        0) AS OverdeliveryToleranceLimit
+        0
+      ) AS OverdeliveryToleranceLimit
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PurchaseDocuments` AS PurchaseOrders
     -- PO Schedule Lines details for PO Item
@@ -115,7 +117,8 @@ WITH
       IF(
         POOrderHistory.MovementType__inventoryManagement___BWART = '101',
         POOrderHistory.PostingDateInTheDocument_BUDAT,
-        NULL) AS PostingDateInTheDocument_BUDAT,
+        NULL
+      ) AS PostingDateInTheDocument_BUDAT,
 
       -- DeliveryStatus
       -- TRUE stands for Delivered Orders and FALSE stands for NotDelivered Orders
@@ -133,26 +136,34 @@ WITH
             IF(
               POOrderHistory.MovementType__inventoryManagement___BWART = '101',
               MAX(POOrderHistory.PostingDateInTheDocument_BUDAT) OVER (
-                PARTITION BY PurchaseOrderScheduleLine.Client_MANDT,
+                PARTITION BY
+                  PurchaseOrderScheduleLine.Client_MANDT,
                   PurchaseOrderScheduleLine.DocumentNumber_EBELN,
-                  PurchaseOrderScheduleLine.Item_EBELP),
-              NULL),
+                  PurchaseOrderScheduleLine.Item_EBELP
+              ),
+              NULL
+            ),
             PurchaseOrderScheduleLine.PurchasingDocumentDate_BEDAT,
-            DAY),
-          0),
-        NULL) AS VendorCycleTimeInDays,
+            DAY
+          ),
+          0
+        ),
+        NULL
+      ) AS VendorCycleTimeInDays,
 
       -- Vendor Quality (Rejection)
       -- TRUE stands for Rejected Orders and FALSE stands for NotRejected Orders
       IF(
         POOrderHistory.MovementType__inventoryManagement___BWART IN ('122', '161'),
         TRUE,
-        FALSE) AS IsRejected,
+        FALSE
+      ) AS IsRejected,
       -- Rejected Quantity
       IF(
         POOrderHistory.MovementType__inventoryManagement___BWART IN ('122', '161'),
         POOrderHistory.Quantity_MENGE,
-        0) AS RejectedQuantity,
+        0
+      ) AS RejectedQuantity,
 
       -- Vendor On Time Delivery
       -- TRUE stands for NotDelayed Orders and FALSE for Delayed Orders
@@ -162,10 +173,13 @@ WITH
           IF(
             POOrderHistory.MovementType__inventoryManagement___BWART = '101',
             POOrderHistory.PostingDateInTheDocument_BUDAT,
-            NULL) <= PurchaseOrderScheduleLine.ItemDeliveryDate_EINDT,
+            NULL
+          ) <= PurchaseOrderScheduleLine.ItemDeliveryDate_EINDT,
           TRUE,
-          FALSE),
-        NULL) AS IsDeliveredOnTime,
+          FALSE
+        ),
+        NULL
+      ) AS IsDeliveredOnTime,
 
       -- Vendor InFull Delivery
       -- TRUE stands for DeliveredInFull Orders and FALSE stands for NotDeliveredInFull Orders
@@ -180,11 +194,14 @@ WITH
                 POOrderHistory.Quantity_MENGE,
                 (POOrderHistory.Quantity_MENGE * -1)
               )) OVER (
-              PARTITION BY PurchaseOrderScheduleLine.Client_MANDT,
+              PARTITION BY
+                PurchaseOrderScheduleLine.Client_MANDT,
                 PurchaseOrderScheduleLine.DocumentNumber_EBELN,
-                PurchaseOrderScheduleLine.Item_EBELP) >= PurchaseOrderScheduleLine.POQuantity_MENGE,
+                PurchaseOrderScheduleLine.Item_EBELP
+            ) >= PurchaseOrderScheduleLine.POQuantity_MENGE,
             TRUE,
-            FALSE),
+            FALSE
+          ),
           IF(
             SUM(
               IF(
@@ -192,11 +209,14 @@ WITH
                 POOrderHistory.Quantity_MENGE,
                 (POOrderHistory.Quantity_MENGE * -1)
               )) OVER (
-              PARTITION BY PurchaseOrderScheduleLine.Client_MANDT,
+              PARTITION BY
+                PurchaseOrderScheduleLine.Client_MANDT,
                 PurchaseOrderScheduleLine.DocumentNumber_EBELN,
-                PurchaseOrderScheduleLine.Item_EBELP) >= PurchaseOrderScheduleLine.POQuantity_MENGE - PurchaseOrderScheduleLine.UnderdeliveryToleranceLimit,
+                PurchaseOrderScheduleLine.Item_EBELP
+            ) >= PurchaseOrderScheduleLine.POQuantity_MENGE - PurchaseOrderScheduleLine.UnderdeliveryToleranceLimit,
             TRUE,
-            FALSE)
+            FALSE
+          )
           OR IF(
             SUM(
               IF(
@@ -204,13 +224,17 @@ WITH
                 POOrderHistory.Quantity_MENGE,
                 (POOrderHistory.Quantity_MENGE * -1)
               )) OVER (
-              PARTITION BY PurchaseOrderScheduleLine.Client_MANDT,
+              PARTITION BY
+                PurchaseOrderScheduleLine.Client_MANDT,
                 PurchaseOrderScheduleLine.DocumentNumber_EBELN,
-                PurchaseOrderScheduleLine.Item_EBELP) <= PurchaseOrderScheduleLine.POQuantity_MENGE + PurchaseOrderScheduleLine.OverdeliveryToleranceLimit,
+                PurchaseOrderScheduleLine.Item_EBELP
+            ) <= PurchaseOrderScheduleLine.POQuantity_MENGE + PurchaseOrderScheduleLine.OverdeliveryToleranceLimit,
             TRUE,
-            FALSE)
+            FALSE
+          )
         ),
-        NULL) AS IsDeliveredInFull,
+        NULL
+      ) AS IsDeliveredInFull,
 
       -- Vendor Invoice Accuracy
       -- TRUE stands for Accurate Invoices and FALSE stands for Inaccurate Invoices
@@ -225,45 +249,58 @@ WITH
                 POOrderHistory.Quantity_MENGE,
                 (POOrderHistory.Quantity_MENGE * -1)
               )) OVER (
-              PARTITION BY PurchaseOrderScheduleLine.Client_MANDT,
+              PARTITION BY
+                PurchaseOrderScheduleLine.Client_MANDT,
                 PurchaseOrderScheduleLine.DocumentNumber_EBELN,
-                PurchaseOrderScheduleLine.Item_EBELP),
+                PurchaseOrderScheduleLine.Item_EBELP
+            ),
             TRUE,
-            FALSE),
+            FALSE
+          ),
           IF(
             SUM(
               IF(
                 POOrderHistory.MovementType__inventoryManagement___BWART = '101',
                 POOrderHistory.Quantity_MENGE,
                 (POOrderHistory.Quantity_MENGE * -1)
-              )) OVER (
-              PARTITION BY PurchaseOrderScheduleLine.Client_MANDT,
-                PurchaseOrderScheduleLine.DocumentNumber_EBELN,
-                PurchaseOrderScheduleLine.Item_EBELP)
+              ))
+              OVER (
+                PARTITION BY
+                  PurchaseOrderScheduleLine.Client_MANDT,
+                  PurchaseOrderScheduleLine.DocumentNumber_EBELN,
+                  PurchaseOrderScheduleLine.Item_EBELP
+              )
             BETWEEN PurchaseOrderScheduleLine.POQuantity_MENGE - PurchaseOrderScheduleLine.UnderdeliveryToleranceLimit
             AND PurchaseOrderScheduleLine.POQuantity_MENGE + purchaseOrderScheduleLine.OverdeliveryToleranceLimit,
             TRUE,
-            FALSE)
+            FALSE
+          )
           OR IF(
             SUM(
               IF(
                 POOrderHistory.MovementType__inventoryManagement___BWART = '101',
                 POOrderHistory.Quantity_MENGE,
                 (POOrderHistory.Quantity_MENGE * -1)
-              )) OVER (
-              PARTITION BY PurchaseOrderScheduleLine.Client_MANDT,
-                PurchaseOrderScheduleLine.DocumentNumber_EBELN,
-                PurchaseOrderScheduleLine.Item_EBELP)
+              ))
+              OVER (
+                PARTITION BY
+                  PurchaseOrderScheduleLine.Client_MANDT,
+                  PurchaseOrderScheduleLine.DocumentNumber_EBELN,
+                  PurchaseOrderScheduleLine.Item_EBELP
+              )
             BETWEEN PurchaseOrderScheduleLine.POQuantity_MENGE - PurchaseOrderScheduleLine.UnderdeliveryToleranceLimit
             AND PurchaseOrderScheduleLine.POQuantity_MENGE + PurchaseOrderScheduleLine.OverdeliveryToleranceLimit,
             TRUE,
-            FALSE)
+            FALSE
+          )
         ),
-        NULL) AS IsGoodsReceiptAccurate,
+        NULL
+      ) AS IsGoodsReceiptAccurate,
 
       -- Vendor Spend Analysis In Source Currency
       -- Goods Receipt Amount In Source Currency
-      IF(POOrderHistory.MovementType__inventoryManagement___BWART = '101',
+      IF(
+        POOrderHistory.MovementType__inventoryManagement___BWART = '101',
         POOrderHistory.AmountInLocalCurrency_DMBTR,
         (POOrderHistory.AmountInLocalCurrency_DMBTR * -1)
       ) AS GoodsReceiptAmountInSourceCurrency,
@@ -313,7 +350,7 @@ WITH
       MAX(PurchaseOrdersGoodsReceipt.OrderDateOfScheduleLine_BEDAT) AS OrderDateOfScheduleLine_BEDAT,
       MAX(PurchaseOrdersGoodsReceipt.PostingDateInTheDocument_BUDAT) AS PostingDateInTheDocument_BUDAT,
       SUM(PurchaseOrdersGoodsReceipt.AmountInLocalCurrency_DMBTR) AS AmountInLocalCurrency_DMBTR,
-      ANY_VALUE(PurchaseOrdersGoodsReceipt.POOrderHistoryCurrencyKey_WAERS)AS POOrderHistoryCurrencyKey_WAERS,
+      ANY_VALUE(PurchaseOrdersGoodsReceipt.POOrderHistoryCurrencyKey_WAERS) AS POOrderHistoryCurrencyKey_WAERS,
       AVG(PurchaseOrdersGoodsReceipt.POQuantity_MENGE) AS POQuantity_MENGE,
       ANY_VALUE(PurchaseOrdersGoodsReceipt.UoM_MEINS) AS UoM_MEINS,
       AVG(PurchaseOrdersGoodsReceipt.NetPrice_NETPR) AS NetPrice_NETPR,
@@ -324,7 +361,7 @@ WITH
       ANY_VALUE(PurchaseOrdersGoodsReceipt.MaterialGroup_MATKL) AS MaterialGroup_MATKL,
       ANY_VALUE(PurchaseOrdersGoodsReceipt.PurchasingOrganization_EKORG) AS PurchasingOrganization_EKORG,
       ANY_VALUE(PurchaseOrdersGoodsReceipt.PurchasingGroup_EKGRP) AS PurchasingGroup_EKGRP,
-      ANY_VALUE(PurchaseOrdersGoodsReceipt. VendorAccountNumber_LIFNR) AS VendorAccountNumber_LIFNR,
+      ANY_VALUE(PurchaseOrdersGoodsReceipt.VendorAccountNumber_LIFNR) AS VendorAccountNumber_LIFNR,
       ANY_VALUE(PurchaseOrdersGoodsReceipt.Company_BUKRS) AS Company_BUKRS,
       ANY_VALUE(PurchaseOrdersGoodsReceipt.Plant_WERKS) AS Plant_WERKS,
       LOGICAL_AND(PurchaseOrdersGoodsReceipt.IsDelivered) AS IsDelivered,
@@ -374,48 +411,8 @@ SELECT
   PurchaseDocuments.YearOfPurchasingDocumentDate_BEDAT,
   PurchaseDocuments.MonthOfPurchasingDocumentDate_BEDAT,
   PurchaseDocuments.WeekOfPurchasingDocumentDate_BEDAT,
-  CASE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(
-    PurchaseDocuments.Client_MANDT,
-    Companies.FiscalyearVariant_PERIV,
-    PurchaseDocuments.PurchasingDocumentDate_BEDAT)
-    WHEN 'CASE1' THEN
-      SUBSTRING(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case1`(
-        PurchaseDocuments.Client_MANDT,
-        Companies.FiscalyearVariant_PERIV,
-        PurchaseDocuments.PurchasingDocumentDate_BEDAT), 1, 4)
-    WHEN 'CASE2' THEN
-      SUBSTRING(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case2`(
-        PurchaseDocuments.Client_MANDT,
-        Companies.FiscalyearVariant_PERIV,
-        PurchaseDocuments.PurchasingDocumentDate_BEDAT), 1, 4)
-    WHEN 'CASE3' THEN
-      SUBSTRING(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case3`(
-        PurchaseDocuments.Client_MANDT,
-        Companies.FiscalyearVariant_PERIV,
-        PurchaseDocuments.PurchasingDocumentDate_BEDAT), 1, 4)
-    ELSE 'DATA ISSUE'
-  END AS FiscalYear,
-  CASE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(
-    PurchaseDocuments.Client_MANDT,
-    Companies.FiscalyearVariant_PERIV,
-    PurchaseDocuments.PurchasingDocumentDate_BEDAT)
-    WHEN 'CASE1' THEN
-      SUBSTRING(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case1`(
-        PurchaseDocuments.Client_MANDT,
-        Companies.FiscalyearVariant_PERIV,
-        PurchaseDocuments.PurchasingDocumentDate_BEDAT), 6, 2)
-    WHEN 'CASE2' THEN
-      SUBSTRING(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case2`(
-        PurchaseDocuments.Client_MANDT,
-        Companies.FiscalyearVariant_PERIV,
-        PurchaseDocuments.PurchasingDocumentDate_BEDAT), 6, 2)
-    WHEN 'CASE3' THEN
-      SUBSTRING(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case3`(
-        PurchaseDocuments.Client_MANDT,
-        Companies.FiscalyearVariant_PERIV,
-        PurchaseDocuments.PurchasingDocumentDate_BEDAT), 6, 2)
-    ELSE 'DATA ISSUE'
-  END AS FiscalPeriod,
+  FiscalDateDimension_BEDAT.FiscalYear,
+  FiscalDateDimension_BEDAT.FiscalPeriod,
   -- Invoice Quantity
   PurchaseOrdersInvoiceReceipt.InvoiceQuantity,
   -- Vendor Spend Analysis (Invoice Amount in Source Currency)
@@ -466,17 +463,21 @@ SELECT
   IF(
     PurchaseDocuments.IsDeliveredOnTime IS NULL,
     'NotApplicable',
-    IF(PurchaseDocuments.IsDeliveredOnTime,
+    IF(
+      PurchaseDocuments.IsDeliveredOnTime,
       'NotDelayed',
-      'Delayed')
+      'Delayed'
+    )
   ) AS VendorOnTimeDelivery,
   -- Vendor InFull Delivery
   IF(
     PurchaseDocuments.IsDeliveredInFull IS NULL,
     'NotApplicable',
-    IF(PurchaseDocuments.IsDeliveredInFull,
+    IF(
+      PurchaseDocuments.IsDeliveredInFull,
       'DeliveredInFull',
-      'NotDeliveredInFull')
+      'NotDeliveredInFull'
+    )
   ) AS VendorInFullDelivery,
   -- Vendor On Time In Full Delivery
   IF(
@@ -485,7 +486,8 @@ SELECT
     IF(
       PurchaseDocuments.IsDeliveredInFull AND PurchaseDocuments.IsDeliveredOnTime,
       'OTIF',
-      'NotOTIF')
+      'NotOTIF'
+    )
   ) AS VendorOnTimeInFullDelivery,
   -- Vendor Invoice Accuracy
   IF(
@@ -495,7 +497,8 @@ SELECT
       PurchaseDocuments.IsGoodsReceiptAccurate
       AND PurchaseDocuments.POQuantity_MENGE = PurchaseOrdersInvoiceReceipt.InvoiceQuantity,
       'AccurateInvoice',
-      'InaccurateInvoice')
+      'InaccurateInvoice'
+    )
   ) AS VendorInvoiceAccuracy,
   -- Past Due and Open
   IF(
@@ -504,11 +507,12 @@ SELECT
     IF(
       CURRENT_DATE() > PurchaseDocuments.ItemDeliveryDate_EINDT,
       'PastDue',
-      'Open')
+      'Open'
+    )
   ) AS PastDueOrOpenItems
 FROM PurchaseDocuments
 LEFT JOIN
-  (
+  ( --noqa: disable=ST05
     SELECT
       Client_MANDT,
       PurchasingDocumentNumber_EBELN,
@@ -527,7 +531,7 @@ LEFT JOIN
     --## TransactioneventType_VGABE='2' -> Invoice Receipt
     WHERE TransactioneventType_VGABE = '2'
     GROUP BY Client_MANDT, PurchasingDocumentNumber_EBELN, ItemNumberOfPurchasingDocument_EBELP
-  ) AS PurchaseOrdersInvoiceReceipt
+  ) AS PurchaseOrdersInvoiceReceipt --noqa: enable = all
   ON
     PurchaseDocuments.Client_MANDT = PurchaseOrdersInvoiceReceipt.Client_MANDT
     AND PurchaseDocuments.DocumentNumber_EBELN = PurchaseOrdersInvoiceReceipt.PurchasingDocumentNumber_EBELN
@@ -558,6 +562,12 @@ LEFT JOIN
   ON
     PurchaseDocuments.Client_MANDT = Companies.Client_MANDT
     AND PurchaseDocuments.Company_BUKRS = Companies.CompanyCode_BUKRS
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.fiscal_date_dim` AS FiscalDateDimension_BEDAT
+  ON
+    PurchaseDocuments.Client_MANDT = FiscalDateDimension_BEDAT.MANDT
+    AND Companies.FiscalyearVariant_PERIV = FiscalDateDimension_BEDAT.PERIV
+    AND PurchaseDocuments.PurchasingDocumentDate_BEDAT = FiscalDateDimension_BEDAT.DATE
 CROSS JOIN LanguageKey
 LEFT JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.MaterialsMD` AS Materials

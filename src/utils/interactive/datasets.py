@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,6 +45,10 @@ DATASETS = [
             False),
         (["deploySFDC"], "SFDC.datasets.reporting", "Salesforce Reporting",
             True),
+        (["deployOracleEBS"], "OracleEBS.datasets.cdc",
+            "OracleEBS CDC Processed", False),
+        (["deployOracleEBS"], "OracleEBS.datasets.reporting",
+            "OracleEBS Reporting", True),
         (["deployMarketing", "marketing.deployGoogleAds"],
             "marketing.GoogleAds.datasets.raw", "Google Ads Raw",
             False),
@@ -92,6 +96,21 @@ DATASETS = [
             False),
         (["deployMarketing", "marketing.deploySFMC"],
             "marketing.SFMC.datasets.reporting", "SFMC Reporting",
+            True),
+        (["deployMarketing", "marketing.deployDV360"],
+            "marketing.DV360.datasets.raw", "DV360 Raw",
+            False),
+        (["deployMarketing", "marketing.deployDV360"],
+            "marketing.DV360.datasets.cdc", "DV360 CDC",
+            False),
+        (["deployMarketing", "marketing.deployDV360"],
+            "marketing.DV360.datasets.reporting", "DV360 Reporting",
+            True),
+        (["deployMarketing", "marketing.deployGA4"],
+            "marketing.GA4.datasets.cdc", "GA4 CDC",
+            False),
+        (["deployMarketing", "marketing.deployGA4"],
+            "marketing.GA4.datasets.reporting", "GA4 Reporting",
             True),
     ]
 
@@ -166,8 +185,11 @@ def get_all_datasets(config: typing.Dict[str, typing.Any]) -> typing.List[str]:
     for dataset in DATASETS:
         name = _get_json_value(config, dataset[1])
         if name and name != "":
+            if dataset[2] == "GA4 CDC":
+                name = name[0].get("name")
             datasets.append((target_project
-                                if dataset[3] else source_project) + "." + name)
+                                if dataset[3] else source_project) +
+                                "." + str(name))
 
     return datasets
 
@@ -213,6 +235,8 @@ def check_datasets_locations(config: typing.Dict[str, typing.Any]) -> (
         if not _is_dataset_needed(config, dataset):
             continue
         current_value = _get_json_value(config, dataset[1])
+        if dataset[2] == "GA4 CDC":
+            current_value = current_value[0].get("name")
         project = (config["projectIdTarget"]
                     if dataset[3] else config["projectIdSource"])
 
@@ -251,6 +275,10 @@ def prompt_for_datasets(session: PromptSession,
         if not current_value:
             current_value = ""
         while True:
+            if dataset[2] == "GA4 CDC":
+                dataset_name = [{"property_id": "123",
+                              "name": dataset_name}]
+                break
             dataset_name = get_value(session, f"{dataset[2]} Dataset",
                                 (target_completer
                                     if dataset[3] else source_completer),
@@ -269,6 +297,7 @@ def prompt_for_datasets(session: PromptSession,
                     return None
             else:
                 break
+
         config = _set_json_value(config, dataset[1], dataset_name)
 
     return config

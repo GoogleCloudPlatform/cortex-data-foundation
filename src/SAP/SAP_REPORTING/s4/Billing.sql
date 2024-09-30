@@ -1,12 +1,14 @@
-WITH AGG_PRCD_ELEMENTS AS (
-  SELECT
-    Prcd_Elements.knumv AS Knumv,
-    Prcd_Elements.kposn AS Kposn,
-    SUM(IF(Prcd_Elements.koaid = 'C' AND Prcd_Elements.kinak IS NULL, Prcd_Elements.kwert, NULL )) AS Rebate
-  FROM
-    `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.prcd_elements` AS Prcd_Elements
-  GROUP BY Knumv, Kposn
-)
+WITH
+  AGG_PRCD_ELEMENTS AS (
+    SELECT
+      Prcd_Elements.client AS Mandt,
+      Prcd_Elements.knumv AS Knumv,
+      Prcd_Elements.kposn AS Kposn,
+      SUM(IF(Prcd_Elements.koaid = 'C' AND Prcd_Elements.kinak IS NULL, Prcd_Elements.kwert, NULL)) AS Rebate
+    FROM
+      `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.prcd_elements` AS Prcd_Elements
+    GROUP BY Mandt, Knumv, Kposn
+  )
 
 SELECT
   VBRK.MANDT AS Client_MANDT,
@@ -119,9 +121,9 @@ SELECT
   COALESCE(VBRK.MWSBK * currency_decimal.CURRFIX, VBRK.MWSBK) AS TaxAmount_MWSBK,
   COALESCE(VBRP.MWSBP * currency_decimal.CURRFIX, VBRP.MWSBP) AS TaxAmountPos_MWSBP,
   COALESCE(AGG_PRCD_ELEMENTS.rebate * currency_decimal.CURRFIX, AGG_PRCD_ELEMENTS.rebate) AS Rebate,
-  COUNT(VBRK.VBELN) OVER(PARTITION BY CalendarDateDimension_FKDAT.CalYear) AS YearOrderCount,
-  COUNT(VBRK.VBELN) OVER(PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth) AS MonthOrderCount,
-  COUNT(VBRK.VBELN) OVER(PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth, CalendarDateDimension_FKDAT.CalWeek) AS WeekOrderCount
+  COUNT(VBRK.VBELN) OVER (PARTITION BY CalendarDateDimension_FKDAT.CalYear) AS YearOrderCount,
+  COUNT(VBRK.VBELN) OVER (PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth) AS MonthOrderCount,
+  COUNT(VBRK.VBELN) OVER (PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth, CalendarDateDimension_FKDAT.CalWeek) AS WeekOrderCount
 FROM `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.vbrk` AS VBRK
 INNER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.vbrp` AS VBRP
   ON
@@ -129,7 +131,8 @@ INNER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.vbrp` AS VBRP
     AND VBRK.MANDT = VBRP.MANDT
 INNER JOIN AGG_PRCD_ELEMENTS
   ON
-    CAST(AGG_PRCD_ELEMENTS.Knumv AS STRING) = vbrk.knumv
+    AGG_PRCD_ELEMENTS.MANDT = vbrk.MANDT
+    AND CAST(AGG_PRCD_ELEMENTS.Knumv AS STRING) = vbrk.knumv
     AND CAST(AGG_PRCD_ELEMENTS.Kposn AS STRING) = vbrp.posnr
 LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS currency_decimal
   ON vbrk.WAERK = currency_decimal.CURRKEY
@@ -138,7 +141,7 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS
 --   ON VBRK.MANDT = currency_conversion.MANDT
 --     AND VBRK.WAERK = currency_conversion.FCURR
 --     AND VBRK.FKDAT = currency_conversion.conv_date
---     AND currency_conversion.TCURR {{ currency }}
+--     AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
 -- ##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
 --     AND currency_conversion.KURST = 'M'
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_FKDAT

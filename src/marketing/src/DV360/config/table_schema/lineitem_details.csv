@@ -1,0 +1,10 @@
+ColumnName,ColumnDataType
+date,DATE
+line_item_id,INT64
+campaign_id,INT64
+line_item,STRING
+campaign,STRING
+line_item_type,STRING
+line_item_start_date,DATE
+line_item_end_date,DATE
+impressions,INT64

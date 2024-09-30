@@ -21,17 +21,16 @@ import pathlib
 import sys
 import typing
 
-from google.cloud import bigquery
-
 # Make sure common modules are in Python path
 sys.path.append(str(pathlib.Path(__file__).parent.parent))
 
 # pylint:disable=wrong-import-position
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
+from common.py_libs.bq_helper import get_table_list
+from common.py_libs.configs import load_config_file
 from common.py_libs.logging import initialize_console_logging
 from common.py_libs.test_harness import load_dataset_test_data
-from common.py_libs.configs import load_config_file
-from common.py_libs.test_harness import TEST_HARNESS_VERSION
-
 
 _DEFAULT_CONFIG = "config/config.json"  # data foundation config
 
@@ -57,7 +56,7 @@ def main(args: typing.Sequence[str]):
 
     test_data = config.get("testData", False)
     test_harness_version = config.get("testHarnessVersion",
-                                      TEST_HARNESS_VERSION)
+                                      constants.TEST_HARNESS_VERSION)
     if not test_data:
         logging.error("testData in %s is false. Aborting.", params.config_file)
         return 1
@@ -76,16 +75,28 @@ def main(args: typing.Sequence[str]):
     current_workload = config[workload_components[0]]
     for component in workload_components[1:]:
         current_workload = current_workload[component]
-    dataset_name = current_workload["datasets"][dataset_type]
+
+    if workload_path == "marketing.GA4" and dataset_type == "cdc":
+        dataset_name = current_workload["datasets"][dataset_type][0].get("name")
+    else:
+        dataset_name = current_workload["datasets"][dataset_type]
+
     project = source_project if dataset_type != "reporting" else target_project
+
+    client = cortex_bq_client.CortexBQClient(
+        project=project,
+        location=location)
+
+    if get_table_list(client, project, dataset_name):
+        logging.warning(
+            "Dataset '%s.%s' already contains tables. Skipping test data "
+            "deployment.", project, dataset_name)
+        return
 
     logging.info(
         ("Loading test data for workload `%s`, dataset `%s` "
         "(%s.%s)."), workload_path, dataset_type, project, dataset_name)
 
-    client = bigquery.Client(
-        project=project,
-        location=location)
     load_dataset_test_data(client,
                            test_harness_project,
                            workload_path,

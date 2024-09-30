@@ -1,8 +1,26 @@
---'VendorPerformanceOverview' - A view built as reference for details of calculations implemented in dashboards.
---It is not designed for extensive reporting or analytical use.
+# -- Copyright 2024 Google LLC
+# --
+# -- Licensed under the Apache License, Version 2.0 (the "License");
+# -- you may not use this file except in compliance with the License.
+# -- You may obtain a copy of the License at
+# --
+# --      https://www.apache.org/licenses/LICENSE-2.0
+# --
+# -- Unless required by applicable law or agreed to in writing, software
+# -- distributed under the License is distributed on an "AS IS" BASIS,
+# -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# -- See the License for the specific language governing permissions and
+# -- limitations under the License.
+
+/* 'VendorPerformanceOverview' - A view built as reference for details of calculations implemented in dashboards.
+*
+* It is not designed for extensive reporting or analytical use.
+*/
+
 WITH
-  -- This subquery groups the data by Date,Company,Purchasing Organization,Purchasing Group,
-  -- Vendor,Vendor Country,Fiscal Year Variant,Material,MaterialType,Plant,Target Currency and Language
+  -- This subquery groups the data by Client, Purchasing Document Date, Invoice Date, Company,
+  -- Purchasing Organization, Purchasing Group, Vendor Account Number, Vendor Name, Country Key,
+  -- Fiscalyear Variant, Material Number, Plant, Material Type, Target Currency, and Language Key.
   VendorPerformance AS (
     SELECT
       Client_MANDT,
@@ -39,32 +57,36 @@ WITH
       COUNTIF(VendorInFullDelivery = 'DeliveredInFull') AS CountInFullOrders,
       COUNTIF(VendorInFullDelivery = 'NotDeliveredInFull') AS CountNotInFullOrders,
       COUNTIF(VendorInvoiceAccuracy = 'AccurateInvoice') AS CountAccurateInvoices,
-      ---## CORTEX-CUSTOMER Percentage calculations are dependent on final granularity of display.
-      ---## We suggest percentages are calculated in query on the view, from the Counts given above.
+      -- ## CORTEX-CUSTOMER Percentage calculations are dependent on the final granularity of display.
+      -- ## We suggest percentages are calculated in the query on the view, from the Counts given above.
       -- ROUND(
       --   SAFE_DIVIDE(
       --     COUNTIF(IsRejected),
       --     COUNTIF(IsRejected) + COUNTIF(NOT IsRejected)
       --   ) * 100,
-      --   2) AS RejectionPercent,
+      --   2
+      -- ) AS RejectionPercent,
       -- ROUND(
       --   SAFE_DIVIDE(
       --     COUNTIF(VendorOnTimeDelivery = 'NotDelayed'),
       --     COUNTIF(VendorOnTimeDelivery = 'NotDelayed') + COUNTIF(VendorOnTimeDelivery = 'Delayed')
       --   ) * 100,
-      --   2) AS OnTimePercent,
+      --   2
+      -- ) AS OnTimePercent,
       -- ROUND(
       --   SAFE_DIVIDE(
       --     COUNTIF(VendorInFullDelivery = 'DeliveredInFull'),
       --     COUNTIF(VendorInFullDelivery = 'DeliveredInFull') + COUNTIF(VendorInFullDelivery = 'NotDeliveredInFull')
       --   ) * 100,
-      --   2) AS InFullPercent,
+      --   2
+      -- ) AS InFullPercent,
       -- ROUND(
       --   SAFE_DIVIDE(
       --     COUNTIF(VendorInvoiceAccuracy = 'AccurateInvoice'),
       --     COUNTIF(VendorInvoiceAccuracy = 'AccurateInvoice') + COUNTIF(VendorInvoiceAccuracy = 'InaccurateInvoice')
       --   ) * 100,
-      --   2) AS InvoiceAccuracyPercent,
+      --   2
+      -- ) AS InvoiceAccuracyPercent,
       COUNTIF(VendorInvoiceAccuracy = 'InaccurateInvoice') AS CountInaccurateInvoices,
       COUNTIF(PastDueOrOpenItems = 'PastDue') AS CountPastDueOrders,
       COUNTIF(PastDueOrOpenItems = 'Open') AS CountOpenOrders,
@@ -74,44 +96,8 @@ WITH
       MAX(YearOfInvoiceDate) AS YearOfInvoiceDate,
       MAX(MonthOfInvoiceDate) AS MonthOfInvoiceDate,
       MAX(WeekOfInvoiceDate) AS WeekOfInvoiceDate,
-      SUBSTRING(IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(Client_MANDT,
-        FiscalyearVariant_PERIV,
-        PurchasingDocumentDate_BEDAT) = 'CASE1',
-        `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case1`(Client_MANDT,
-          FiscalyearVariant_PERIV,
-          PurchasingDocumentDate_BEDAT),
-        IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(Client_MANDT,
-          FiscalyearVariant_PERIV,
-          PurchasingDocumentDate_BEDAT) = 'CASE2',
-          `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case2`(Client_MANDT,
-            FiscalyearVariant_PERIV,
-            PurchasingDocumentDate_BEDAT),
-          IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(Client_MANDT,
-            FiscalyearVariant_PERIV,
-            PurchasingDocumentDate_BEDAT) = 'CASE3',
-            `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case3`(Client_MANDT,
-              FiscalyearVariant_PERIV,
-              PurchasingDocumentDate_BEDAT),
-            'DATA ISSUE'))), 1, 4) AS FiscalYear,
-      SUBSTRING(IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(Client_MANDT,
-        FiscalyearVariant_PERIV,
-        PurchasingDocumentDate_BEDAT) = 'CASE1',
-        `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case1`(Client_MANDT,
-          FiscalyearVariant_PERIV,
-          PurchasingDocumentDate_BEDAT),
-        IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(Client_MANDT,
-          FiscalyearVariant_PERIV,
-          PurchasingDocumentDate_BEDAT) = 'CASE2',
-          `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case2`(Client_MANDT,
-            FiscalyearVariant_PERIV,
-            PurchasingDocumentDate_BEDAT),
-          IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(Client_MANDT,
-            FiscalyearVariant_PERIV,
-            PurchasingDocumentDate_BEDAT) = 'CASE3',
-            `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case3`(Client_MANDT,
-              FiscalyearVariant_PERIV,
-              PurchasingDocumentDate_BEDAT),
-            'DATA ISSUE'))), 6, 2) AS FiscalPeriod
+      MAX(FiscalYear) AS FiscalYear,
+      MAX(FiscalPeriod) AS FiscalPeriod
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorPerformance` AS VendorPerformance
     WHERE
@@ -173,8 +159,8 @@ SELECT
   VendorPerformance.CountNotInFullOrders,
   VendorPerformance.CountAccurateInvoices,
   VendorPerformance.CountInaccurateInvoices,
-  ---##CORTEX-CUSTOMER Percentage calculations are dependent on final granularity of display.
-  ---## We suggest percentages are calculated in query on the view, from the Counts given above
+  -- ##CORTEX-CUSTOMER Percentage calculations are dependent on the final granularity of display.
+  -- ## We suggest percentages are calculated in the query on the view, from the Counts given above.
   -- VendorPerformance.RejectionPercent,
   -- VendorPerformance.OnTimePercent,
   -- VendorPerformance.InFullPercent,
@@ -223,5 +209,5 @@ LEFT JOIN
     AND VendorPerformance.Plant_WERKS = MaterialLedger.ValuationArea_BWKEY
     AND VendorPerformance.MaterialNumber_MATNR = MaterialLedger.MaterialNumber_MATNR
     AND VendorPerformance.FiscalYear = MaterialLedger.FiscalYear
-    AND VendorPerformance.FiscalPeriod = SUBSTR(MaterialLedger.PostingPeriod, (-2), 2)
+    AND VendorPerformance.FiscalPeriod = MaterialLedger.PostingPeriod
     AND MaterialLedger.ValuationType_BWTAR = ''

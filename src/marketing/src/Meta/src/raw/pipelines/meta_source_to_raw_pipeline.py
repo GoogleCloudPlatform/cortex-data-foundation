@@ -100,18 +100,26 @@ class MetaRawLayerOptions(PipelineOptions):
             required=False,
             type=int,
             help="Maximum number of look back days for data loading.")
+        parser.add_argument("--pipeline_logging_level",
+                            required=True,
+                            type=str,
+                            help="Logging level of pipeline.")
 
 
 def run_pipeline():
     args = PipelineOptions().view_as(MetaRawLayerOptions)
 
+    logger = logging.getLogger(__name__)
+    level = getattr(logging, args.pipeline_logging_level)
+    logger.setLevel(level)
+
     # Getting API request fields from settings file.
     request_fields = read_request_fields(args.request_file)
-    logging.debug("Request fields: %s", request_fields)
+    logger.debug("Request fields: %s", request_fields)
 
     # Creating response and target field pairs.
     field_mapping = read_field_mapping(path_to_mapping=args.mapping_file)
-    logging.debug("Field mapping: %s", field_mapping)
+    logger.debug("Field mapping: %s", field_mapping)
 
     # Getting Meta access token for the pipeline.
     access_token = get_access_token(args.tgt_project,

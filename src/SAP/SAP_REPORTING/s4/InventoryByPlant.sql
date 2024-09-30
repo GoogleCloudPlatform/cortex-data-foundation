@@ -3,8 +3,7 @@ WITH
     SELECT LanguageKey_SPRAS
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Languages_T002`
-    WHERE
-      LanguageKey_SPRAS {{ language }}
+    WHERE LanguageKey_SPRAS IN UNNEST({{ sap_languages }})
   ),
 
   CurrencyConversion AS (
@@ -13,7 +12,7 @@ WITH
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CurrencyConversion`
     WHERE
-      ToCurrency_TCURR {{ currency }}
+      ToCurrency_TCURR IN UNNEST({{ sap_currencies }})
       --##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
       AND ExchangeRateType_KURST = 'M'
   ),
@@ -57,7 +56,7 @@ WITH
         AND StockWeeklySnapshots.MaterialNumber_MATNR = MaterialLedger.MaterialNumber_MATNR
         AND StockWeeklySnapshots.Plant_WERKS = MaterialLedger.ValuationArea_BWKEY
         AND StockWeeklySnapshots.FiscalYear = MaterialLedger.FiscalYear
-        AND StockWeeklySnapshots.FiscalPeriod = SUBSTR(MaterialLedger.PostingPeriod, -2, 2)
+        AND StockWeeklySnapshots.FiscalPeriod = MaterialLedger.PostingPeriod
     WHERE
       MaterialLedger.ValuationType_BWTAR = ''
   ),
@@ -90,7 +89,8 @@ WITH
       IF(
         StockWeeklySnapshots.WeekEndDate = LAST_DAY(CURRENT_DATE, WEEK),
         CURRENT_DATE,
-        StockWeeklySnapshots.WeekEndDate) AS WeekEndDate,
+        StockWeeklySnapshots.WeekEndDate
+      ) AS WeekEndDate,
       MaterialCostAndPrice.StandardCost_STPRS,
       MaterialCostAndPrice.MovingAveragePrice_VERPR
     FROM
@@ -173,42 +173,59 @@ SELECT
 
   -- Inventory Value In Target Currency
   COALESCE(
-    IF(MaterialsMD.MaterialType_MTART IN ('FERT', 'HALB'),
+    IF(
+      MaterialsMD.MaterialType_MTART IN ('FERT', 'HALB'),
       CurrentStock.QuantityWeeklyCumulative * (CurrentStock.StandardCost_STPRS * CurrencyConversion.ExchangeRate_UKURS),
-      IF(MaterialsMD.MaterialType_MTART IN ('ROH', 'HIBE'),
+      IF(
+        MaterialsMD.MaterialType_MTART IN ('ROH', 'HIBE'),
         CurrentStock.QuantityWeeklyCumulative * (CurrentStock.MovingAveragePrice_VERPR * CurrencyConversion.ExchangeRate_UKURS),
-        0)
-    ), 0) AS InventoryValueInTargetCurrency,
+        0
+      )
+    ), 0
+  ) AS InventoryValueInTargetCurrency,
 
   -- Obsolete Inventory Value In Target Currency
   IF(
-    DATE_ADD(CurrentStock.DateOfManufacture_HSDAT,
-      INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY) < CURRENT_DATE,
+    DATE_ADD(
+      CurrentStock.DateOfManufacture_HSDAT,
+      INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY
+    ) < CURRENT_DATE,
     (CurrentStock.AmountWeeklyCumulative * CurrencyConversion.ExchangeRate_UKURS),
-    0) AS ObsoleteInventoryValueInTargetCurrency,
+    0
+  ) AS ObsoleteInventoryValueInTargetCurrency,
 
   -- Inventory Value In Source Currency
   COALESCE(
-    IF(MaterialsMD.MaterialType_MTART IN ('FERT', 'HALB'),
+    IF(
+      MaterialsMD.MaterialType_MTART IN ('FERT', 'HALB'),
       CurrentStock.QuantityWeeklyCumulative * CurrentStock.StandardCost_STPRS,
-      IF(MaterialsMD.MaterialType_MTART IN ('ROH', 'HIBE'),
+      IF(
+        MaterialsMD.MaterialType_MTART IN ('ROH', 'HIBE'),
         CurrentStock.QuantityWeeklyCumulative * CurrentStock.MovingAveragePrice_VERPR,
-        0)
-    ), 0) AS InventoryValueInSourceCurrency,
+        0
+      )
+    ), 0
+  ) AS InventoryValueInSourceCurrency,
 
   -- ObsoleteStock
   IF(
-    DATE_ADD(CurrentStock.DateOfManufacture_HSDAT,
-      INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY) < CURRENT_DATE,
+    DATE_ADD(
+      CurrentStock.DateOfManufacture_HSDAT,
+      INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY
+    ) < CURRENT_DATE,
     CurrentStock.QuantityWeeklyCumulative,
-    0) AS ObsoleteStock,
+    0
+  ) AS ObsoleteStock,
 
   -- Obsolete Inventory Value In Source Currency
   IF(
-    DATE_ADD(CurrentStock.DateOfManufacture_HSDAT,
-      INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY) < CURRENT_DATE,
+    DATE_ADD(
+      CurrentStock.DateOfManufacture_HSDAT,
+      INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY
+    ) < CURRENT_DATE,
     CurrentStock.AmountWeeklyCumulative,
-    0) AS ObsoleteInventoryValueInSourceCurrency
+    0
+  ) AS ObsoleteInventoryValueInSourceCurrency
 
 FROM
   CurrentStock

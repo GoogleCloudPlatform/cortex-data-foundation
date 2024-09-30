@@ -48,3 +48,12 @@ CDC_PROJECT = _PROJECT_CONFIG["projectIdSource"]
 CDC_DATASET = _SOURCE_CONFIG["datasets"]["cdc"]
 
 POPULATE_TEST_DATA = _PROJECT_CONFIG["testData"]
+
+SCHEMA_TARGET_FIELD = "TargetField"
+SCHEMA_BQ_DATATYPE_FIELD = "DataType"
+
+SYSTEM_FIELDS = {
+    "RecordStamp": "TIMESTAMP",
+    "SourceFileName": "STRING",
+    "SourceFileLastUpdateTimeStamp": "TIMESTAMP"
+}

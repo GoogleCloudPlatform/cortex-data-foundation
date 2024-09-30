@@ -92,7 +92,7 @@ class SalesforceToBigquery:
         has_is_archived = "isarchived" in sfdc_field_names
 
         if not has_system_mod_stamp:
-            logging.fatal("⛔️ % is not supported (no SystemModstamp field).",
+            logging.critical("⛔️ % is not supported (no SystemModstamp field).",
                           api_name)
             raise RuntimeError(
                 f"{api_name} is not supported (no SystemModstamp field).")
@@ -306,7 +306,7 @@ class SalesforceToBigquery:
             status = sfdc_connection.restful(path=job_status_path, method="GET")
             state = status["state"]
             if state in ["Failed", "Aborted"]:
-                logging.fatal("⛔️ Operation %s %s: %s", job_id, state,
+                logging.critical("⛔️ Operation %s %s: %s", job_id, state,
                               status["errorMessage"])
                 raise RuntimeError(
                     f"Operation {job_id} {state}: {status['errorMessage']}")

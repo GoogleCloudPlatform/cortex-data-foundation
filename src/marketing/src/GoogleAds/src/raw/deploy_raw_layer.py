@@ -17,25 +17,20 @@ Google Adwords system to BigQuery RAW dataset.
 """
 
 import argparse
-import datetime
+from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import shutil
 import sys
 
-from common.py_libs.bq_helper import table_exists
-from common.py_libs.dag_generator import generate_file_from_template
-from google.cloud.bigquery import Client
-
+from src.constants import POPULATE_TEST_DATA
 from src.constants import PROJECT_REGION
 from src.constants import RAW_DATASET
 from src.constants import RAW_PROJECT
-from src.constants import LOOKBACK_DAYS
-from src.constants import POPULATE_TEST_DATA
 from src.constants import SCHEMA_DIR
 from src.constants import SETTINGS
 from src.py_libs.table_creation_utils import create_bq_schema
-from src.py_libs.table_creation_utils import create_table
 from src.py_libs.table_creation_utils import repr_schema
 from src.raw.constants import DAG_TEMPLATE_FILE
 from src.raw.constants import DEPENDENCIES_INPUT_DIR
@@ -44,6 +39,11 @@ from src.raw.constants import OUTPUT_DIR_FOR_RAW
 from src.raw.constants import SCHEMAS_OUTPUT_DIR
 from src.raw.constants import SQL_OUTPUT_DIR
 from src.raw.view_creation_utils import create_view
+
+from common.py_libs import cortex_bq_client
+from common.py_libs.bq_helper import create_table_from_schema
+from common.py_libs.bq_helper import table_exists
+from common.py_libs.dag_generator import generate_file_from_template
 
 
 def _generate_dag_from_template(template_file: Path,
@@ -56,7 +56,10 @@ def _generate_dag_from_template(template_file: Path,
     Args:
         template_file (Path): Path of the template file.
         generation_target_directory (Path): Directory where files are generated.
+        project_id (str): Id of GCP project.
+        dataset_id (str): Id of BigQuery dataset.
         table_name (str): The table name which is loaded by this dag.
+        subs (dict): DAG template substitutions.
     """
     new_table_name = table_name.replace(".", "_")
     output_dag_py_file = Path(
@@ -106,8 +109,8 @@ def main():
     logging.info("Copying schema files...")
     shutil.copytree(src=SCHEMA_DIR, dst=SCHEMAS_OUTPUT_DIR, dirs_exist_ok=True)
 
-    now_date = datetime.datetime.utcnow().date()
-    client = Client(project=RAW_PROJECT)
+    dag_start_date = datetime.now(timezone.utc).date()
+    client = cortex_bq_client.CortexBQClient(project=RAW_PROJECT)
 
     if not "source_to_raw_tables" in SETTINGS:
         logging.warning(
@@ -153,11 +156,9 @@ def main():
             logging.info("Creating schema...")
             table_schema = create_bq_schema(table_mapping_path)
             logging.debug("Raw table schema: %s\n", repr_schema(table_schema))
-            create_table(client=client,
+            create_table_from_schema(bq_client=client,
                          schema=table_schema,
-                         project=RAW_PROJECT,
-                         dataset=RAW_DATASET,
-                         table_name=table_name,
+                         full_table_name=full_table_name,
                          partition_details=partition_details,
                          cluster_details=cluster_details)
             logging.info("Table is created successfully.")
@@ -180,9 +181,7 @@ def main():
             "resource_type":
                 resource_type,
             "start_date":
-                now_date,
-            "lookback_days":
-                LOOKBACK_DAYS,
+                dag_start_date,
             "schema_file":
                 table_mapping_path.name,
             "pipeline_temp_location":

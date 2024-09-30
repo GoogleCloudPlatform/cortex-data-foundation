@@ -41,7 +41,7 @@ then
     if [ ! -z "$(shopt -s nullglob dotglob; echo src/SFMC/_generated_dags/*)" ]
     then
         echo "Copying SFMC artifacts to gs://${_TGT_BUCKET}/dags/sfmc."
-        gsutil -m cp -r src/SFMC/_generated_dags/* gs://${_TGT_BUCKET}/dags/sfmc/
+        gcloud storage cp -r src/SFMC/_generated_dags/* gs://${_TGT_BUCKET}/dags/sfmc/
         echo "✅ SFMC artifacts have been copied."
     else
         echo "❗ No file generated. Nothing to copy."
@@ -51,13 +51,24 @@ else
 fi
 
 echo "Deploying SFMC Reporting layer..."
+declare -a _WORKER_POOL_OPTIONS
+
+if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+_WORKER_POOL_OPTIONS+=(--worker_pool_name "${_WORKER_POOL_NAME}")
+fi
+
+if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+_WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+fi
+
 src/common/materializer/deploy.sh \
     --gcs_logs_bucket ${_GCS_LOGS_BUCKET} \
     --gcs_tgt_bucket ${_TGT_BUCKET} \
     --module_name SFMC \
     --config_file ${_CONFIG_FILE} \
     --target_type "Reporting" \
-    --materializer_settings_file src/SFMC/config/reporting_settings.yaml
+    --materializer_settings_file src/SFMC/config/reporting_settings.yaml \
+    "${_WORKER_POOL_OPTIONS[@]}"
 
 echo "✅ SFMC Reporting layer deployed successfully."
 echo "==================================================="

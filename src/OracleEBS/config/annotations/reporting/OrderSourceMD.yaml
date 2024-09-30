@@ -1,0 +1,14 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.OrderSourceMD"
+description: "Dimension table containing order source attributes."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "ORDER_SOURCE_ID"
+    description: "Primary key identifying the order source"
+  - name: "NAME"
+    description: "Order source name"
+  - name: "DESCRIPTION"
+    description: "Description of order source type"

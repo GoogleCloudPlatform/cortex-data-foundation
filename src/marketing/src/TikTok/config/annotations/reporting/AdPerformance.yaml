@@ -26,7 +26,7 @@ fields:
   - name: "ad_text"
     description: "Ad title"
   - name: "image_mode"
-    description: "Creative format.\n Enum values:\n IMAGE_MODE_LARGE\uFF1AImage\n IMAGE_MODE_VIDEO\uFF1AVideo (16:9)\n IMAGE_MODE_VIDEO_SQUARE\uFF1AVideo (1:1)\n IMAGE_MODE_VIDEO_VERTICAL\uFF1AVideo (9:16)\n CAROUSEL_ADS: Carousel."
+    description: "Creative format.\n Enum values:\n IMAGE_MODE_LARGE: Image\n IMAGE_MODE_VIDEO: Video (16:9)\n IMAGE_MODE_VIDEO_SQUARE: Video (1:1)\n IMAGE_MODE_VIDEO_VERTICAL: Video (9:16)\n CAROUSEL_ADS: Carousel."
   - name: "gross_impressions"
     description: "Gross Impressions (Includes Invalid Impressions)  The number of times an ad was seen on screen, including invalid impressions."
   - name: "cost_per_1000_reached"

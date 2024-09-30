@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,22 +15,26 @@
 Generates GCP Cloud Build files that will create BQ objects (tables, views etc)
 in the given dataset based on settings file.
 """
+#TODO: Remove these. Only here to pass presubmit for intial changes.
+#pylint: disable=unused-import
 
 import argparse
 import json
 import logging
+from pathlib import Path
 import shutil
+
+from google.cloud import bigquery
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
 import yaml
 
-from jinja2 import Environment, FileSystemLoader
-from pathlib import Path
-
+from common.py_libs import bq_helper
 from common.py_libs import bq_materializer
+from common.py_libs import cortex_bq_client
 from common.py_libs import configs
 from common.py_libs import jinja
 from common.py_libs import k9_deployer
-
-from google.cloud import bigquery
 
 # NOTE: All paths here are relative to the root directory, unless specified
 # otherwise.
@@ -53,23 +57,30 @@ _CLOUDBUILD_TEMPLATE_FILE = "cloudbuild_materializer.yaml.jinja"
 
 # All supported Cortex modules
 _CORTEX_MODULES = [
-    "SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "k9"
+    "SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "DV360",
+    "GA4", "OracleEBS", "k9"
 ]
 
 # All supported Marketing modules
-_MARKETING_MODULES = ["GoogleAds", "CM360", "TikTok", "Meta", "SFMC"]
+_MARKETING_MODULES = [
+    "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "GA4", "DV360"
+]
 
 # All supported target dataset types
 _CORTEX_DATASET_TYPES_LOWER = ["cdc", "reporting", "processing"]
 
 
-def _create_tgt_dataset(full_dataset_name: str, location: str) -> None:
+def _create_tgt_dataset(full_dataset_name: str, location: str,
+                        label_dataset:bool = False) -> None:
     """Creates target (CDC/Reporting etc.) BQ target dataset if needed."""
     logging.info("Creating '%s' dataset if needed...", full_dataset_name)
-    client = bigquery.Client()
+    client = cortex_bq_client.CortexBQClient()
     ds = bigquery.Dataset(full_dataset_name)
     ds.location = location
     ds = client.create_dataset(ds, exists_ok=True, timeout=30)
+
+    if label_dataset:
+        bq_helper.label_dataset(bq_client=client, dataset=ds)
 
 
 def _create_jinja_data_file(config_dict: dict, generated_files_dir) -> None:
@@ -126,13 +137,15 @@ def _process_bq_object_settings(global_settings: dict,
             })
     return build_file_settings
 
+
 #TODO: Refactor so it takes only global settings and bq_obj_settings dicts,
 # not a full list of individual parameters.
 
+
 def _create_build_files(global_settings: dict, bq_obj_settings: dict,
                         module_name: str, tgt_dataset_name: str,
-                        tgt_dataset_type: str,
-                        generated_files_dir: Path) -> None:
+                        tgt_dataset_type: str, generated_files_dir: Path,
+                        private_worker_pool: bool, enable_debug: bool) -> None:
     """
     Generates cloud build files that will create target artifacts such as BQ
     tables / views, K9 DAGs, etc.
@@ -188,8 +201,11 @@ def _create_build_files(global_settings: dict, bq_obj_settings: dict,
             "target_dataset_type": tgt_dataset_type,
             "target_dataset_name": tgt_dataset_name,
             "load_test_data": config_dict["testData"],
+            "debug": enable_debug,
             "config_file": global_settings["config_file"],
-            "build_files_list": build_files_list
+            "build_files_list": build_files_list,
+            "private_worker_pool": private_worker_pool,
+            "allow_telemetry": config_dict.get("allowTelemetry", True)
         })
 
         build_file_num = f"{build_file_counter:03d}"
@@ -240,7 +256,7 @@ def _get_materializer_settings(materializer_settings_file: str) -> dict:
     return materializer_settings
 
 
-def _parse_args() -> tuple[str, str, str, str, dict]:
+def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
     """Parses arguments and sets up logging."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -273,7 +289,13 @@ def _parse_args() -> tuple[str, str, str, str, dict]:
         required=False,
         default=None,
         help="K9 Manifest file, with relative path. Required only if "
-             "local K9 is being utilized.")
+        "local K9 is being utilized.")
+    parser.add_argument(
+        "--private_worker_pool",
+        type=str,
+        required=False,
+        default=False,
+        help="If customer uses a private worker pool. Optional.")
     parser.add_argument(
         "--debug",
         default=False,
@@ -290,6 +312,7 @@ def _parse_args() -> tuple[str, str, str, str, dict]:
     materializer_settings_file = args.materializer_settings_file
     target_dataset_type = args.target_dataset_type
     k9_manifest_file = args.k9_manifest_file
+    private_worker_pool = bool(args.private_worker_pool)
 
     logging.info("Arguments:")
     logging.info("  module_name = %s", module_name)
@@ -338,29 +361,30 @@ def _parse_args() -> tuple[str, str, str, str, dict]:
 
     # K9 Manifest file
     try:
-        k9_manifest = (
-            k9_deployer.load_k9s_manifest(k9_manifest_file)
-            if k9_manifest_file
-            else {})
+        k9_manifest = (k9_deployer.load_k9s_manifest(k9_manifest_file)
+                       if k9_manifest_file else {})
     except Exception as e:
         raise FileNotFoundError(f"The specified K9 manifest {k9_manifest_file} "
                                 "does not exist.") from e
 
     return (module_name, target_dataset_type, config_file,
-            materializer_settings_file, k9_manifest)
-
+            materializer_settings_file, k9_manifest, private_worker_pool,
+            enable_debug)
 
 
 def main():
 
     # Parse and validate arguments.
-    (module_name, tgt_dataset_type, config_file,
-     materializer_settings_file, k9_manifest) = _parse_args()
+    (module_name, tgt_dataset_type, config_file, materializer_settings_file,
+     k9_manifest, private_worker_pool, enable_debug) = _parse_args()
 
     logging.info("Generating %s Build files....", tgt_dataset_type)
 
     # Load and validate configs in config file
     config_dict = configs.load_config_file(config_file)
+
+    # Get telemetry opt in, default to True
+    allow_telemetry = config_dict.get("allowTelemetry", True)
 
     # Load and validate Materializer settings
     materializer_settings = _get_materializer_settings(
@@ -392,7 +416,7 @@ def main():
     # individual BQ table creation SQL build file later in the process.
     _create_jinja_data_file(config_dict, generated_files_dir)
 
-    global_settings={
+    global_settings = {
         "config_file": config_file,
         "config_dict": config_dict,
         "k9_manifest": k9_manifest
@@ -401,10 +425,11 @@ def main():
     # Create build files.
     _create_build_files(global_settings, materializer_settings, module_name,
                         tgt_dataset_full_name, tgt_dataset_type,
-                        generated_files_dir)
+                        generated_files_dir, private_worker_pool, enable_debug)
 
     # Create target dataset if not present.
-    _create_tgt_dataset(tgt_dataset_full_name, config_dict["location"])
+    _create_tgt_dataset(tgt_dataset_full_name, config_dict["location"],
+                        label_dataset = allow_telemetry)
 
     logging.info("Finished generating Cloud Build files for %s for %s.",
                  tgt_dataset_type, module_name)

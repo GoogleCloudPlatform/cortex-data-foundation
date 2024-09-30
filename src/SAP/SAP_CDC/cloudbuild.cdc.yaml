@@ -19,19 +19,26 @@ steps:
     waitFor: ['-']
     script: |
       #!/bin/bash
-      echo "Configuration (${_CONFIG_FILE}):"
-      cat ${_CONFIG_FILE}
 
-      _PJID_SRC_=$(jq -r ."projectIdSource" ${_CONFIG_FILE})
-      _DEPLOY_CDC_=$(jq -r ."SAP.deployCDC" ${_CONFIG_FILE})
-      _DS_RAW_=$(jq -r ."SAP.datasets.raw" ${_CONFIG_FILE})
-      _DS_CDC_=$(jq -r ."SAP.datasets.cdc" ${_CONFIG_FILE})
-      _TEST_DATA_=$(jq -r ."testData" ${_CONFIG_FILE})
-      _SQL_FLAVOUR_=$(jq -r ."SAP.SQLFlavor" ${_CONFIG_FILE})
+      echo "Configuration ("${_CONFIG_FILE}"):"
+      cat "${_CONFIG_FILE}"
 
-      if [[ ${_DEPLOY_CDC_} == "true" ]] ; then
+      # Save absolute config file path to .env file
+      # that can be accessed by all Cloud Build steps since exported env
+      # variables do not persist between steps.
+
+      realpath "${_CONFIG_FILE}" > /workspace/config_file_full_path.env
+
+      _PJID_SRC_="$(jq -r ."projectIdSource" "${_CONFIG_FILE}")"
+      _DEPLOY_CDC_="$(jq -r ."SAP.deployCDC" "${_CONFIG_FILE}")"
+      _DS_RAW_="$(jq -r ."SAP.datasets.raw" "${_CONFIG_FILE}")"
+      _DS_CDC_="$(jq -r ."SAP.datasets.cdc" "${_CONFIG_FILE}")"
+      _TEST_DATA_="$(jq -r ."testData" "${_CONFIG_FILE}")"
+      _SQL_FLAVOUR_="$(jq -r ."SAP.SQLFlavor" "${_CONFIG_FILE}")"
+
+      if [[ "${_DEPLOY_CDC_}" == "true" ]] ; then
         echo "Running config_reader"
-        cd ./src/ && python config_reader.py ${_PJID_SRC_} ${_DS_RAW_} ${_DS_CDC_} ${_TEST_DATA_} ${_SQL_FLAVOUR_}
+        python src/config_reader.py "${_PJID_SRC_}" "${_DS_RAW_}" "${_DS_CDC_}" "${_TEST_DATA_}" "${_SQL_FLAVOUR_}"
       fi
 
   - name: 'gcr.io/kittycorn-public/deploy-kittycorn:v2.0'
@@ -43,7 +50,7 @@ steps:
       then
         _TGT_BUCKET_=${_TGT_BUCKET}
       else
-        _TGT_BUCKET_=$(jq -r ."targetBucket" ${_CONFIG_FILE})
+        _TGT_BUCKET_=$(jq -r ."targetBucket" "${_CONFIG_FILE}")
       fi
 
       echo "Running copy_dag_py_files_to_gcs"
@@ -64,7 +71,7 @@ steps:
       then
         _TGT_BUCKET_=${_TGT_BUCKET}
       else
-        _TGT_BUCKET_=$(jq -r ."targetBucket" ${_CONFIG_FILE})
+        _TGT_BUCKET_=$(jq -r ."targetBucket" "${_CONFIG_FILE}")
       fi
 
       echo "Copying DAG SQL files to GCS..."
@@ -82,13 +89,13 @@ steps:
     script: |
       #!/bin/bash
       set -e
-      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" "${_CONFIG_FILE}")
 
       if [[ ${_DEPLOY_DATA_MESH_} == "true" ]]; then
-        _SQL_FLAVOR_=$(jq -r ."SAP.SQLFlavor" ${_CONFIG_FILE})
+        _SQL_FLAVOR_=$(jq -r ."SAP.SQLFlavor" "${_CONFIG_FILE}")
 
         python3 common/data_mesh/deploy_data_mesh.py \
-            --config-file ${_CONFIG_FILE} \
+            --config-file "${_CONFIG_FILE}" \
             --tag-template-directories config/${_SQL_FLAVOR_}/tag_templates \
             --policy-directories config/${_SQL_FLAVOR_}/policy_taxonomies \
             --lake-directories config/${_SQL_FLAVOR_}/lakes \
@@ -100,9 +107,12 @@ steps:
       fi
 
 logsBucket: "gs://${_GCS_BUCKET}"
+serviceAccount: "${_BUILD_ACCOUNT}"
 timeout: 7200s
 substitutions:
   _CONFIG_FILE: "config/config.json"
 options:
   substitution_option: "ALLOW_LOOSE"
   automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"

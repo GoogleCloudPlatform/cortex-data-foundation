@@ -14,39 +14,47 @@
 
 import sys
 from airflow import DAG
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
-sys.path.append('/home/airflow/gcs/dags/sap/reporting/hier_reader')
+sys.path.append("/home/airflow/gcs/dags/sap/reporting/hier_reader")
 import dag_hierarchies_module
 
 default_dag_args = {
-   'depends_on_past': False,
-   'start_date': datetime(${year}, ${month}, ${day}),
-   'retries': 1,
-   'retry_delay': timedelta(minutes=30),
+   "depends_on_past": False,
+   "start_date": datetime(${year}, ${month}, ${day}),
+   "retries": 1,
+   "retry_delay": timedelta(minutes=30),
 }
 
-with DAG("CDC_Hierarchy_${setname}",
-        description="Hierarchy Resolution for ${setname}",
-        schedule_interval="${load_frequency}",
-        default_args=default_dag_args,
-        catchup=False,
-        max_active_runs=1) as dag:
-    start_task = DummyOperator(task_id="start")
-    python_task	= PythonOperator(task_id="python_task", python_callable=dag_hierarchies_module.generate_hier,
-            op_kwargs={"src_project": "${src_project}",
-                        "src_dataset": "${src_dataset}",
-                        "setname": "${setname}",
-                        "setclass":"${setclass}",
-                        "orgunit":"${orgunit}",
-                        "mandt": "${mandt}",
-                        "table": "${table}",
-                        "select_key":  "${select_key}",
-                        "where_clause": ${where_clause},
-                        "full_table" : "${full_table}"
+with DAG(dag_id="CDC_Hierarchy_${setname}",
+         description="Hierarchy Resolution for ${setname}",
+         schedule_interval="${load_frequency}",
+         default_args=default_dag_args,
+         catchup=False,
+         max_active_runs=1) as dag:
+
+    start_task = EmptyOperator(task_id="start")
+
+    python_task	= PythonOperator(
+        task_id="python_task",
+        python_callable=dag_hierarchies_module.generate_hier,
+        op_kwargs={
+            "src_project": "${src_project}",
+            "src_dataset": "${src_dataset}",
+            "setname": "${setname}",
+            "setclass":"${setclass}",
+            "orgunit":"${orgunit}",
+            "mandt": "${mandt}",
+            "table": "${table}",
+            "select_key":  "${select_key}",
+            "where_clause": ${where_clause},
+            "full_table" : "${full_table}"
         })
-    stop_task = DummyOperator(task_id="stop")
+
+    stop_task = EmptyOperator(task_id="stop")
+
     start_task >> python_task >> stop_task
 
+ # type: ignore

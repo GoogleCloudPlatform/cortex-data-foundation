@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.DeliveryAssignments"
+description: "Base fact view of delivery assignments."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Facts"
+fields:
+  - name: "DELIVERY_ASSIGNMENT_ID"
+    description: "Primary key identifying the delivery assignment"
+  - name: "DELIVERY_ID"
+    description: "Foreign key identifying a delivery"
+  - name: "DELIVERY_DETAIL_ID"
+    description: "Foreign key identifying a delivery detail"
+  - name: "CREATION_TS"
+    description: "Timestamp when the record was created in the source system"
+  - name: "LAST_UPDATE_TS"
+    description: "Timestamp when the record was last updated in the source system"

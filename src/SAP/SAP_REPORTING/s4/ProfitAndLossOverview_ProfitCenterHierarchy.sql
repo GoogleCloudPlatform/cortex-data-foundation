@@ -58,6 +58,7 @@ LEFT JOIN
     AND ProfitCenters.setclass = PCParentText.SetClass_SETCLASS
     AND ProfitCenters.subclass = PCParentText.OrganizationalUnit_SUBCLASS
     AND CAST(PCParentText.NodeNumber_SUCC AS STRING) = ProfitCenters.parent
+    AND ProfitCenters.hiername = PCParentText.SetName_HIERBASE
 LEFT JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProfitCenterHierarchiesMD` AS PCNodeText
   ON
@@ -65,6 +66,7 @@ LEFT JOIN
     AND ProfitCenters.setclass = PCNodeText.SetClass_SETCLASS
     AND ProfitCenters.subclass = PCNodeText.OrganizationalUnit_SUBCLASS
     AND CAST(PCNodeText.NodeNumber_SUCC AS STRING) = ProfitCenters.node
+    AND ProfitCenters.hiername = PCNodeText.SetName_HIERBASE
 LEFT JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProfitCentersMD` AS PCText
   ON

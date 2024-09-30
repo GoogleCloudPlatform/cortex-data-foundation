@@ -12,6 +12,9 @@
 #-- See the License for the specific language governing permissions and
 #-- limitations under the License.
 
+## Following currency conversion functions are deprecated, and will be removed in the next release.
+## Use currency_conversion table instead.
+
 CREATE TABLE IF NOT EXISTS `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_conversion`
 (
   mandt STRING,

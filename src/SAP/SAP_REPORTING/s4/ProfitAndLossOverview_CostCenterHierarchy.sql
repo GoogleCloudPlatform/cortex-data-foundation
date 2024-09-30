@@ -57,6 +57,7 @@ LEFT JOIN
     AND CostCenters.setclass = CCParentText.SetClass_SETCLASS
     AND CostCenters.subclass = CCParentText.OrganizationalUnit_SUBCLASS
     AND CAST(CCParentText.NodeNumber_SUCC AS STRING) = CostCenters.parent
+    AND CostCenters.hiername = CCParentText.SetName_HIERBASE
 LEFT JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CostCenterHierarchiesMD` AS CCNodeText
   ON
@@ -64,6 +65,7 @@ LEFT JOIN
     AND CostCenters.setclass = CCNodeText.SetClass_SETCLASS
     AND CostCenters.subclass = CCNodeText.OrganizationalUnit_SUBCLASS
     AND CAST(CCNodeText.NodeNumber_SUCC AS STRING) = CostCenters.node
+    AND CostCenters.hiername = CCNodeText.SetName_HIERBASE
 LEFT JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CostCentersMD` AS CCText
   ON

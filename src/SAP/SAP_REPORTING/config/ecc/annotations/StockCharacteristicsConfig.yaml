@@ -1,4 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.StockCharacteristicsConfig"
+description: "This view stores the configurations for various stock characteristics (blocked, restricted etc) and their associated movement types. The granularity is at Client(System), Stock Type, Debit/Credit Indicator, Special Stock Indicator and Movement Type"
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -8,14 +9,14 @@ catalog_tags:
         value: "Inventory Management"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "StockType_INSMK"
-    description: "Stock Type"
+    description: "Stock Type, PK"
   - name: "Debit_CreditIndicator_SHKZG"
-    description: "Debit/Credit ind"
+    description: "Debit/Credit indicator, PK"
   - name: "SpecialStockIndicator_SOBKZ"
-    description: "Special Stock"
+    description: "Special Stock Indicator, PK"
   - name: "MovementType_BWART"
-    description: "Movement type"
+    description: "Movement Type, PK"
   - name: "StockCharacteristic"
-    description: "Stock Characteristic"
+    description: "The characteristics/categories of Inventory the materials are moving into/out of"

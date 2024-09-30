@@ -18,11 +18,10 @@ from pathlib import Path
 _CURRENT_DIR = Path(__file__).resolve().parent
 
 # Template files
-DAG_TEMPLATE_DIR = Path(_CURRENT_DIR, "templates")
-DAG_TEMPLATE_PATH = Path(DAG_TEMPLATE_DIR, "raw_to_cdc_dag_py_template.py")
+_DAG_TEMPLATE_DIR = Path(_CURRENT_DIR, "templates")
+DAG_TEMPLATE_PATH = Path(_DAG_TEMPLATE_DIR, "raw_to_cdc_dag_py_template.py")
 
-CDC_SQL_TEMPLATE_DIR = Path(DAG_TEMPLATE_DIR, "sql")
-CDC_SQL_TEMPLATE_PATH = Path(CDC_SQL_TEMPLATE_DIR,
+CDC_SQL_TEMPLATE_PATH = Path(_DAG_TEMPLATE_DIR, "sql",
                              "raw_to_cdc_sql_template.sql")
 
 # Directories under which all the generated dag files and related files

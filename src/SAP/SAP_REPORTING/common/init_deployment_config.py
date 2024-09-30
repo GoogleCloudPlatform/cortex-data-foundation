@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,32 +16,33 @@ Processes config.json for resolving default values and validation.
 """
 
 import argparse
-from importlib.util import spec_from_file_location, module_from_spec
+from importlib.util import module_from_spec
+from importlib.util import spec_from_file_location
 import json
 import logging
-import sys
 from pathlib import Path
+import sys
 import typing
 import uuid
 
-from google.cloud.exceptions import (BadRequest,
-                                     Forbidden,
-                                     Unauthorized,
-                                     ServerError)
-from google.cloud import bigquery
+from google.cloud.exceptions import BadRequest
+from google.cloud.exceptions import Forbidden
+from google.cloud.exceptions import ServerError
+from google.cloud.exceptions import Unauthorized
 
 # Make sure common modules are in Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # pylint:disable=wrong-import-position
-from common.py_libs import bq_helper, resource_validation_helper
-from common.py_libs.test_harness import TEST_HARNESS_VERSION
+from common.py_libs import bq_helper
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
+from common.py_libs import resource_validation_helper
 
 _DEFAULT_CONFIG_ = "config/config.json"
 _VALIDATOR_FILE_NAME_ = "config_validator"
 _VALIDATE_FUNC_NAME_ = "validate"
 _DEFAULT_TEST_HARNESS_PROJECT = "kittycorn-public"
-
 
 def _load_config(config_file):
     """Loads config file.
@@ -134,7 +135,8 @@ def _validate_config_resources(config: typing.Dict[str, typing.Any])-> bool:
     if source != target:
         projects.append(target)
     for project in projects:
-        bq_client = bigquery.Client(project=project, location=location)
+        bq_client = cortex_bq_client.CortexBQClient(project=project,
+                                                    location=location)
         temp_dataset_name = f"tmp_cortex_{uuid.uuid4().hex}"
         full_temp_dataset_name = f"{project}.{temp_dataset_name}"
         try:
@@ -214,6 +216,7 @@ def validate_config(
     config["deploySAP"] = config.get("deploySAP", False)
     config["deploySFDC"] = config.get("deploySFDC", False)
     config["deployMarketing"] = config.get("deployMarketing", False)
+    config["deployOracleEBS"] = config.get("deployOracleEBS", False)
     config["deployDataMesh"] = config.get("deployDataMesh", False)
     config["testData"] = config.get("testData", False)
     config["turboMode"] = config.get("turboMode", True)
@@ -222,8 +225,6 @@ def validate_config(
     if not config["location"]:
         logging.warning("⚠️ No location specified. Using `US`. ⚠️")
         config["location"] = "us"
-    config["currencies"] = config.get("currencies", ["USD"])
-    config["languages"] = config.get("languages", ["E", "S"])
 
     if config.get("testDataProject", "") == "":
         logging.warning("testDataProject is empty. Using default project `%s`.",
@@ -253,7 +254,7 @@ def validate_config(
 
     logging.info("Fetching test harness version.")
     config["testHarnessVersion"] = config.get("testHarnessVersion",
-                                              TEST_HARNESS_VERSION)
+                                              constants.TEST_HARNESS_VERSION)
 
     logging.info("Validating common configuration resources.")
     if not _validate_config_resources(config):

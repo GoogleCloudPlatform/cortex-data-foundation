@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,26 +15,37 @@
 """Useful functions to carry out neecssary operations."""
 
 #TODO: Remove all pylint disabled flags.
-#TODO: Arrange functions in more logical order.
+#pylint:disable=missing-type-doc
 
 import datetime
+from pathlib import Path
+import sys
+
 from string import Template
 
 from google.cloud.exceptions import NotFound
 from google.cloud import bigquery
 from google.cloud import storage
 
-_SQL_DAG_PYTHON_TEMPLATE = 'template_dag/dag_sql.py'
-_SQL_DAG_SQL_TEMPLATE = 'template_sql/cdc_sql_template.sql'
-_VIEW_SQL_TEMPLATE = 'template_sql/runtime_query_view.sql'
+# Make sure common modules are in Python path
+sys.path.append(str(Path(__file__).parent.parent))
 
-_GENERATED_DAG_DIR = '../generated_dag'
-_GENERATED_SQL_DIR = '../generated_sql'
+# pylint:disable=wrong-import-position
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
+from common.py_libs import cortex_exceptions as cortex_exc
+
+_SQL_DAG_PYTHON_TEMPLATE = 'src/template_dag/dag_sql.py'
+_SQL_DAG_SQL_TEMPLATE = 'src/template_sql/cdc_sql_template.sql'
+_VIEW_SQL_TEMPLATE = 'src/template_sql/runtime_query_view.sql'
+
+_GENERATED_DAG_DIR = 'generated_dag'
+_GENERATED_SQL_DIR = 'generated_sql'
 
 # Columns to be ignored for CDC tables
 _CDC_EXCLUDED_COLUMN_LIST = ['_PARTITIONTIME', 'operation_flag', 'is_deleted']
 
-# Supported parition types.
+# Supported partition types.
 _PARTITION_TYPES = ['time', 'integer_range']
 
 # Column data types supported for time based partitioning.
@@ -60,7 +71,8 @@ _LOAD_FREQUENCIES = [
     '@yearly'
 ]
 
-client = bigquery.Client()
+# Use Cortex wrapper client
+client = cortex_bq_client.CortexBQClient()
 storage_client = storage.Client()
 
 
@@ -80,44 +92,48 @@ def generate_dag_py_file(template, file_name, **dag_subs):
 def generate_runtime_view(raw_table_name, cdc_table_name):
     """Creates runtime CDC view for RAW table."""
 
-    keys = get_keys(raw_table_name)
-    if not keys:
-        e_msg = f'Keys for table {raw_table_name} not found in table DD03L'
-        raise Exception(e_msg) from None
+    primary_keys = get_primary_keys(raw_table_name)
+    if not primary_keys:
+        e_msg = f'Primary keys for {raw_table_name} not found in table DD03L'
+        raise cortex_exc.KeyCError(e_msg) from None
 
-    keys_with_dt1_prefix = ','.join(add_prefix_to_keys('DT1', keys))
-    keys_comparator_with_dt1_t1 = ' AND '.join(
-        get_key_comparator(['DT1', 'T1'], keys))
-    keys_comparator_with_t1_s1 = ' AND '.join(
-        get_key_comparator(['T1', 'S1'], keys))
-    keys_comparator_with_t1s1_d1 = ' AND '.join(
-        get_key_comparator(['D1', 'T1S1'], keys))
+    primary_keys_not_null_list = []
+    for key in primary_keys:
+        primary_keys_not_null_list.append((f'`{key}` IS NOT NULL'))
+    primary_keys_not_null_clause = ' AND '.join(primary_keys_not_null_list)
 
     # Generate view sql by using template.
     with open(_VIEW_SQL_TEMPLATE, mode='r',
               encoding='utf-8') as sql_template_file:
         sql_template = Template(sql_template_file.read())
+
     generated_sql = sql_template.substitute(
         base_table=raw_table_name,
-        keys=', '.join(keys),
-        keys_with_dt1_prefix=keys_with_dt1_prefix,
-        keys_comparator_with_t1_s1=keys_comparator_with_t1_s1,
-        keys_comparator_with_dt1_t1=keys_comparator_with_dt1_t1,
-        keys_comparator_with_t1s1_d1=keys_comparator_with_t1s1_d1)
+        primary_keys=', '.join(primary_keys),
+        primary_keys_not_null_clause=primary_keys_not_null_clause)
 
     view = bigquery.Table(cdc_table_name)
     view.view_query = generated_sql
     client.create_table(view, exists_ok=True)
+
     print(f'Created view {cdc_table_name}')
 
 
 def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
-                           gen_test):
-    """Generates file contaiing DAG code to refresh CDC table from RAW table.
+                           gen_test, allow_telemetry):
+    """Generates file containing DAG code to refresh CDC table from RAW table.
 
     Args:
-        table_name: name of the table for which DAG needs to be generated.
-        **dag_subs: List of substitues to be made to the DAG template.
+        raw_table_name: Full table name of raw table (dataset.table_name).
+        cdc_table_name: Full table name of cdc table (dataset.table_name).
+        load_frequency: DAG run frequency.
+        gen_test: If test data is needed.
+        allow_telemetry: If telemetry allowed.
+
+    Raises:
+        cortex_exc.KeyCEError: If primary keys not found in table DD03L.
+        Exception: If error in executing DAG to populate CDC tables.
+
     """
 
     dag_file_name_part = 'cdc_' + raw_table_name.replace('.', '_')
@@ -131,10 +147,15 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
         'month': today.month,
         'day': today.day,
         'query_file': dag_sql_file_name,
-        'load_frequency': load_frequency
+        'load_frequency': load_frequency,
+        'runtime_labels_dict': '', # A place holder for label key
     }
+     # Add bq_labels to substitutes dict if Telemetry allowed
+     # Converts dict to string for substitution purposes
+    if allow_telemetry:
+        substitutes['runtime_labels_dict'] = str(constants.CORTEX_JOB_LABEL)
 
-    # Create python DAG flie.
+    # Create python DAG file.
     generate_dag_py_file(_SQL_DAG_PYTHON_TEMPLATE, dag_py_file_name,
                          **substitutes)
 
@@ -151,30 +172,32 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
     if not fields:
         print(f'Schema could not be retrieved for {raw_table_name}')
 
-    keys = get_keys(raw_table_name)
-    if not keys:
-        e_msg = f'Keys for table {raw_table_name} not found in table DD03L'
-        raise Exception(e_msg) from None
+    primary_keys = get_primary_keys(raw_table_name)
+    if not primary_keys:
+        e_msg = f'Primary keys for {raw_table_name} not found in table DD03L'
+        raise cortex_exc.KeyCError(e_msg) from None
 
-    p_key_list = get_key_comparator(['S', 'T'], keys)
-    p_key_list_for_sub_query = get_key_comparator(['S1', 'T1'], keys)
-    p_key = ' AND '.join(p_key_list)
-    p_key_sub_query = ' AND '.join(p_key_list_for_sub_query)
+    primary_key_join_list = []
+    primary_key_not_null_list = []
+    for key in primary_keys:
+        primary_key_join_list.append(f'T.`{key}` = S.`{key}`')
+        primary_key_not_null_list.append(f'`{key}` IS NOT NULL')
+
+    primary_keys_join_clause = ' AND '.join(primary_key_join_list)
+    primary_keys_not_null_clause = ' AND '.join(primary_key_not_null_list)
 
     with open(_SQL_DAG_SQL_TEMPLATE, mode='r',
               encoding='utf-8') as sql_template_file:
         sql_template = Template(sql_template_file.read())
 
-    separator = ', '
-
     generated_sql = sql_template.substitute(
         base_table=raw_table_name,
         target_table=cdc_table_name,
-        p_key=p_key,
-        fields=separator.join(fields),
-        update_fields=separator.join(update_fields),
-        keys=', '.join(keys),
-        p_key_sub_query=p_key_sub_query)
+        primary_keys_join_clause=primary_keys_join_clause,
+        primary_keys_not_null_clause=primary_keys_not_null_clause,
+        fields=', '.join(fields),
+        update_fields=', '.join(update_fields),
+        primary_keys=', '.join(primary_keys))
 
     # Create sql file containing the query
     cdc_sql_file = _GENERATED_SQL_DIR + '/' + dag_sql_file_name
@@ -198,22 +221,6 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
             raise e
         print(f'{cdc_table_name} table is populated with data '
               f'from {raw_table_name} table')
-
-
-def get_key_comparator(table_prefix, keys):
-    p_key_list = []
-    for key in keys:
-        # pylint:disable=consider-using-f-string
-        p_key_list.append('{0}.`{2}` = {1}.`{2}`'.format(
-            table_prefix[0], table_prefix[1], key))
-    return p_key_list
-
-
-def add_prefix_to_keys(prefix, keys):
-    prefix_keys = []
-    for key in keys:
-        prefix_keys.append(f'{prefix}.`{key}`')
-    return prefix_keys
 
 
 def validate_partition_details(partition_details, load_frequency):
@@ -367,7 +374,7 @@ def validate_cluster_columns(cluster_details, target_schema):
         if not cluster_column_details:
             e_msg = (f'Column "{column}" specified for clustering does '
                      'not exist in the table.')
-            raise Exception(e_msg) from None
+            raise cortex_exc.CriticalError(e_msg) from None
 
 
 def validate_partition_columns(partition_details, target_schema):
@@ -381,7 +388,7 @@ def validate_partition_columns(partition_details, target_schema):
     if not partition_column_details:
         e_msg = (f'Column "{column}" specified for partitioning does not '
                  'exist in the table.')
-        raise Exception(e_msg) from None
+        raise cortex_exc.CriticalError(e_msg) from None
 
     # Since there will be only value in the list (a column exists only once
     # in a table), let's just use the first value from the list.
@@ -395,14 +402,14 @@ def validate_partition_columns(partition_details, target_schema):
                  'one of the following data types:'
                  f'{_TIME_PARTITION_DATA_TYPES}.\n'
                  f'But column "{column}" is of "{partition_column_type}" type.')
-        raise Exception(e_msg) from None
+        raise cortex_exc.TypeCError(e_msg) from None
 
     if (partition_type == 'integer_range' and
             partition_column_type != 'INTEGER'):
         e_msg = ('Error: For `partition_type` = "integer_range", '
                  'partitioning column has to be of INTEGER data type.\n'
                  f'But column "{column}" is of {partition_column_type}.')
-        raise Exception(e_msg) from None
+        raise cortex_exc.TypeCError(e_msg) from None
 
 
 def create_cdc_table(raw_table_name, cdc_table_name, partition_details,
@@ -466,7 +473,7 @@ def create_cdc_table(raw_table_name, cdc_table_name, partition_details,
         print(f'Created table {cdc_table_name}.')
 
 
-def get_keys(full_table_name):
+def get_primary_keys(full_table_name):
     """Retrieves primary key columns for raw table from metadata table.
 
     Args:

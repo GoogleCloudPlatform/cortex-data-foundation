@@ -8,7 +8,7 @@ WITH
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CurrencyConversion`
     WHERE
-      ToCurrency_TCURR {{ currency }}
+      ToCurrency_TCURR IN UNNEST({{ sap_currencies }})
       --##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
       AND ExchangeRateType_KURST = 'M'
   ),
@@ -56,7 +56,7 @@ WITH
         AND StockMonthlySnapshots.MaterialNumber_MATNR = MaterialLedger.MaterialNumber_MATNR
         AND StockMonthlySnapshots.Plant_WERKS = MaterialLedger.ValuationArea_BWKEY
         AND StockMonthlySnapshots.FiscalYear = MaterialLedger.FiscalYear
-        AND StockMonthlySnapshots.FiscalPeriod = SUBSTR(MaterialLedger.PostingPeriod, -2, 2)
+        AND StockMonthlySnapshots.FiscalPeriod = MaterialLedger.PostingPeriod
         AND MaterialLedger.ValuationType_BWTAR = ''
   ),
   -- TODO: Consider materializing this CTE to avoid multiple evaluations.
@@ -85,7 +85,8 @@ WITH
       IF(
         StockMonthlySnapshots.MonthEndDate = LAST_DAY(CURRENT_DATE),
         CURRENT_DATE,
-        StockMonthlySnapshots.MonthEndDate) AS MonthEndDate,
+        StockMonthlySnapshots.MonthEndDate
+      ) AS MonthEndDate,
       StockMonthlySnapshots.MonthEndDate
         BETWEEN -- noqa: disable=L003
           LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 12 MONTH))
@@ -333,50 +334,77 @@ SELECT
   Inventory.ValueOfTotalValuatedStock_SALK3 * CurrencyConversion.ExchangeRate_UKURS AS ValueOfTotalValuatedStockInTargetCurrency_SALK3,
 
   -- Slow Moving Inventory In Target Currency
-  IF(COALESCE(
-      IF(Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
+  IF(
+    COALESCE(
+      IF(
+        Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
         SAFE_DIVIDE((Inventory.TotalConsumptionQuantityForPastYear * 100), Inventory.StockOnHand),
-        0),
-      0) < Inventory.ThresholdValue,
-    IF(Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
+        0
+      ),
+      0
+    ) < Inventory.ThresholdValue,
+    IF(
+      Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
       (Inventory.StockOnHandValue * CurrencyConversion.ExchangeRate_UKURS),
-      0),
-    0) AS SlowMovingInventoryAsOfPreviousMonthInTargetCurrency,
+      0
+    ),
+    0
+  ) AS SlowMovingInventoryAsOfPreviousMonthInTargetCurrency,
 
   -- Days Of Supply
   COALESCE(
-    IF(Inventory.MonthEndDate = CURRENT_DATE,
+    IF(
+      Inventory.MonthEndDate = CURRENT_DATE,
       SAFE_DIVIDE(Inventory.StockOnHand, Inventory.DemandPerDayForPastYearTillToday),
-      0),
-    0) AS DaysOfSupplyAsOfToday,
+      0
+    ),
+    0
+  ) AS DaysOfSupplyAsOfToday,
 
   -- Slow Moving Indicator
-  IF(COALESCE(
-      IF(Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
-        SAFE_DIVIDE((Inventory.TotalConsumptionQuantityForPastYear * 100), Inventory.StockOnHand),
-        0),
-      0) < Inventory.ThresholdValue,
+  IF(
     COALESCE(
-      IF(Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
-        SAFE_DIVIDE((Inventory.TotalConsumptionQuantityForPastYear * 100), Inventory.StockOnHand), 0),
-      0),
-    0) AS SlowMovingIndicatorAsOfPreviousMonth,
+      IF(
+        Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
+        SAFE_DIVIDE((Inventory.TotalConsumptionQuantityForPastYear * 100), Inventory.StockOnHand),
+        0
+      ),
+      0
+    ) < Inventory.ThresholdValue,
+    COALESCE(
+      IF(
+        Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
+        SAFE_DIVIDE((Inventory.TotalConsumptionQuantityForPastYear * 100), Inventory.StockOnHand),
+        0
+      ),
+      0
+    ),
+    0
+  ) AS SlowMovingIndicatorAsOfPreviousMonth,
 
   -- Slow Moving Inventory In Source Currency
-  IF(COALESCE(
-      IF(Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
+  IF(
+    COALESCE(
+      IF(
+        Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
         SAFE_DIVIDE((Inventory.TotalConsumptionQuantityForPastYear * 100), Inventory.StockOnHand),
-        0),
-      0) < Inventory.ThresholdValue,
-    IF(Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
+        0
+      ),
+      0
+    ) < Inventory.ThresholdValue,
+    IF(
+      Inventory.MonthEndDate = LAST_DAY(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH)),
       Inventory.StockOnHandValue,
-      0),
-    0) AS SlowMovingInventoryAsOfPreviousMonthInSourceCurrency,
+      0
+    ),
+    0
+  ) AS SlowMovingInventoryAsOfPreviousMonthInSourceCurrency,
 
   -- Inventory Turn
   COALESCE(
     SAFE_DIVIDE(Inventory.CostOfGoodsSoldByMonth, Inventory.AvgInventoryByMonth),
-    0) AS InventoryTurnByMonth
+    0
+  ) AS InventoryTurnByMonth
 FROM
   Inventory
 LEFT JOIN

@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ def _validate_googleads(cfg: dict) -> None:
     googleads = cfg["marketing"]["GoogleAds"]
 
     missing_googleads_attrs = []
-    for attr in ("deployCDC", "datasets", "lookbackDays"):
+    for attr in ("deployCDC", "datasets"):
         if googleads.get(attr) is None or googleads.get(attr) == "":
             missing_googleads_attrs.append(attr)
 
@@ -312,6 +312,107 @@ def _validate_sfmc(cfg: dict) -> None:
     logging.info("Config file validated for SFMC and is looking good.")
 
 
+def _validate_dv360(cfg: dict) -> None:
+    """ Validate DV360 specific config attributes. """
+
+    logging.info("Validating Config file for DV360...")
+
+    dv360 = cfg["marketing"]["DV360"]
+
+    missing_dv360_attrs = []
+    for attr in ("deployCDC", "datasets"):
+        if dv360.get(attr) is None or dv360.get(attr) == "":
+            missing_dv360_attrs.append(attr)
+
+    if missing_dv360_attrs:
+        raise ValueError(
+            "Config file is missing some DV360 attributes or has empty "
+            f"values: {missing_dv360_attrs}")
+
+    datasets = dv360["datasets"]
+    missing_datasets_attrs = []
+    for attr in ("raw", "cdc", "reporting"):
+        if datasets.get(attr) is None or datasets.get(attr) == "":
+            missing_datasets_attrs.append(attr)
+
+    if missing_datasets_attrs:
+        raise ValueError(
+            "Config file is missing some DV360 datasets attributes "
+            f"or has empty value: {missing_datasets_attrs} ")
+
+    source = cfg["projectIdSource"]
+    target = cfg["projectIdTarget"]
+    location = cfg["location"]
+    datasets = [
+        resource_validation_helper.DatasetConstraints(
+            f'{source}.{datasets["raw"]}', True, True, location),
+        resource_validation_helper.DatasetConstraints(
+            f'{source}.{datasets["cdc"]}', True, True, location),
+        resource_validation_helper.DatasetConstraints(
+            f'{target}.{datasets["reporting"]}', False, True, location)
+    ]
+    if not resource_validation_helper.validate_resources([], datasets):
+        raise ValueError("Resource validation failed.")
+
+    logging.info("Config file validated for DV360 and is looking good.")
+
+
+def _validate_ga4(cfg: dict) -> None:
+    """ Validate Google Analytics 4 specific config attributes. """
+
+    logging.info("Validating Config file for Google Analytics 4...")
+
+    ga4 = cfg["marketing"]["GA4"]
+
+    if not ga4.get("datasets"):
+        raise ValueError(
+            "Config file is missing some Google Analytics 4 attributes"
+            " or has empty values: datasets")
+
+    datasets = ga4["datasets"]
+
+    if not datasets.get("reporting"):
+        raise ValueError(
+            "Config file is missing Google Analytics 4"
+            "reporting datasets attributes")
+
+    cdc_dataset_list = []
+    cdc_property_id_list = []
+    for dataset in datasets.get("cdc"):
+        dataset_name = dataset.get("name")
+        property_id = dataset.get("property_id")
+        if dataset_name not in cdc_dataset_list:
+            cdc_dataset_list.append(dataset_name)
+        else:
+            raise ValueError(
+            "Config file contains identical Google Analytics 4 CDC datasets")
+        if property_id not in cdc_property_id_list:
+            cdc_property_id_list.append(property_id)
+        else:
+            raise ValueError(
+            "Config file contains identical Google Analytics 4 CDC property_ids"
+            )
+    if not cdc_dataset_list:
+        raise ValueError(
+            "Config file is missing Google Analytics 4 CDC datasets attributes")
+
+    source = cfg["projectIdSource"]
+    target = cfg["projectIdTarget"]
+    location = cfg["location"]
+    cdc_datasets = [resource_validation_helper.DatasetConstraints(
+                    f"{source}.{cdc_dataset}", True, True, location)
+                    for cdc_dataset in cdc_dataset_list]
+    datasets = cdc_datasets + [
+        resource_validation_helper.DatasetConstraints(
+            f'{target}.{datasets["reporting"]}', False, True, location)
+    ]
+    if not resource_validation_helper.validate_resources([], datasets):
+        raise ValueError("Resource validation failed.")
+
+    logging.info(
+        "Config file validated for Google Analytics 4 and is looking good.")
+
+
 def validate(cfg: dict) -> Union[dict, None]:
     """Validates and processes configuration.
 
@@ -335,8 +436,8 @@ def validate(cfg: dict) -> Union[dict, None]:
     # Marketing Attributes
     missing_marketing_attr = []
     for attr in ("deployGoogleAds", "deployCM360", "deployTikTok",
-                 "deployLiveRamp", "deployMeta", "deploySFMC",
-                 "dataflowRegion"):
+                 "deployLiveRamp", "deployMeta", "deploySFMC", "deployDV360",
+                 "deployGA4"):
         if marketing.get(attr) is None or marketing.get(attr) == "":
             missing_marketing_attr.append(attr)
 
@@ -472,13 +573,66 @@ def validate(cfg: dict) -> Union[dict, None]:
                 logging.error(e)
                 return None
 
-    region = marketing["dataflowRegion"].lower()
-    location = cfg["location"].lower()
-    if region != location and not region.startswith(f"{location}-"):
-        logging.error("🛑 Invalid `dataflowRegion`: `%s`. "
-                        "It's expected to be in `%s`. 🛑",
-                        marketing["dataflowRegion"], cfg["location"])
-        return None
+    # DV360
+    deploy_dv360 = marketing.get("deployDV360")
+    if deploy_dv360:
+        dv360 = marketing.get("DV360")
+        if not dv360:
+            logging.error("🛑 Missing 'marketing' 'DV360' attribute "
+                          "in the config file. 🛑")
+            return None
+        else:
+            try:
+                _validate_dv360(cfg)
+            except ValueError as e:
+                logging.error("🛑 DV360 config validation failed: %s 🛑",
+                              str(e))
+                return None
+            except Exception as e:  # pylint: disable=broad-except
+                logging.error("🛑 DV360 config validation failed. 🛑")
+                logging.error(e)
+                return None
+
+    # Google Analytics 4
+    deploy_ga4 = marketing.get("deployGA4")
+    if deploy_ga4:
+        ga4 = marketing.get("GA4")
+        if not ga4:
+            logging.error("🛑 Missing 'marketing' 'GA4' attribute "
+                          "in the config file. 🛑")
+            return None
+        else:
+            try:
+                _validate_ga4(cfg)
+            except ValueError as e:
+                logging.error(
+                    "🛑 Google Analytics 4 config validation failed: %s 🛑",
+                    str(e))
+                return None
+            except Exception as e:  # pylint: disable=broad-except
+                logging.error(
+                    "🛑 Google Analytics 4 config validation failed. 🛑")
+                logging.error(e)
+                return None
+
+    # dataflowRegion is only required for certain data sources.
+    if (deploy_googleads or deploy_cm360 or deploy_liveramp or deploy_meta or
+            deploy_tiktok or deploy_sfmc):
+
+        if not marketing.get("dataflowRegion"):
+            logging.error(
+                "🛑 Config file is missing or has empty value for "
+                "required attribute: dataflowRegion. 🛑")
+            return None
+
+        region = marketing["dataflowRegion"].lower()
+        location = cfg["location"].lower()
+        if region != location and not region.startswith(f"{location}-"):
+            logging.error(
+                "🛑 Invalid `dataflowRegion`: `%s`. "
+                "It's expected to be in `%s`. 🛑", marketing["dataflowRegion"],
+                cfg["location"])
+            return None
 
     logging.info("✅ 'marketing' config validated successfully. Looks good.")
 

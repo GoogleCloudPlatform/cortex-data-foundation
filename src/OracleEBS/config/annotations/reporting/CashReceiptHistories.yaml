@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.CashReceiptHistories"
+description: "Base fact view of cash receipt histories."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Facts"
+fields:
+  - name: "CASH_RECEIPT_HISTORY_ID"
+    description: "Primary key identifying cash receipt history event"
+  - name: "CASH_RECEIPT_ID"
+    description: "foreign key identifying cash receipt"
+  - name: "LEDGER_DATE"
+    description: "Date when the cash received applied to the ledger"
+  - name: "CREATION_TS"
+    description: "Timestamp when the record was created in the source system"
+  - name: "LAST_UPDATE_TS"
+    description: "Timestamp when the record was last updated in the source system"

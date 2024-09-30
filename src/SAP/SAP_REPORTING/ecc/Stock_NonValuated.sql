@@ -10,7 +10,7 @@ SELECT
   mara.ProductHierarchy_PRDHA,
   t001w.Region_County__REGIO AS Plant_Region,
   t001w.CountryKey_LAND1 AS Plant_Country,
-  sum(MARD.LABST) AS ValuatedUnrestrictedUseStock
+  SUM(MARD.LABST) AS ValuatedUnrestrictedUseStock
 # MARD.PSTAT AS MaintenanceStatus_PSTAT, MARD.LVORM AS FlagMaterialForDeletionAtStorageLocationLevel_LVORM,  MARD.LFGJA AS FiscalYearOfCurrentPeriod_LFGJA,  MARD.LFMON AS CurrentPeriod_postingPeriod_LFMON,
 #MARD.SPERR AS PhysicalInventoryBlockingIndicator_SPERR,    MARD.UMLME AS StockInTransfer__fromOneStorageLocationToAnother___UMLME,
 #MARD.INSME AS StockInQualityInspection_INSME,  MARD.EINME AS TotalStockOfAllRestrictedBatches_EINME,  MARD.SPEME AS BlockedStock_SPEME,  MARD.RETME AS BlockedStockReturns_RETME,
@@ -33,8 +33,9 @@ INNER JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PlantsMD` AS t001w
   ON t001w.Client_MANDT = MARD.MANDT
     AND t001w.Plant_WERKS = MARD.WERKS
     AND t001w.Language_SPRAS = mara.Language_SPRAS
-WHERE mara.Language_SPRAS {{ language }}
-GROUP BY MARD.MANDT, MARD.MATNR, mara.MaterialText_MAKTX, MARD.WERKS,
+WHERE mara.Language_SPRAS IN UNNEST({{ sap_languages }})
+GROUP BY
+  MARD.MANDT, MARD.MATNR, mara.MaterialText_MAKTX, MARD.WERKS,
   t001w.Name_NAME1, MARD.LGORT, mara.BaseUnitOfMeasure_MEINS,
   mara.Language_SPRAS, mara.MaterialType_MTART,
   mara.MaterialGroup_MATKL, mara.ProductHierarchy_PRDHA,

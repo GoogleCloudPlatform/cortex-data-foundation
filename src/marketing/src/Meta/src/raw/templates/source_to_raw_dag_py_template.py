@@ -19,9 +19,9 @@ from datetime import timedelta
 from pathlib import Path
 
 from airflow import DAG
+from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
-from airflow.version import version as AIRFLOW_VERSION
 
 _TABLE_NAME = "${table_name}"
 _DATASET_ID = "${dataset}"
@@ -51,6 +51,11 @@ api_version = config.get("meta", "api_version", fallback="v19.0")
 max_load_lookback_days = config.get("meta",
                                     "max_load_lookback_days",
                                     fallback=366)
+
+pipeline_logging_level = config.get("meta",
+                                    "pipeline_logging_level",
+                                    fallback="INFO")
+
 
 _IDENTIFIER = ("meta_"
                f"{_PROJECT_ID}_{_DATASET_ID}_extract_to_raw_{_TABLE_NAME}")
@@ -108,7 +113,9 @@ beam_pipeline_params = {
     "api_version":
         api_version,
     "max_load_lookback_days":
-        max_load_lookback_days
+        max_load_lookback_days,
+    "pipeline_logging_level":
+        pipeline_logging_level
 }
 
 _DATAFLOW_CONFIG = {
@@ -151,27 +158,10 @@ _BEAM_OPERATOR_CONFIG = {
         execution_retry_count,
 }
 
-if AIRFLOW_VERSION.startswith("1."):
-    with DAG(**_DAG_OPTIONS, schedule_interval="${load_frequency}") as dag:
+with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:
 
-        # Import here to avoid slow DAG imports in Airflow.
-        from airflow.operators.dummy_operator import DummyOperator
-
-        start_task = DummyOperator(**_START_TASK_OPTIONS)
-
-        extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
-
-        stop_task = DummyOperator(task_id="stop")
-else:
-    with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:
-
-        # Import here to avoid slow DAG imports in Airflow.
-        from airflow.operators.empty import EmptyOperator
-
-        start_task = EmptyOperator(**_START_TASK_OPTIONS)
-
-        extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
-
-        stop_task = EmptyOperator(task_id="stop")
+    start_task = EmptyOperator(**_START_TASK_OPTIONS)
+    extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
+    stop_task = EmptyOperator(task_id="stop")
 
 start_task >> extract_data >> stop_task  # pylint: disable=pointless-statement

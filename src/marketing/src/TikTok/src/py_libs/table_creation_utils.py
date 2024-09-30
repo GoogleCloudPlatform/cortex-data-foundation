@@ -15,17 +15,9 @@
 
 import copy
 import csv
-import logging
 from pathlib import Path
 
-from google.cloud.bigquery import Client
-from google.cloud.bigquery import DatasetReference
 from google.cloud.bigquery import SchemaField
-from google.cloud.bigquery import Table
-from google.cloud.bigquery import TableReference
-
-from common.py_libs.bq_materializer import add_cluster_to_table_def
-from common.py_libs.bq_materializer import add_partition_to_table_def
 
 
 def _create_bq_schema_from_mapping(mapping_file: Path, layer: str,
@@ -74,36 +66,10 @@ def create_bq_schema(mapping_file: Path, layer: str) -> list[SchemaField]:
 
     Args:
         mapping_file (Path): Schema mapping file path.
+        layer (String): Target layer.
     """
     bq_schema = _create_bq_schema_from_mapping(mapping_file,
                                                layer,
                                                target_field="TargetField",
                                                datatype_field="DataType")
     return _add_additional_fields(bq_schema)
-
-
-def create_table(client: Client, schema: list[SchemaField], project: str,
-                 dataset: str, table_name: str, partition_details: dict,
-                 cluster_details: dict):
-    """Creates a table in BigQuery. Skips creation if it exists.
-
-    Args:
-        client: BQ client.
-        schema: BQ schema.
-        project: BQ project id.
-        dataset: Destination dataset.
-        table_name: Destination table name.
-        partition_details: Partition details from setting file.
-        clustering_details: Clustering details from setting file.
-    """
-
-    logging.info("Creating raw table %s.%s.%s", project, dataset, table_name)
-
-    table_ref = TableReference(DatasetReference(project, dataset), table_name)
-    table = Table(table_ref, schema=schema)
-    if partition_details:
-        table = add_partition_to_table_def(table, partition_details)
-
-    if cluster_details:
-        table = add_cluster_to_table_def(table, cluster_details)
-    client.create_table(table)

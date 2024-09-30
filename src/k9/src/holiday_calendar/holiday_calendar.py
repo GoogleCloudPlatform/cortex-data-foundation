@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Holiday Calendar DAG.
 
@@ -19,14 +18,15 @@ This loads last X years worth of holidays for specified countries into a
 BigQuery table.
 """
 
-import holidays
 import configparser
-import pandas as pd
+from datetime import datetime
+from datetime import timedelta
 
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.dummy_operator import DummyOperator
-from datetime import datetime, timedelta
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
+import holidays
+import pandas as pd
 
 default_args = {"retries": 1, "retry_delay": timedelta(minutes=5)}
 
@@ -99,23 +99,21 @@ def load_holidays():
               if_exists=write_mode)  # type: ignore
 
 
-with DAG(
-        "Holiday_Calendar",
-        default_args=default_args,
-        description="Holiday Calendar For Multiple Years",
-        schedule_interval="@yearly",
-        start_date=datetime(2021, 1, 1),
-        catchup=False,
-        max_active_runs=1,
-        tags=["API"],
-) as dag:
-    start_task = DummyOperator(task_id="start")
-    t1 = PythonOperator(
-        task_id="calendar",
-        python_callable=load_holidays,
-        dag=dag,
-    )
-    stop_task = DummyOperator(task_id="stop")
+with DAG("Holiday_Calendar",
+         default_args=default_args,
+         description="Holiday Calendar For Multiple Years",
+         schedule_interval="@yearly",
+         start_date=datetime(2021, 1, 1),
+         catchup=False,
+         max_active_runs=1,
+         tags=["API"]) as dag:
+
+    start_task = EmptyOperator(task_id="start")
+    t1 = PythonOperator(task_id="calendar",
+                        python_callable=load_holidays,
+                        dag=dag)
+
+    stop_task = EmptyOperator(task_id="stop")
 
 # pylint:disable=pointless-statement
 start_task >> t1 >> stop_task

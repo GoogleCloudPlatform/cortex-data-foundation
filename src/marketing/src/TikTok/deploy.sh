@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ then
     if [ ! -z "$(shopt -s nullglob dotglob; echo src/TikTok/_generated_dags/*)" ]
     then
         echo "Copying TikTok artifacts to gs://${_TGT_BUCKET}/dags/tiktok."
-        gsutil -m cp -r src/TikTok/_generated_dags/* gs://${_TGT_BUCKET}/dags/tiktok/
+        gcloud storage cp -r src/TikTok/_generated_dags/* gs://${_TGT_BUCKET}/dags/tiktok/
         echo "✅ TikTok artifacts have been copied."
     else
         echo "❗ No file generated. Nothing to copy."
@@ -52,13 +52,24 @@ fi
 
 # Deploy reporting layer
 echo "Deploying TikTok Reporting layer..."
+declare -a _WORKER_POOL_OPTIONS
+
+if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+_WORKER_POOL_OPTIONS+=(--worker_pool_name "${_WORKER_POOL_NAME}")
+fi
+
+if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+_WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+fi
+
 src/common/materializer/deploy.sh \
     --gcs_logs_bucket ${_GCS_LOGS_BUCKET} \
     --gcs_tgt_bucket ${_TGT_BUCKET} \
     --module_name TikTok \
     --config_file ${_CONFIG_FILE} \
     --target_type "Reporting" \
-    --materializer_settings_file src/TikTok/config/reporting_settings.yaml
+    --materializer_settings_file src/TikTok/config/reporting_settings.yaml \
+    "${_WORKER_POOL_OPTIONS[@]}"
 
 echo "✅ TikTok Reporting layer deployed successfully."
 echo "==================================================="

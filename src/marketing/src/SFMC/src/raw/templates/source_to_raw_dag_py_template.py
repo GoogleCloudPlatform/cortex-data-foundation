@@ -23,9 +23,9 @@ import os
 from pathlib import Path
 
 from airflow import DAG
+from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
-from airflow.version import version as AIRFLOW_VERSION
 
 _TABLE_NAME = "${table_name}"
 _DATASET_ID = "${raw_dataset}"
@@ -45,6 +45,9 @@ max_retry_delay_sec = config.getint("sfmc",
 execution_retry_count = config.getint("sfmc",
                                       "execution_retry_count",
                                       fallback=3)
+pipeline_logging_level = config.get("sfmc",
+                                    "pipeline_logging_level",
+                                    fallback="INFO")
 
 _IDENTIFIER = ("sfmc_"
                f"{_PROJECT_ID}_{_DATASET_ID}_extract_to_raw_{_TABLE_NAME}")
@@ -55,6 +58,7 @@ _DAG_OPTIONS = {
     "description": f"Extract from source to raw {_TABLE_NAME} entities",
     "start_date": _START_DATE,
     "dagrun_timeout": timedelta(minutes=60),
+    "schedule": "${load_frequency}",
     "tags": ["sfmc", "raw"],
     "catchup": False,
     "max_active_runs": 1
@@ -77,7 +81,8 @@ beam_pipeline_params = {
     "mapping_file": str(Path(_CURRENT_DIR, "${schemas_dir}", "${schema_file}")),
     "tgt_project": "${project_id}",
     "tgt_dataset": "${raw_dataset}",
-    "tgt_table": _TABLE_NAME
+    "tgt_table": _TABLE_NAME,
+    "pipeline_logging_level": pipeline_logging_level
 }
 
 _DATAFLOW_CONFIG = {
@@ -105,21 +110,9 @@ _BEAM_OPERATOR_CONFIG = {
     "retries": execution_retry_count
 }
 
-if AIRFLOW_VERSION.startswith("1."):
-    with DAG(**_DAG_OPTIONS, schedule_interval="${load_frequency}") as dag:
-        # Import here to avoid slow DAG imports in Airflow.
-        from airflow.operators.dummy_operator import DummyOperator
-
-        start_task = DummyOperator(**_START_TASK_OPTIONS)
-        extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
-        stop_task = DummyOperator(task_id="stop")
-else:
-    with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:
-        # Import here to avoid slow DAG imports in Airflow.
-        from airflow.operators.empty import EmptyOperator
-
-        start_task = EmptyOperator(**_START_TASK_OPTIONS)
-        extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
-        stop_task = EmptyOperator(task_id="stop")
+with DAG(**_DAG_OPTIONS) as dag:
+    start_task = EmptyOperator(**_START_TASK_OPTIONS)
+    extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
+    stop_task = EmptyOperator(task_id="stop")
 
 start_task >> extract_data >> stop_task  # pylint: disable=pointless-statement

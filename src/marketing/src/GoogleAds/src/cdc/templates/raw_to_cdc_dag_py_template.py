@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,16 @@
 # limitations under the License.
 """This DAG starts a Beam pipeline for processing Ads CDC layer ingestion."""
 
+import ast
+import configparser
 from datetime import datetime
 from datetime import timedelta
+import os
+from pathlib import Path
 
 from airflow import DAG
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
 
 _CDC_SQL_PATH = "${cdc_sql_path}"
 _DAG_SCHEDULE = "${load_frequency}"
@@ -26,8 +30,24 @@ _PROJECT_ID = "${project_id}"
 _DATASET_ID = "${cdc_dataset}"
 _TABLE_NAME = "${table_name}"
 
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("${runtime_labels_dict}" or "{}")
+
 _START_DATE = datetime.fromisoformat("${start_date}")
+_THIS_DIR = Path(__file__).resolve().parent
 _IDENTIFIER = f"googleads_{_PROJECT_ID}_{_DATASET_ID}_raw_to_cdc_{_TABLE_NAME}"
+
+# Load config values.
+dag_config_path = os.path.join(_THIS_DIR, "config.ini")
+config = configparser.ConfigParser()
+config.read(dag_config_path)
+
+# Check DAG config sections.
+retry_delay_sec = config.getint("googleads", "retry_delay_sec", fallback=60)
+execution_retry_count = config.getint("googleads",
+                                      "execution_retry_count",
+                                      fallback=3)
 
 _DAG_OPTIONS = {
     "dag_id": _IDENTIFIER,
@@ -47,28 +67,22 @@ _START_TASK_OPTIONS = {
 
 _BQ_OPTIONS = {
     "task_id": _IDENTIFIER,
-    "sql": _CDC_SQL_PATH,
-    "use_legacy_sql": False,
-    "retries": 0
+    "configuration": {
+        "query": {
+            "query": _CDC_SQL_PATH,
+            "useLegacySql": False,
+        },
+        "labels": _BQ_LABELS
+    },
+    "gcp_conn_id": "googleads_cdc_bq",
+    "retries": execution_retry_count,
+    "retry_delay": retry_delay_sec
 }
 
-if AIRFLOW_VERSION.startswith("1."):
-    with DAG(**_DAG_OPTIONS, schedule_interval=_DAG_SCHEDULE) as dag:
+with DAG(**_DAG_OPTIONS, schedule=_DAG_SCHEDULE) as dag:
 
-        from airflow.operators.dummy_operator import DummyOperator
-
-        start_task = DummyOperator(**_START_TASK_OPTIONS)
-        copy_raw_to_cdc = BigQueryOperator(**_BQ_OPTIONS,
-                                           bigquery_conn_id="googleads_cdc_bq")
-        stop_task = DummyOperator(task_id="stop")
-else:
-    with DAG(**_DAG_OPTIONS, schedule=_DAG_SCHEDULE) as dag:
-
-        from airflow.operators.empty import EmptyOperator
-
-        start_task = EmptyOperator(**_START_TASK_OPTIONS)
-        copy_raw_to_cdc = BigQueryOperator(**_BQ_OPTIONS,
-                                           gcp_conn_id="googleads_cdc_bq")
-        stop_task = EmptyOperator(task_id="stop")
+    start_task = EmptyOperator(**_START_TASK_OPTIONS)
+    copy_raw_to_cdc = BigQueryInsertJobOperator(**_BQ_OPTIONS)
+    stop_task = EmptyOperator(task_id="stop")
 
 start_task >> copy_raw_to_cdc >> stop_task  # pylint: disable=pointless-statement

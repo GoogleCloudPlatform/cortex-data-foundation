@@ -104,89 +104,118 @@ SELECT
     WHEN 'B' THEN 'Partially Processed'
     WHEN 'C' THEN 'Completely Processed'
     ELSE 'Not relevant'
-  END
-  AS ReturnOrderDescription,
+  END AS ReturnOrderDescription,
   Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG * Deliveries.NetPrice_NETPR AS DeliveredValue,
   Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG * Deliveries.NetValueInDocumentCurrency_NETWR AS Value,
   SalesOrders.CumulativeOrderQuantity_KWMENG * SalesOrders.Netprice_NETPR AS SalesOrderNetValue,
-  SUM(Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG * Deliveries.NetPrice_NETPR) OVER(PARTITION BY Deliveries.DeliveryItem_POSNR, Deliveries.Delivery_VBELN) AS DeliveredNetValue,
-  IF(Deliveries.Date__proofOfDelivery___PODAT > Deliveries.DeliveryDate_LFDAT,
+  SUM(Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG * Deliveries.NetPrice_NETPR) OVER (PARTITION BY Deliveries.DeliveryItem_POSNR, Deliveries.Delivery_VBELN) AS DeliveredNetValue,
+  IF(
+    Deliveries.Date__proofOfDelivery___PODAT > Deliveries.DeliveryDate_LFDAT,
     'Delayed',
-    'NotDelayed') AS LateDeliveries,
-  IF(Deliveries.DeliveryBlock_documentHeader_LIFSK IS NULL
+    'NotDelayed'
+  ) AS LateDeliveries,
+  IF(
+    Deliveries.DeliveryBlock_documentHeader_LIFSK IS NULL
     AND Deliveries.BillingBlockInSdDocument_FAKSK IS NULL,
     'NotBlocked',
-    'Blocked' ) AS BlockedSalesOrder,
+    'Blocked'
+  ) AS BlockedSalesOrder,
   /* Count of SalesOrderNumber*/
-  COUNT(DISTINCT SalesOrders.SalesDocument_VBELN) OVER(PARTITION BY SalesOrders.Client_MANDT) AS TotalOrders,
+  COUNT(DISTINCT SalesOrders.SalesDocument_VBELN) OVER (PARTITION BY SalesOrders.Client_MANDT) AS TotalOrders,
   /* Count of Sales order Item */
-  COUNT(SalesOrders.Item_POSNR) OVER(PARTITION BY SalesOrders.Client_MANDT) AS TotalOrderItems,
+  COUNT(SalesOrders.Item_POSNR) OVER (PARTITION BY SalesOrders.Client_MANDT) AS TotalOrderItems,
 
   /* Count of TotalDeliveryItems*/
-  COUNT(Deliveries.DeliveryItem_POSNR) OVER(PARTITION BY SalesOrders.Client_MANDT) AS TotalDeliveries,
+  COUNT(Deliveries.DeliveryItem_POSNR) OVER (PARTITION BY SalesOrders.Client_MANDT) AS TotalDeliveries,
   /*SalesOrderQuantityHeaderLevel*/
-  SUM(SalesOrders.CumulativeOrderQuantity_KWMENG ) OVER(PARTITION BY SalesOrders.Client_MANDT, SalesOrders.SalesDocument_VBELN, SalesOrders.Item_POSNR) AS SalesOrderQuantity,
+  SUM(SalesOrders.CumulativeOrderQuantity_KWMENG) OVER (PARTITION BY SalesOrders.Client_MANDT, SalesOrders.SalesDocument_VBELN, SalesOrders.Item_POSNR) AS SalesOrderQuantity,
 
   /*SalesOrderValueHeaderLevel*/
-  SUM(SalesOrders.Netprice_NETPR * SalesOrders.CumulativeOrderQuantity_KWMENG) OVER(PARTITION BY SalesOrders.Client_MANDT, SalesOrders.SalesDocument_VBELN, SalesOrders.Item_POSNR) AS SalesOrderValue,
+  SUM(SalesOrders.Netprice_NETPR * SalesOrders.CumulativeOrderQuantity_KWMENG) OVER (PARTITION BY SalesOrders.Client_MANDT, SalesOrders.SalesDocument_VBELN, SalesOrders.Item_POSNR) AS SalesOrderValue,
 
   /*Count OF Incoming SalesOrders*/
-  IF(SalesOrders.DocumentCategory_VBTYP = 'C',
+  IF(
+    SalesOrders.DocumentCategory_VBTYP = 'C',
     SalesOrders.SalesDocument_VBELN,
-    NULL) AS IncomingOrderNum,
+    NULL
+  ) AS IncomingOrderNum,
 
   /*InFullDelivery*/
-  IF(SalesOrders.CumulativeOrderQuantity_KWMENG = Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG,
+  IF(
+    SalesOrders.CumulativeOrderQuantity_KWMENG = Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG,
     'DeliveredInFull',
-    'NotDeliverdInFull') AS InFullDelivery,
+    'NotDeliverdInFull'
+  ) AS InFullDelivery,
 
   /*OTIF*/
-  IF(Deliveries.Date__proofOfDelivery___PODAT <= Deliveries.DeliveryDate_LFDAT
+  IF(
+    Deliveries.Date__proofOfDelivery___PODAT <= Deliveries.DeliveryDate_LFDAT
     AND SalesOrders.CumulativeOrderQuantity_KWMENG = Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG,
     'OTIF',
-    'NotOTIF') AS OTIF,
+    'NotOTIF'
+  ) AS OTIF,
 
   /*FillRate*/
-  SAFE_DIVIDE(SalesOrders.ConfirmedOrderQuantity_BMENG, SalesOrders.CumulativeOrderQuantity_KWMENG ) * 100 AS FillRatePercent,
+  SAFE_DIVIDE(SalesOrders.ConfirmedOrderQuantity_BMENG, SalesOrders.CumulativeOrderQuantity_KWMENG) * 100 AS FillRatePercent,
 
   /* BackOrder*/
-  IF(SalesOrders.CumulativeOrderQuantity_KWMENG > SalesOrders.ConfirmedOrderQuantity_BMENG,
+  IF(
+    SalesOrders.CumulativeOrderQuantity_KWMENG > SalesOrders.ConfirmedOrderQuantity_BMENG,
     'BackOrder',
-    'NotBackOrder') AS BackOrder,
+    'NotBackOrder'
+  ) AS BackOrder,
 
   /*Open Orders*/
-  IF(Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG = SalesOrders.CumulativeOrderQuantity_KWMENG
+  IF(
+    Deliveries.ActualQuantityDelivered_InSalesUnits_LFIMG = SalesOrders.CumulativeOrderQuantity_KWMENG
     AND SalesOrders.CumulativeOrderQuantity_KWMENG = Billing.ActualBilledQuantity_FKIMG,
     'NotOpenOrder',
-    'OpenOrder') AS OpenOrder,
+    'OpenOrder'
+  ) AS OpenOrder,
 
   /*ReturnOrder*/
-  IF( SalesOrders.DocumentCategory_VBTYP = 'H',
-    IF( SalesOrders.PrecedingDocCategory_VGTYP = 'C' AND SalesOrders.ReferenceDocument_VGBEL = SalesOrders.Documentnumberofthereferencedocument_VGBEL
-        AND SalesOrders.Item_POSNR = SalesOrders.ReferenceItem_VGPOS,
+  IF(
+    SalesOrders.DocumentCategory_VBTYP = 'H',
+    IF(
+      SalesOrders.PrecedingDocCategory_VGTYP = 'C' AND SalesOrders.ReferenceDocument_VGBEL = SalesOrders.Documentnumberofthereferencedocument_VGBEL
+      AND SalesOrders.Item_POSNR = SalesOrders.ReferenceItem_VGPOS,
       'Returned',
-      'NotReturned'),
-    IF( SalesOrders.PrecedingDocCategory_VGTYP = 'M' AND SalesOrders.ReferenceDocument_VGBEL = Billing.DocumentNumberOfTheReferenceDocument_VGBEL
+      'NotReturned'
+    ),
+    IF(
+      SalesOrders.PrecedingDocCategory_VGTYP = 'M' AND SalesOrders.ReferenceDocument_VGBEL = Billing.DocumentNumberOfTheReferenceDocument_VGBEL
       AND SalesOrders.ReferenceItem_VGPOS = Billing.ItemNumberOfTheReferenceItem_VGPOS
       AND Billing.SalesDocument_AUBEL = SalesOrders.SalesDocument_VBELN
       AND Billing.SalesDocumentItem_AUPOS = SalesOrders.Item_POSNR,
       'Returned',
-      'NotReturned') ) AS ReturnOrder,
+      'NotReturned'
+    )
+  ) AS ReturnOrder,
 
   /* CancelledOrders*/
-  IF(SalesOrders.RejectionReason_ABGRU IS NOT NULL,
+  IF(
+    SalesOrders.RejectionReason_ABGRU IS NOT NULL,
     'Canceled',
-    'NotCanceled') AS CanceledOrder,
+    'NotCanceled'
+  ) AS CanceledOrder,
 
   /*OrderCycleTimeInDays*/
-  IF(Deliveries.ActualGoodsMovementDate_WADAT_IST IS NOT NULL,
-    TIMESTAMP_DIFF(CAST(CONCAT(Deliveries.Date__proofOfDelivery___PODAT, ' ', Deliveries.ConfirmationTime_POTIM) AS TIMESTAMP),
-      CAST(CONCAT(SalesOrders.CreationDate_ERDAT, ' ', SalesOrders.CreationTime_ERZET) AS TIMESTAMP), DAY), NULL) AS OrderCycleTimeInDays,
+  IF(
+    Deliveries.ActualGoodsMovementDate_WADAT_IST IS NOT NULL,
+    TIMESTAMP_DIFF(
+      CAST(CONCAT(Deliveries.Date__proofOfDelivery___PODAT, ' ', Deliveries.ConfirmationTime_POTIM) AS TIMESTAMP),
+      CAST(CONCAT(SalesOrders.CreationDate_ERDAT, ' ', SalesOrders.CreationTime_ERZET) AS TIMESTAMP),
+      DAY
+    ),
+    NULL
+  ) AS OrderCycleTimeInDays,
 
   /*OnTimeDelivery*/
-  IF(Deliveries.Date__proofOfDelivery___PODAT <= Deliveries.DeliveryDate_LFDAT,
+  IF(
+    Deliveries.Date__proofOfDelivery___PODAT <= Deliveries.DeliveryDate_LFDAT,
     'DeliveredOnTime',
-    'NotDeliveredOnTime') AS OnTimeDelivery
+    'NotDeliveredOnTime'
+  ) AS OnTimeDelivery
 
 FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SalesOrders` AS SalesOrders
 LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Deliveries` AS Deliveries
@@ -228,8 +257,8 @@ LEFT JOIN
     SalesOrders.Client_MANDT = CountriesMD.Client_MANDT
     AND CustomersMD.CountryKey_LAND1 = CountriesMD.CountryKey_LAND1
     AND CountriesMD.Language_SPRAS = MaterialsMD.Language_SPRAS
- --## CORTEX-CUSTOMER: Remove references to OneTouchOrder
- -- if not using the view
+--## CORTEX-CUSTOMER: Remove references to OneTouchOrder
+-- if not using the view
 LEFT JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.OneTouchOrder` AS OneTouchOrder
   ON
@@ -257,5 +286,5 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.BillingBlockingReaso
     Deliveries.Client_MANDT = TVFST.Client_MANDT
     AND Deliveries.BillingBlockInSdDocument_FAKSK = TVFST.Block_FAKSP
     AND TVFST.LanguageKey_SPRAS = MaterialsMD.Language_SPRAS
-WHERE MaterialsMD.Language_SPRAS {{ language }}
-  AND DivisionsMD.LanguageKey_SPRAS {{ language }}
+WHERE MaterialsMD.Language_SPRAS IN UNNEST({{ sap_languages }})
+  AND DivisionsMD.LanguageKey_SPRAS IN UNNEST({{ sap_languages }})

@@ -13,41 +13,25 @@
 --  limitations under the License.
 
 WITH
-  -- We need to dedupe the source table to handle occasional dups from SLT connector.
+  -- For each unique record (by primary key), find chronologically latest row. This ensures CDC
+  -- view only contains one entry for a unique record.
+  -- This also handles the conditions where SLT connector may have introduced true duplicate
+  -- rows (same recordstamp).
   SourceTable AS (
-    SELECT * EXCEPT(row_num)
-    FROM (
-      SELECT *, ROW_NUMBER() OVER (PARTITION BY ${keys}, recordstamp ORDER BY recordstamp) AS row_num
-      FROM `${base_table}`
-    )
-    WHERE row_num = 1
-  ),
-  T1 AS (
-    SELECT ${keys}, MAX(recordstamp) AS recordstamp
-    FROM SourceTable
-    -- Let's make sure we bring records with NULL operation_flag values as well.
-    WHERE IFNULL(operation_flag, 'I') IN ('U', 'I', 'L')
-    GROUP BY ${keys}
-  ),
-  D1 AS (
-    SELECT ${keys_with_dt1_prefix}, DT1.recordstamp
-    FROM SourceTable AS DT1
-    CROSS JOIN T1
-    WHERE DT1.operation_flag = 'D'
-      AND ${keys_comparator_with_dt1_t1}
-      AND DT1.recordstamp > T1.recordstamp
-  ),
-  T1S1 AS (
-    SELECT S1.* EXCEPT (operation_flag, is_deleted)
-    FROM SourceTable AS S1
-    INNER JOIN T1
-    ON ${keys_comparator_with_t1_s1}
-      AND S1.recordstamp = T1.recordstamp
+    SELECT *
+    FROM `${base_table}`
+    WHERE ${primary_keys_not_null_clause}
+    QUALIFY
+      ROW_NUMBER() OVER (
+        PARTITION BY ${primary_keys}
+        ORDER BY
+          recordstamp DESC,
+          IF(operation_flag = 'D', 'ZZ', operation_flag) DESC -- Prioritize "D" flag within the dups.
+        ) = 1
   )
-SELECT T1S1.* EXCEPT (recordstamp)
-FROM T1S1
-LEFT OUTER JOIN D1
-  ON ${keys_comparator_with_t1s1_d1}
-    AND D1.recordstamp > T1S1.recordstamp
-WHERE D1.recordstamp IS NULL
+SELECT * EXCEPT (operation_flag, is_deleted, recordstamp)
+FROM SourceTable
+-- ## CORTEX-CUSTOMER You can use "is_deleted = true" condition along with "operation_flag = 'D'",
+-- if that is applicable to your CDC set up.
+WHERE IFNULL(operation_flag, 'I') != 'D' -- We don't need to see Deleted records.
 

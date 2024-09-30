@@ -12,6 +12,9 @@
 #-- See the License for the specific language governing permissions and
 #-- limitations under the License.
 
+## Following sample script uses the deprecated "csks_hier" tables.
+## It will be updated to use the new "cost_centers" tables in the next release.
+
 {% if sql_flavour == 'ecc' -%}
 ({% include './ecc/CostCenterAmountsHierarchy_SAMPLE.sql' -%})
 {% endif -%}

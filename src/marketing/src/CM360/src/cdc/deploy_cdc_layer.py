@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,22 +14,26 @@
 """Generate all necessary assets for CDC layer of CM360."""
 
 import argparse
-import datetime
+from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import re
 import shutil
 import sys
 
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
+from common.py_libs.bq_helper import create_table_from_schema
 from common.py_libs.bq_helper import table_exists
-from common.py_libs.bq_materializer import add_cluster_to_table_def
-from common.py_libs.bq_materializer import add_partition_to_table_def
 from google.cloud.bigquery import Client
 from google.cloud.bigquery import SchemaField
 
 from src.cdc.constants import CDC_SQL_SCRIPTS_OUTPUT_DIR
 from src.cdc.constants import CDC_SQL_TEMPLATE
-from src.cdc.constants import DAG_TEMPLATE_DIR
+from src.cdc.constants import DAG_CONFIG_INI_INPUT_PATH
+from src.cdc.constants import DAG_CONFIG_INI_OUTPUT_PATH
+from src.cdc.constants import DAG_TEMPLATE_PATH
 from src.cdc.constants import OUTPUT_DIR_FOR_CDC
 from src.constants import CDC_DATASET
 from src.constants import CDC_PROJECT
@@ -41,12 +45,9 @@ from src.constants import SETTINGS
 from src.py_libs.sql_generator import render_template_file
 from src.py_libs.sql_generator import write_generated_sql_to_disk
 from src.py_libs.utils import create_bq_schema
-from src.py_libs.utils import create_table_ref
 from src.py_libs.utils import generate_dag_from_template
 from src.py_libs.utils import repr_schema
 from src.py_libs.utils import TableNotFoundError
-
-DAG_TEMPLATE_PATH = Path(DAG_TEMPLATE_DIR, "raw_to_cdc_dag_py_template.py")
 
 
 def _create_sql_output_dir_structure() -> None:
@@ -120,9 +121,8 @@ def main():
     _create_output_dir_structure()
     _create_sql_output_dir_structure()
 
-    now = datetime.datetime.utcnow()
-    now_date = datetime.datetime(now.year, now.month, now.day)
-    client = Client(project=CDC_PROJECT)
+    dag_start_date = datetime.now(timezone.utc).date()
+    client = cortex_bq_client.CortexBQClient(project=CDC_PROJECT)
 
     cdc_layer_settings = SETTINGS["raw_to_cdc_tables"]
 
@@ -137,7 +137,7 @@ def main():
         if table_exists(bq_client=client, full_table_name=full_table_name):
             logging.warning("❗ Table already exists.")
         else:
-            logging.info("Creating table...")
+            logging.info("Creating table %s...", full_table_name)
 
             logging.info("Creating schema...")
             schema = create_bq_schema(table_mapping_path)
@@ -145,22 +145,17 @@ def main():
             schema.append(SchemaField(name="account_id", field_type="INTEGER"))
             logging.debug("Table schema: %s\n", repr_schema(schema))
 
-            table_ref = create_table_ref(schema=schema,
-                                         project=CDC_PROJECT,
-                                         dataset=CDC_DATASET,
-                                         table_name=table_name)
-
-            # Add partition and clustering details
             partition_details = cdc_table_settings.get("partition_details")
-            if partition_details:
-                table_ref = add_partition_to_table_def(table_ref, partition_details)
-
             cluster_details = cdc_table_settings.get("cluster_details")
-            if cluster_details:
-                table_ref = add_cluster_to_table_def(table_ref, cluster_details)
 
-            client.create_table(table_ref)
-            logging.info("Table is created successfully.")
+            create_table_from_schema(bq_client=client,
+                         full_table_name=full_table_name,
+                         schema=schema,
+                         partition_details=partition_details,
+                         cluster_details=cluster_details)
+
+            logging.info("Table %s processed successfully.", full_table_name)
+
 
         # DAG PY file generation
         logging.info("Generating DAG python file...")
@@ -171,8 +166,15 @@ def main():
             "cdc_sql_path": Path("cdc_sql_scripts", f"{table_name}.sql"),
             "load_frequency": load_frequency,
             "table_name": table_name,
-            "start_date": now_date,
+            "start_date": dag_start_date,
+            "runtime_labels_dict": "", # A place holder for labels dict string
         }
+
+        # If telemetry opted in, convert CORTEX JOB LABEL dict to string
+        # And assign to substitution
+        if client.allow_telemetry:
+            subs["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
+
         generate_dag_from_template(
             template_file=DAG_TEMPLATE_PATH,
             generation_target_directory=OUTPUT_DIR_FOR_CDC,
@@ -218,6 +220,12 @@ def main():
         logging.info("----------------------------")
 
     logging.info("Processed all tables successfully.")
+
+    logging.info("Copying DAG config file...")
+
+    shutil.copyfile(src=DAG_CONFIG_INI_INPUT_PATH,
+                    dst=DAG_CONFIG_INI_OUTPUT_PATH)
+    logging.info("DAG config file copied successfully.")
 
     logging.info("✅ CDC layer deployed successfully!")
 

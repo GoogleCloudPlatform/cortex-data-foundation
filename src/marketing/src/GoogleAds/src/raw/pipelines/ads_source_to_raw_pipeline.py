@@ -16,10 +16,10 @@ Data loading pipeline for GoogleAds source data. It uses GoogleAds API to
 read the data. Result is landed in the BigQuery table.
 """
 
-import argparse
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+import logging
 from typing import Optional
 
 import apache_beam as beam
@@ -36,7 +36,7 @@ from helpers.pipeline_utils import get_max_recordstamp
 from helpers.pipeline_utils import get_select_columns
 
 
-class ArgumentOptions(PipelineOptions):
+class GoogleAdsRawLayerOptions(PipelineOptions):
     """Arguments for raw extraction pipeline."""
 
     @classmethod
@@ -67,13 +67,17 @@ class ArgumentOptions(PipelineOptions):
         parser.add_argument("--resource_type",
                             required=True,
                             help="Resource type")
+        parser.add_argument("--pipeline_logging_level",
+                            required=True,
+                            type=str,
+                            help="Logging level of pipeline.")
 
 
-arg_parser = argparse.ArgumentParser()
-_, beam_args = arg_parser.parse_known_args()
+args = PipelineOptions().view_as(GoogleAdsRawLayerOptions)
 
-beam_options = PipelineOptions(beam_args)
-args = PipelineOptions().view_as(ArgumentOptions)
+logger = logging.getLogger(__name__)
+level = getattr(logging, args.pipeline_logging_level)
+logger.setLevel(level)
 
 # Reading column mappings for data load
 columns_mapping = create_column_mapping(args.mapping_file)
@@ -118,7 +122,7 @@ query = generate_query(select_columns,
                        end_window=end_window)
 
 # yapf: disable
-with beam.Pipeline(options=beam_options) as pipeline:
+with beam.Pipeline(options=args) as pipeline:
     clients_to_process = get_available_client_ids(credentials, args.api_version,
                                                   is_metric_table)
 

@@ -36,11 +36,11 @@ WITH
       END AS ActivityStatus,
       Events.WhoId,
       --## CORTEX-CUSTOMER Consider adding other dimensions from the CalendarDateDimension table as per your requirement
-       Events.EventCreatedDate AS ActivityCreatedDate,
-       Events.EventCreatedWeek AS ActivityCreatedWeek,
-       Events.EventCreatedMonth AS ActivityCreatedMonth,
-       Events.EventCreatedQuarter AS ActivityCreatedQuarter,
-       Events.EventCreatedYear AS ActivityCreatedYear,
+      Events.EventCreatedDate AS ActivityCreatedDate,
+      Events.EventCreatedWeek AS ActivityCreatedWeek,
+      Events.EventCreatedMonth AS ActivityCreatedMonth,
+      Events.EventCreatedQuarter AS ActivityCreatedQuarter,
+      Events.EventCreatedYear AS ActivityCreatedYear,
       Events.WhatId
     FROM
       `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.Events` AS Events
@@ -59,11 +59,11 @@ WITH
       Tasks.Status AS ActivityStatus,
       Tasks.WhoId,
       --## CORTEX-CUSTOMER Consider adding other dimensions from the CalendarDateDimension table as per your requirement
-       Tasks.TaskCreatedDate AS ActivityCreatedDate,
-       Tasks.TaskCreatedWeek AS ActivityCreatedWeek,
-       Tasks.TaskCreatedMonth AS ActivityCreatedMonth,
-       Tasks.TaskCreatedQuarter AS ActivityCreatedQuarter,
-       Tasks.TaskCreatedYear AS ActivityCreatedYear,
+      Tasks.TaskCreatedDate AS ActivityCreatedDate,
+      Tasks.TaskCreatedWeek AS ActivityCreatedWeek,
+      Tasks.TaskCreatedMonth AS ActivityCreatedMonth,
+      Tasks.TaskCreatedQuarter AS ActivityCreatedQuarter,
+      Tasks.TaskCreatedYear AS ActivityCreatedYear,
       Tasks.WhatId
     FROM
       `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.Tasks` AS Tasks
@@ -76,7 +76,7 @@ WITH
       ConversionDate AS CurrencyConversionDate
     FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion`
     WHERE
-      TargetCurrency IN ({{ currencies }})
+      TargetCurrency IN UNNEST({{ sfdc_currencies }})
   )
 SELECT
   Activities.*,

@@ -11,43 +11,44 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Airflow dag for Product Hierarchy Text"""
+import ast
 
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
-# from __future__ import print_function
+
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
+
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
 
 default_args = {
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
 }
 
-with DAG(
-        'Product_Hierarchy_Text',
-        default_args=default_args,
-        schedule_interval='@yearly',
-        start_date=datetime(2021, 1, 1),
-        catchup=False,
-        max_active_runs=1
-) as dag:
-    start_task = DummyOperator(task_id='start')
-    if AIRFLOW_VERSION.startswith("1."):
-        get_prodhier_texts = BigQueryOperator(
-            task_id='get_prodhier_texts',
-            sql='prod_hierarchy_texts.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            bigquery_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
-    else:
-        get_prodhier_texts = BigQueryOperator(
-            task_id='get_prodhier_texts',
-            sql='prod_hierarchy_texts.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            gcp_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
+with DAG(dag_id="Product_Hierarchy_Text",
+         default_args=default_args,
+         schedule_interval="@yearly",
+         start_date=datetime(2021, 1, 1),
+         catchup=False,
+         max_active_runs=1) as dag:
+    start_task = EmptyOperator(task_id="start")
 
-    stop_task = DummyOperator(task_id='stop')
+    get_prodhier_texts = BigQueryInsertJobOperator(
+        task_id="get_prodhier_texts",
+        gcp_conn_id="sap_reporting_bq",
+        configuration={
+            "query": {
+                "query": "prod_hierarchy_texts.sql",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        })
 
-    start_task >> get_prodhier_texts >> stop_task
+    stop_task = EmptyOperator(task_id="stop")
+
+    # pylint:disable=pointless-statement
+    start_task >> get_prodhier_texts >> stop_task  # type: ignore

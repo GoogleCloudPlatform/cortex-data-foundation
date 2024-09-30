@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.Deliveries"
+description: "Base fact view of deliveries."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Facts"
+fields:
+  - name: "DELIVERY_ID"
+    description: "Primary key identifying a delivery"
+  - name: "STATUS_CODE"
+    description: "Delivery shipping status, including OP: open, CL: closed, PA: packed, IT: in transit, SC: shipment cancellation sent, CO: confirmed, SA: shipment advice received, SR: shipment request sent"
+  - name: "CONFIRM_DATE"
+    description: "Date the delivery was confirmed"
+  - name: "CREATION_TS"
+    description: "Timestamp when the record was created in the source system"
+  - name: "LAST_UPDATE_TS"
+    description: "Timestamp when the record was last updated in the source system"

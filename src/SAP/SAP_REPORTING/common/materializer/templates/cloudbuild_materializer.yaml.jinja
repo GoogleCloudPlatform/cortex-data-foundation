@@ -1,9 +1,23 @@
 steps:
 
+{% raw %}
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: 'set-config-file-path'
+    script: |
+      #!/usr/bin/env bash
+      set -e
+
+      # Save absolute config file path to .env file
+      # that can be accessed by all Cloud Build steps since exported env
+      # variables do not persist between steps.
+
+      realpath "${_CONFIG_FILE}" > /workspace/config_file_full_path.env
+{% endraw %}
+
 {%- for build_file in build_files_list %}
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     {%- if not build_file.wait_for_prev_step %}
-    waitFor: ['-']
+    waitFor: ['set-config-file-path']
     {%- endif %}
     script: |
       #!/usr/bin/env bash
@@ -30,11 +44,17 @@ steps:
           --target_dataset_type='{{ target_dataset_type }}' \
           --target_dataset='{{ target_dataset_name }}' \
           --jinja_data_file='generated_materializer_build_files/{{ module_name }}/bq_sql_jinja_data.json' \
-          {%- if load_test_data %}
-          --bq_object_setting='{{ build_file.bq_object_setting }}' --load_test_data
-          {%- else %}
-          --bq_object_setting='{{ build_file.bq_object_setting }}'
+          {%- if allow_telemetry %}
+          --allow_telemetry \
           {%- endif %}
+          {%- if load_test_data %}
+          --load_test_data \
+          {%- endif %}
+          {%- if enable_debug %}
+          --debug \
+          {%- endif %}
+          --bq_object_setting='{{ build_file.bq_object_setting }}'
+
 
       {%- elif build_file.k9_id %}
 
@@ -69,9 +89,15 @@ steps:
 
 timeout: 15000s
 logsBucket: "gs://${_GCS_LOGS_BUCKET}"
+serviceAccount: "${_BUILD_ACCOUNT}"
 substitutions:
   _EXECUTE_SAMPLES: "false"
+  _CONFIG_FILE: '{{ config_file }}'
 options:
   substitution_option: "ALLOW_LOOSE"
-  machineType: "E2_HIGHCPU_32"
   automapSubstitutions: true
+  {% if not private_worker_pool %}
+  machineType: "E2_HIGHCPU_32"
+  {% endif %}
+  pool:
+    name: "${_WORKER_POOL_NAME}"

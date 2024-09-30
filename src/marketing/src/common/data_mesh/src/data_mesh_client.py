@@ -19,7 +19,7 @@ import enum
 from exceptiongroup import ExceptionGroup
 import logging
 import re
-from typing import Any, Awaitable, DefaultDict, Dict, Iterable, List, Optional, Set, Type
+from typing import Any, Awaitable, DefaultDict, Dict, Iterable, List, Optional, Sequence, Set, Type
 
 from google.api_core import exceptions as google_exc
 from google.api_core import retry
@@ -36,6 +36,7 @@ from google.longrunning import operations_pb2
 from common.data_mesh.src import data_mesh_types as dmt
 from common.data_mesh.src import data_mesh_types_util as dmt_util
 from common.py_libs import cortex_exceptions as cortex_exc
+from common.py_libs import cortex_bq_client
 
 _RETRY_TIMEOUT_SEC = 20 * 60.0
 _ASSET_TAG_PREFIX = "asset"
@@ -161,7 +162,7 @@ class CortexDataMeshClient:
     def __init__(self,
                  location: str,
                  overwrite: bool = False,
-                 bq_client=bigquery.Client(),
+                 bq_client=cortex_bq_client.CortexBQClient(),
                  bq_datapolicy_client=(
                      bigquery_datapolicies_v1.DataPolicyServiceClient()),
                  catalog_client=datacatalog_v1.DataCatalogClient(),
@@ -399,6 +400,7 @@ class CortexDataMeshClient:
         Args:
             resource_type: A data_mesh_types dataclass type associated with a
                 resource, e.g. PolicyTaxonomy.
+            display_name: Display name of resource.
             name: String that uniquely identifies the resource.
         """
         if resource_type == dmt.CatalogTagTemplate:
@@ -715,8 +717,8 @@ class CortexDataMeshClient:
         """Create the specified Catalog Tag Templates.
 
         Args:
-            catalog_tag_templates_spec: data_mesh_types.CatalogTagTemplates that
-                specifies a list of Catalog Tag Templates to create.
+            tag_templates_spec: data_mesh_types.CatalogTagTemplates that
+                contains a list of data_mesh_types.CatalogTagTemplate.
         """
         existing_tag_templates = self._list_resources(
             dmt.CatalogTagTemplate, tag_templates_spec.project)
@@ -1378,6 +1380,75 @@ class CortexDataMeshClient:
             return True
         return False
 
+    def _get_updated_schema(
+            self,
+            original_schema: Sequence[bigquery.SchemaField],
+            annotation_map: Dict[str, dmt.BqAssetFieldAnnotation],
+            updated_annotations: Set[str],
+            asset_id: str,
+            parent_field: str = "",
+            deploy_descriptions: bool = True,
+            deploy_acls: bool = True) -> List[bigquery.SchemaField]:
+        """Return an updated schema including nested fields.
+
+        Args:
+            original_schema: Bigquery sequence of SchemaFields before updates.
+                This list can represent a table or nested subfields.
+            annotation_map: Dict mapping full field names to annotations.
+            updated_annotations: Mutated set of strings representing annotations
+                that were updated after overwrite setting is applied, e.g.
+                {"table_name.field_name.description"}
+            asset_id: Asset ID to be returned.
+            parent_field: Parent field.
+            deploy_descriptions: Bool indicating whether to deploy descriptions.
+            deploy_acls: Bool indicating whether to deploy policy tags.
+
+        Returns:
+            List of SchemaFields representing the updated table or subfields.
+        """
+        new_schema = []
+        for field in original_schema:
+            if parent_field:
+                full_field_name = f"{parent_field}.{field.name}"
+            else:
+                full_field_name = field.name
+            qualified_field_name = f"{asset_id}.{full_field_name}"
+            field_annotation = annotation_map.get(full_field_name)
+
+            # Warn if no annotation exists, but could still have annotations for
+            # child fields.
+            if not field_annotation:
+                logging.warning("No annotation found for %s.",
+                                qualified_field_name)
+
+            field_repr = field.to_api_repr()
+
+            # Conditionally set the field description.
+            if (field_annotation and deploy_descriptions and
+                    self._should_overwrite(field_repr.get("description"),
+                                           field_annotation.description)):
+                field_repr["description"] = field_annotation.description
+                updated_annotations.add(f"{qualified_field_name}:description")
+
+            # Conditionally set the policy tag.
+            if field_annotation and deploy_acls and self._maybe_set_policy_tag(
+                    asset_id, field_annotation, field_repr):
+                updated_annotations.add(f"{qualified_field_name}:policy_tag")
+
+            # Recursively update children
+            if field.fields:
+                updated_children = self._get_updated_schema(
+                    field.fields, annotation_map, updated_annotations, asset_id,
+                    full_field_name, deploy_descriptions, deploy_acls)
+                field_repr["fields"] = [
+                    c.to_api_repr() for c in updated_children
+                ]
+
+            new_field = bigquery.SchemaField.from_api_repr(field_repr)
+            new_schema.append(new_field)
+
+        return new_schema
+
     def annotate_bq_asset_schema(
             self,
             bq_asset_annotation_spec: dmt.BqAssetAnnotation,
@@ -1392,6 +1463,8 @@ class CortexDataMeshClient:
         Args:
             bq_asset_annotation_spec: data_mesh_types.BqAssetAnnotation that
                 specifies a list of asset and field descriptions to annotate.
+            deploy_descriptions: Bool indicating whether to deploy descriptions.
+            deploy_acls: Bool indicating whether to deploy policy tags.
 
         Returns:
             updated_annotations: Set of strings representing annotations
@@ -1423,40 +1496,15 @@ class CortexDataMeshClient:
 
         # Update field schema.
         original_schema = table.schema
-        field_annotations_map = {
+        annotation_map = {
             field.name: field for field in bq_asset_annotation_spec.fields
         }
 
-        # TODO: Support nested fields.
-        new_schema = []
-        for field in original_schema:
-            field_annotation = field_annotations_map.get(field.name)
-            full_field_name = f"{asset_id}.{field.name}"
+        table.schema = self._get_updated_schema(original_schema, annotation_map,
+                                                updated_annotations, asset_id,
+                                                "", deploy_descriptions,
+                                                deploy_acls)
 
-            # Don't update field schema if no annotation exists.
-            if not field_annotation:
-                logging.warning("No annotation found for %s.", full_field_name)
-                new_schema.append(field)
-                continue
-
-            field_repr = field.to_api_repr()
-
-            # Conditionally set the field description.
-            if deploy_descriptions and self._should_overwrite(
-                    field_repr.get("description"),
-                    field_annotation.description):
-                field_repr["description"] = field_annotation.description
-                updated_annotations.add(f"{full_field_name}:description")
-
-            # Conditionally set the policy tag.
-            if deploy_acls and self._maybe_set_policy_tag(
-                    asset_id, field_annotation, field_repr):
-                updated_annotations.add(f"{full_field_name}:policy_tag")
-
-            new_field = bigquery.SchemaField.from_api_repr(field_repr)
-            new_schema.append(new_field)
-
-        table.schema = new_schema
         _ = self._bq_client.update_table(table,
                                          fields_to_update,
                                          retry=self._retry_options)
@@ -1576,6 +1624,9 @@ class CortexDataMeshClient:
             bq_asset_types: A dictionary mapping each asset in the BQ dataset
                 to its BqAssetType. The key is the table ID without project or
                 dataset.
+            deploy_descriptions: If descriptions should be deployed.
+            deploy_catalog: If catalog should be deployed.
+            deploy_acls: If ACLs should be deployed.
         """
         asset_id = bq_asset_annotation_spec.name
 
@@ -1632,9 +1683,13 @@ class CortexDataMeshClient:
             bq_asset_annotation_specs: Optional list of
                 data_mesh_types.BqAssetAnnotation that specifies annotations for
                 a group of BQ assets.
-            templates_spec: Optional list of data_mesh_types.CatalogTagTemplates
-                that specifies a list of templates that include all those
-                referenced in the BqAssetAnnotations.
+            templates_specs: Optional list of
+                data_mesh_types.CatalogTagTemplates that specifies a list of
+                templates that include all those referenced in
+                the BqAssetAnnotations.
+            deploy_descriptions: If descriptions should be deployed.
+            deploy_catalog: If catalog should be deployed.
+            deploy_acls: If ACLs should be deployed.
         """
         if not bq_asset_annotation_specs:
             logging.warning("Attempting to deploy empty list of annotations.")

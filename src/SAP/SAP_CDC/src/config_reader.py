@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,21 @@
 #
 """Creates CDC tables and related DAGS."""
 
-import os
-import sys
-import yaml
 import jinja2
 import logging
+import os
+import pathlib
+import sys
+import yaml
+
 from concurrent import futures
+
+# Make sure common modules are in Python path
+sys.path.append(str(pathlib.Path(__file__).parent.parent))
+
+# pylint:disable=wrong-import-position
+
+from common.py_libs.configs import load_config_file_from_env
 
 from generate_query import generate_runtime_view
 from generate_query import create_cdc_table
@@ -29,18 +38,18 @@ from generate_query import client as generate_query_bq_client
 
 # File containing list and settings for cdc tables to be copied
 # The path is relative to "src" directory.
-_CONFIG_FILE = "../cdc_settings.yaml"
+_CONFIG_FILE = "cdc_settings.yaml"
 
 # This script generates a bunch of DAG and SQL files.
 # We store them locally, before they get copied over to GCS buckets.
 # TODO: These are declared in two places - here and and in generate_query.
 #       It needs a cleanup.
-_GENERATED_DAG_DIR = "../generated_dag"
-_GENERATED_SQL_DIR = "../generated_sql"
+_GENERATED_DAG_DIR = "generated_dag"
+_GENERATED_SQL_DIR = "generated_sql"
 
 
 def process_table(table_config: dict, source_dataset: str, target_dataset: str,
-                  gen_test: str) -> None:
+                  gen_test: str, allow_telemetry: bool) -> None:
     try:
 
         table_name = table_config.get("base_table")
@@ -69,7 +78,7 @@ def process_table(table_config: dict, source_dataset: str, target_dataset: str,
             logging.info("Generating required files for DAG with %s ",
                          cdc_table)
             generate_cdc_dag_files(raw_table, cdc_table, load_frequency,
-                                   gen_test)
+                                   gen_test, allow_telemetry)
 
         logging.info("✅ == Processed %s ==", raw_table)
     except Exception as e:
@@ -113,6 +122,22 @@ def main():
     os.makedirs(_GENERATED_DAG_DIR, exist_ok=True)
     os.makedirs(_GENERATED_SQL_DIR, exist_ok=True)
 
+    try:
+        # Load config from environment variable
+        cortex_config = load_config_file_from_env()
+
+        # Gets allowTelemetry config and defaults to True
+        allow_telemetry = cortex_config.get("allowTelemetry", True)
+    except (FileNotFoundError, PermissionError):
+        # File used by telemetry only and the path assumes execution
+        # using Cloud Build.
+        #
+        # Access while executing locally cannot be assumed. If file is not
+        # available then continue execution with telemetry not allowed.
+        #
+        # File not accessible or found, setting allow_telemetry to false.
+        allow_telemetry = False
+
     # Read settings from settings file.
     with open(_CONFIG_FILE, encoding="utf-8") as settings_file:
         t = jinja2.Template(settings_file.read(),
@@ -147,7 +172,7 @@ def main():
     for table_config in table_configs:
         threads.append(
             pool.submit(process_table, table_config, source_dataset,
-                        target_dataset, gen_test))
+                        target_dataset, gen_test, allow_telemetry))
     if len(threads) > 0:
         logging.info("Waiting for all tasks to complete...")
         futures.wait(threads)

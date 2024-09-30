@@ -17,15 +17,24 @@
 from collections import abc
 from enum import Enum
 import logging
-import typing
 import pathlib
+import typing
 
-from google.cloud import bigquery
-from google.cloud.exceptions import NotFound, BadRequest
 from google.api_core import retry
+from google.cloud import bigquery
+from google.cloud.exceptions import BadRequest
 from google.cloud.exceptions import Conflict
+from google.cloud.exceptions import Forbidden
+from google.cloud.exceptions import NotFound
+
+from common.py_libs import constants
+from common.py_libs import cortex_exceptions as exc
+
+from common.py_libs.bq_materializer import add_cluster_to_table_def
+from common.py_libs.bq_materializer import add_partition_to_table_def
 
 logger = logging.getLogger(__name__)
+
 
 
 def execute_sql_file(bq_client: bigquery.Client,
@@ -94,7 +103,7 @@ def _wait_for_bq_jobs(jobs: typing.List[typing.Union[bigquery.CopyJob,
         except Conflict:
             logging.warning("⚠️ Table %s already exists. Skipping it.",
                         job.destination)
-        except Exception:
+        except Exception:  # pylint: disable=bare-except, broad-exception-caught
             logging.error(
                 "⛔️ Failed to load table %s.\n",
                 job.destination,
@@ -104,23 +113,23 @@ def _wait_for_bq_jobs(jobs: typing.List[typing.Union[bigquery.CopyJob,
 
 
 def load_tables(bq_client: bigquery.Client,
-               sources: typing.Union[str, typing.List[str]],
-               target_tables: typing.Union[str, typing.List[str]],
-               location: str,
-               continue_if_failed: bool = False,
-               skip_existing_tables: bool = False,
-               write_disposition: str = bigquery.WriteDisposition.WRITE_EMPTY,
-               parallel_jobs: int = 5):
+                sources: typing.Union[str, typing.List[str]],
+                target_tables: typing.Union[str, typing.List[str]],
+                location: str,
+                continue_if_failed: bool = False,
+                skip_existing_tables: bool = False,
+                write_disposition: str = bigquery.WriteDisposition.WRITE_EMPTY,
+                parallel_jobs: int = 5):
     """Loads data to multiple BigQuery tables.
 
     Args:
         bq_client (bigquery.Client): BigQuery client to use.
-        sources (str|list[str]): data source URI or name.
+        sources (str | list[str]): data source URI or name.
                                Supported sources:
                                 - BigQuery table name as project.dataset.table
                                 - Any URI supported by load_table_from_uri
                                   for avro, csv, json and parquet files.
-        target_table_full_names (str|list[str]): full target tables names as
+        target_tables (str | list[str]): full target tables names as
                                       "project.dataset.table".
         location (str): BigQuery location.
         continue_if_failed (bool): continue loading tables if some jobs fail.
@@ -129,6 +138,11 @@ def load_tables(bq_client: bigquery.Client,
         write_disposition (bigquery.WriteDisposition): write disposition,
                           Defaults to WRITE_EMPTY (skip if has data).
         parallel_jobs (int): maximum number of parallel jobs. Defaults to 5.
+
+     Raises:
+        ValueError: If the number of source URIs is not equal to the number
+                    of target tables, or if an unsupported source format
+                    is provided.
     """
 
     if not isinstance(sources, abc.Sequence):
@@ -220,6 +234,36 @@ def create_table(bq_client: bigquery.Client,
                  schema_tuples_list: list[tuple[str, str]],
                  exists_ok=False) -> None:
     """Creates a BigQuery table based on given schema."""
+    create_table_from_schema(
+        bq_client,
+        full_table_name,
+        [bigquery.SchemaField(t[0], t[1]) for t in schema_tuples_list],
+        None,
+        None,
+        exists_ok
+    )
+
+
+def create_table_from_schema(bq_client: bigquery.Client,
+                             full_table_name: str,
+                             schema: typing.List[bigquery.SchemaField],
+                             partition_details=None,
+                             cluster_details=None,
+                             exists_ok=False) -> None:
+    """Creates a table in BigQuery. Skips creation if it exists.
+
+    Args:
+        bq_client (bigquery.Client): BQ client.
+        full_table_name (str): Full table name (project.dataset.table).
+        schema (list[bigquery.SchemaField]): BQ schema.
+        partition_details (dict): Partition details.
+        cluster_details (dict): Clustering details.
+        exists_ok (Optional[bool]):
+            Allow the table to exist prior to this call. Defaults to False.
+    """
+
+    logging.info("Creating table %s", full_table_name)
+
     project, dataset_id, table_id = full_table_name.split(".")
 
     table_ref = bigquery.TableReference(
@@ -227,7 +271,13 @@ def create_table(bq_client: bigquery.Client,
 
     table = bigquery.Table(
         table_ref,
-        schema=[bigquery.SchemaField(t[0], t[1]) for t in schema_tuples_list])
+        schema=schema)
+
+    if partition_details:
+        table = add_partition_to_table_def(table, partition_details)
+
+    if cluster_details:
+        table = add_cluster_to_table_def(table, cluster_details)
 
     bq_client.create_table(table, exists_ok=exists_ok)
 
@@ -263,7 +313,6 @@ def copy_dataset(bq_client: bigquery.Client,
         target_project (str): Target project.
         target_dataset (str): Target dataset. Must exist in specified location.
         location (str): BigQuery location.
-        continue_if_failed (bool): Continue loading tables if some jobs fail.
         skip_existing_tables (bool): Skip tables that already exist.
                                     Defaults to False.
         write_disposition (bigquery.WriteDisposition): Write disposition,
@@ -279,3 +328,43 @@ def copy_dataset(bq_client: bigquery.Client,
                 source_tables, target_tables, location,
                 skip_existing_tables=skip_existing_tables,
                 write_disposition=write_disposition)
+
+def label_dataset(bq_client: bigquery.Client,
+                  dataset: bigquery.Dataset) -> None:
+    """
+    Adds Cortex label to BigQuery Dataset.
+
+    Only updates dataset if label does not exist already in dataset.
+
+    Args:
+        bq_client (bigquery.Client): BigQuery client to use.
+        dataset (bigquery.Dataset): Dataset to label.
+
+    Raises:
+        NotFoundCError: If dataset does not exist.
+    """
+    try:
+        labels = dataset.labels or {}
+        update_labels = False
+
+        for key, value in constants.BQ_DATASET_LABEL.items():
+            if key not in labels:
+                labels[key] = value
+                update_labels = True
+        if update_labels:
+            dataset.labels = labels
+            bq_client.update_dataset(dataset, ["labels"])
+
+    except NotFound:
+        error_msg = (
+            f"Dataset {dataset.project}.{dataset.dataset_id} not found.")
+        raise exc.NotFoundCError(error_msg) from NotFound
+
+    except Forbidden:
+        logger.info(
+            "Permission to tag %s.%s denied. Skipping tagging dataset.",
+                      dataset.project,
+                      dataset.dataset_id)
+
+
+

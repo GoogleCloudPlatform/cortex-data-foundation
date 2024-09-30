@@ -1,0 +1,95 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# CORTEX-CUSTOMER: Consider updating raw table prefix below based on your
+# configured table prefix from DV360 offline reporting should it be different.
+
+source_to_cdc_tables:
+  - base_table: ad_insights
+    load_frequency: "@daily"
+    raw_table_prefix: ad_insights
+    row_identifiers: ["date", "trueview_ad_id"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+  - base_table: adgroup_insights_by_adformat
+    load_frequency: "@daily"
+    raw_table_prefix: adgroup_insights_by_adformat
+    row_identifiers: ["date", "youtube_ad_group_id", "youtube_ad_format"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+  - base_table: adgroup_insights_by_adtype
+    load_frequency: "@daily"
+    raw_table_prefix: adgroup_insights_by_adtype
+    row_identifiers: ["date", "youtube_ad_group_id", "youtube_ad_type"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+  - base_table: adgroup_insights_by_age_gender
+    load_frequency: "@daily"
+    raw_table_prefix: adgroup_insights_by_age_gender
+    row_identifiers: ["date", "youtube_ad_group_id", "youtube_age", "gender"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+  - base_table: adgroup_insights_by_audience
+    load_frequency: "@daily"
+    raw_table_prefix: adgroup_insights_by_audience
+    row_identifiers: ["date", "youtube_ad_group_id", "youtube_audience_segment", "youtube_audience_segment_type"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+  - base_table: adgroup_insights_by_placement
+    load_frequency: "@daily"
+    raw_table_prefix: adgroup_insights_by_placement
+    row_identifiers: ["date", "youtube_ad_group_id", "placement_all_youtube_channels", "placement_name_all_youtube_channels"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+  - base_table: lineitem_details
+    load_frequency: "@daily"
+    raw_table_prefix: lineitem_details
+    row_identifiers: ["date", "line_item_id"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+  - base_table: lineitem_insights
+    load_frequency: "@daily"
+    raw_table_prefix: lineitem_insights
+    row_identifiers: ["date", "line_item_id", "device_type", "browser", "environment", "country_code"]
+    partition_details: {
+      column: "date",
+      partition_type: "time",
+      time_grain: "day"
+    }
+    # CORTEX-CUSTOMER:
+    # Optionally add clustering config with following structure.
+    # cluster_details: {
+    #   columns: []
+    # }

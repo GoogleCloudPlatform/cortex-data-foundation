@@ -1,0 +1,60 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This settings file drives how the BQ objects (tables/views/functions) for
+# Reporting datasets are created.
+#
+# There are two sections:
+#
+#  1. "bq_independent_objects":
+#     All BigQuery objects that can be created independently, without any
+#     other dependencies.
+#     NOTE: When "turbo_mode" is enabled, these BQ objects are created in
+#           parallel.
+#
+#  2. "bq_dependent_objects":
+#      All BigQuery objects that need to be created in a specific order due to
+#      dependencies.
+#      NOTE: "turbo_mode" does not apply to this section - i.e. each object
+#             will be created one after another.
+#
+#  At least one of the two sections need to be present.
+#
+#  Note that you can change these views to tables, as described in Cortex documentation.
+
+
+bq_independent_objects:
+  - sql_file: src/DV360/src/reporting/ddls/LineItemDetails.sql
+    type: view
+
+  - sql_file: src/DV360/src/reporting/ddls/LineItemInsights.sql
+    type: view
+
+  - sql_file: src/DV360/src/reporting/ddls/AdGroupInsightsByAgeGender.sql
+    type: view
+
+  - sql_file: src/DV360/src/reporting/ddls/AdGroupInsightsByAudience.sql
+    type: view
+
+  - sql_file: src/DV360/src/reporting/ddls/AdGroupInsightsByPlacement.sql
+    type: view
+
+  - sql_file: src/DV360/src/reporting/ddls/AdGroupInsightsByAdFormat.sql
+    type: view
+
+  - sql_file: src/DV360/src/reporting/ddls/AdGroupInsightsByAdType.sql
+    type: view
+
+  - sql_file: src/DV360/src/reporting/ddls/AdInsights.sql
+    type: view

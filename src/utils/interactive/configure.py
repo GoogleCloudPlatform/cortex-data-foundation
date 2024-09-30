@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -110,6 +110,8 @@ def configure(in_cloud_shell: bool,
         defaults.append("deploySAP")
     if config.get("deploySFDC"):
         defaults.append("deploySFDC")
+    if config.get("deployOracleEBS"):
+        defaults.append("deployOracleEBS")
     if (config.get("deployMarketing") and
         config["marketing"].get("deployGoogleAds")):
         defaults.append("deployGoogleAds")
@@ -128,6 +130,12 @@ def configure(in_cloud_shell: bool,
     if (config.get("deployMarketing") and
         config["marketing"].get("deploySFMC")):
         defaults.append("deploySFMC")
+    if (config.get("deployMarketing") and
+        config["marketing"].get("deployDV360")):
+        defaults.append("deployDV360")
+    if (config.get("deployMarketing") and
+        config["marketing"].get("deployGA4")):
+        defaults.append("deployGA4")
 
     while True:
         dialog = checkboxlist_dialog(
@@ -139,6 +147,7 @@ def configure(in_cloud_shell: bool,
                 ("deploySAP", "SAP"),
                 ("deploySFDC",
                  "Salesforce.com (SFDC)"),
+                ("deployOracleEBS", "Oracle EBS"),
                 ("deployGoogleAds",
                  "Marketing with Google Ads"),
                 ("deployCM360",
@@ -151,6 +160,10 @@ def configure(in_cloud_shell: bool,
                  "Marketing with Meta"),
                 ("deploySFMC",
                  "Marketing with SFMC"),
+                ("deployDV360",
+                 "Marketing with Youtube via DV360"),
+                ("deployGA4",
+                 "Marketing with GA4"),
             ],
             default_values=defaults,
             style=Style.from_dict({
@@ -166,21 +179,27 @@ def configure(in_cloud_shell: bool,
 
         config["deploySAP"] = "deploySAP" in results
         config["deploySFDC"] = "deploySFDC" in results
+        config["deployOracleEBS"] = "deployOracleEBS" in results
         config["deployMarketing"] = ("deployGoogleAds" in results or
                                      "deployCM360" in results or
                                      "deployTikTok" in results or
                                      "deployLiveRamp" in results or
                                      "deployMeta" in results or
-                                     "deploySFMC" in results)
+                                     "deploySFMC" in results or
+                                     "deployDV360" in results or
+                                     "deployGA4" in results)
         config["marketing"]["deployGoogleAds"] = "deployGoogleAds" in results
         config["marketing"]["deployCM360"] = "deployCM360" in results
         config["marketing"]["deployTikTok"] = "deployTikTok" in results
         config["marketing"]["deployLiveRamp"] = "deployLiveRamp" in results
         config["marketing"]["deployMeta"] = "deployMeta" in results
         config["marketing"]["deploySFMC"] = "deploySFMC" in results
+        config["marketing"]["deployDV360"] = "deployDV360" in results
+        config["marketing"]["deployGA4"] = "deployGA4" in results
 
-        if (config["deploySAP"] is False and config["deploySFDC"] is False
-            and config["deployMarketing"] is False):
+        if (not config["deploySAP"] and not config["deploySFDC"]
+            and not config["deployMarketing"]
+            and not config["deployOracleEBS"]):
             if yes_no(
                     f"{DF_TITLE} Configuration",
                     "Please select one or more Data Foundation workloads.",
