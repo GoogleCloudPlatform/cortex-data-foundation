@@ -1,0 +1,16 @@
+# Lakes dataclass.
+project: {{ project_id_tgt }}
+lakes:
+  - display_name: "marketing-ga4"
+    ## CORTEX-CUSTOMER: Update with specific region, even if deployment is multiregion.
+    region: ""
+    description: "Cortex Marketing Google Analytics 4 datasets"
+    zones:
+      - display_name: "reporting-marketing-ga4"
+        description: "Cortex Marketing Google Analytics 4 Reporting dataset"
+        zone_type: CURATED
+        ## CORTEX-CUSTOMER: Update to SINGLE_REGION or MULTI_REGION depending on Cortex deployment.
+        location_type:
+        assets:
+          - display_name: "reporting-bq-dataset"
+            asset_name: "{{ marketing_ga4_datasets_reporting }}"

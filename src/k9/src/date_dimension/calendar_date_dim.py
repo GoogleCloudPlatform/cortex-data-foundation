@@ -11,40 +11,43 @@
 """Cloud Composer DAG to generate calendar_dim_date table.
 Executes relevant nodes to create one tables.
 """
-from datetime import datetime, timedelta
+import ast
+
+from datetime import datetime
+from datetime import timedelta
+
 from airflow import DAG
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
+
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
 
 default_args = {
-    'depends_on_past': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    "depends_on_past": False,
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
 }
-with DAG(
-        'calendar_date_dim',
-        default_args=default_args,
-        schedule_interval='@yearly',
-        start_date=datetime(2022, 11, 2),
-        catchup=False,
-        max_active_runs=1
-) as dag:
-    start_task = DummyOperator(task_id='start')
-    if AIRFLOW_VERSION.startswith("1."):
-        calendar_date_dim = BigQueryOperator(
-            task_id='calendar_date_dim',
-            sql='calendar_date_dim.sql',
-            create_disposition='WRITE_TRUNCATE',
-            bigquery_conn_id='sap_cdc_bq',
-            use_legacy_sql=False)
-    else:
-        calendar_date_dim = BigQueryOperator(
-            task_id='calendar_date_dim',
-            sql='calendar_date_dim.sql',
-            create_disposition='WRITE_TRUNCATE',
-            gcp_conn_id='sap_cdc_bq',
-            use_legacy_sql=False)
-    stop_task = DummyOperator(task_id='stop')
+
+with DAG("calendar_date_dim",
+         default_args=default_args,
+         schedule_interval="@yearly",
+         start_date=datetime(2022, 11, 2),
+         catchup=False,
+         max_active_runs=1) as dag:
+    start_task = EmptyOperator(task_id="start")
+    calendar_date_dim = BigQueryInsertJobOperator(
+        task_id="calendar_date_dim",
+        gcp_conn_id="sap_cdc_bq",
+        configuration={
+            "query": {
+                "query": "calendar_date_dim.sql",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        })
+    stop_task = EmptyOperator(task_id="stop")
+
     # pylint:disable=pointless-statement
     (start_task >> calendar_date_dim >> stop_task)

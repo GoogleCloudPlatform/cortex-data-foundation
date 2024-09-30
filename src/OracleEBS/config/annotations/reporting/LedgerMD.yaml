@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.LedgerMD"
+description: "Dimension table containing ledger attributes."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "LEDGER_ID"
+    description: "Primary key identifying the ledger (set of books)"
+  - name: "LEDGER_NAME"
+    description: "Ledger name"
+  - name: "PERIOD_SET_NAME"
+    description: "Accounting calendar name"
+  - name: "PERIOD_TYPE"
+    description: "Accounting period type"

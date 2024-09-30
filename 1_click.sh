@@ -19,8 +19,5 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 pushd "${SCRIPT_DIR}" 1> /dev/null
-echo -n "Please wait..."
-git submodule update --init --recursive &> /dev/null || true
-echo -e -n "\r                \r"
 src/utils/interactive/interactive.sh "${1}" "${2}"
 popd 1> /dev/null

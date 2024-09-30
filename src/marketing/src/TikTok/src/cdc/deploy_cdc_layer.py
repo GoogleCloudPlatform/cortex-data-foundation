@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 """Generates all necessary assets for CDC layer of TikTok API for Business."""
 
 import argparse
-import datetime
+from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import shutil
@@ -23,11 +24,17 @@ import sys
 from google.cloud.bigquery import Client
 from google.cloud.exceptions import NotFound
 
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
 from common.py_libs.bq_helper import table_exists
+from common.py_libs.bq_helper import create_table_from_schema
 from common.py_libs.dag_generator import generate_file_from_template
+
 from src.cdc.constants import CDC_SQL_SCRIPTS_OUTPUT_DIR
 from src.cdc.constants import CDC_SQL_TEMPLATE_PATH
-from src.cdc.constants import DAG_TEMPLATE_DIR
+from src.cdc.constants import DAG_CONFIG_INI_INPUT_PATH
+from src.cdc.constants import DAG_CONFIG_INI_OUTPUT_PATH
+from src.cdc.constants import DAG_TEMPLATE_PATH
 from src.cdc.constants import OUTPUT_DIR_FOR_CDC
 from src.constants import CDC_DATASET
 from src.constants import CDC_PROJECT
@@ -41,9 +48,6 @@ from src.py_libs.sql_generator import repr_schema
 from src.py_libs.sql_generator import TableNotFoundError
 from src.py_libs.sql_generator import write_generated_sql_to_disk
 from src.py_libs.table_creation_utils import create_bq_schema
-from src.py_libs.table_creation_utils import create_table
-
-DAG_TEMPLATE_PATH = Path(DAG_TEMPLATE_DIR, "raw_to_cdc_dag_py_template.py")
 
 
 def _generate_dag_from_template(template_file: Path,
@@ -57,6 +61,7 @@ def _generate_dag_from_template(template_file: Path,
         template_file (Path): Path of the template file.
         generation_target_directory (Path): Directory where files are generated.
         table_name (str): The table name which is loaded by this dag.
+        subs (dict): DAG template substitutions.
     """
     output_dag_py_file_name = (f"{CDC_PROJECT}_{CDC_DATASET}_"
                                f"raw_to_cdc_{table_name.replace('.', '_')}.py")
@@ -115,8 +120,7 @@ def _parse_args(args):
 
 
 def main(parsed_args):
-    now = datetime.datetime.utcnow()
-    now_date = datetime.datetime(now.year, now.month, now.day)
+    dag_start_date = datetime.now(timezone.utc).date()
 
     debug = parsed_args
 
@@ -138,7 +142,7 @@ def main(parsed_args):
     _create_output_dir_structure()
     _create_sql_output_dir_structure()
 
-    client = Client(project=CDC_PROJECT)
+    client = cortex_bq_client.CortexBQClient(project=CDC_PROJECT)
 
     if not "raw_to_cdc_tables" in SETTINGS:
         logging.warning(
@@ -185,13 +189,11 @@ def main(parsed_args):
         # Check if CDC table exists.
         cdc_table_exists = table_exists(client, full_table_name)
         if not cdc_table_exists:
-            create_table(client=client,
-                         schema=schema,
-                         project=CDC_PROJECT,
-                         dataset=CDC_DATASET,
-                         table_name=table_name,
-                         partition_details=partition_details,
-                         cluster_details=cluster_details)
+            create_table_from_schema(bq_client=client,
+                                     full_table_name=full_table_name,
+                                     schema=schema,
+                                     partition_details=partition_details,
+                                     cluster_details=cluster_details)
             logging.info("Table is created successfully.")
         else:
             logging.warning("❗ Table already exists. Not creating table.")
@@ -206,8 +208,15 @@ def main(parsed_args):
             "table_name": table_name,
             "cdc_dataset": CDC_DATASET,
             "project_id": CDC_PROJECT,
-            "start_date": now_date,
+            "start_date": dag_start_date,
+            "runtime_labels_dict": "" # A place holder for label dict string
         }
+
+        # If telemetry opted in, convert CORTEX JOB LABEL dict to string
+        # And assign to substitution
+        if client.allow_telemetry:
+            subs["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
+
         _generate_dag_from_template(
             template_file=DAG_TEMPLATE_PATH,
             generation_target_directory=OUTPUT_DIR_FOR_CDC,
@@ -251,6 +260,12 @@ def main(parsed_args):
         logging.info("----------------------------")
 
     logging.info("Processed all tables successfully.")
+
+    logging.info("Copying DAG config file...")
+
+    shutil.copyfile(src=DAG_CONFIG_INI_INPUT_PATH,
+                    dst=DAG_CONFIG_INI_OUTPUT_PATH)
+    logging.info("DAG config file copied successfully.")
 
     logging.info("✅ CDC layer deployed successfully!")
 

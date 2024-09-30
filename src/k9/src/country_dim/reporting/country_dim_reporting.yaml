@@ -1,0 +1,3 @@
+bq_independent_objects:
+  - sql_file: src/k9/src/country_dim/reporting/CountryDim.sql
+    type: view

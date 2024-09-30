@@ -21,7 +21,7 @@ WITH
       ConversionDate AS CurrencyConversionDate
     FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion`
     WHERE
-      TargetCurrency IN ({{ currencies }})
+      TargetCurrency IN UNNEST({{ sfdc_currencies }})
   )
 SELECT
   Opportunities.OpportunityId,

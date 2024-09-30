@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import yaml
 from pathlib import Path
 import typing
 
-from google.cloud import bigquery
-
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
 from common.py_libs.bq_helper import execute_sql_file
 from common.py_libs.cdc import create_cdc_table
 from common.py_libs.configs import load_config_file
@@ -137,6 +137,7 @@ def process_table(bq_client, table_setting, project_id, raw_dataset,
 
     today = datetime.datetime.now()
     load_frequency = table_setting["load_frequency"]
+
     py_subs = {
         "project_id": project_id,
         "raw_dataset": raw_dataset,
@@ -145,8 +146,14 @@ def process_table(bq_client, table_setting, project_id, raw_dataset,
         "load_frequency": load_frequency,
         "year": today.year,
         "month": today.month,
-        "day": today.day
+        "day": today.day,
+        "runtime_labels_dict": "", # A place holder for label dict
     }
+
+    # Add bq_labels to py_subs dict if telemetry is allowed
+    # Convert CORTEX_JOB_LABEL dict to str for substitution purposes
+    if bq_client.allow_telemetry:
+        py_subs["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
 
     generate_file_from_template(python_template_file, output_py_file, **py_subs)
 
@@ -253,7 +260,7 @@ def main():
 
     logging.info("Processing tables...")
 
-    bq_client = bigquery.Client()
+    bq_client = cortex_bq_client.CortexBQClient()
 
     table_settings = settings["raw_to_cdc_tables"]
     for table_setting in table_settings:

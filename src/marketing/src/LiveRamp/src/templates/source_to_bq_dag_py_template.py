@@ -19,8 +19,8 @@ import importlib
 import os
 
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.version import version as AIRFLOW_VERSION
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
 
 # Use dynamic import to account for Airflow directory structure limitations.
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -63,62 +63,29 @@ liveramp_base_url = config.get("liveramp",
 liveramp_lookup_api_url = f"{liveramp_base_url}/v1/batch/lookup"
 liveramp_auth_url = f"{liveramp_base_url}/token"
 
-if AIRFLOW_VERSION.startswith("1."):
-    with DAG(dag_id=_IDENTIFIER,
-             description="Extract RampIds from LiveRamp Lookup to BQ",
-             schedule_interval=_SCHEDULE_INTERVAL,
-             start_date=_START_DATE,
-             tags=["liveramp", "cdc"],
-             catchup=False,
-             max_active_runs=1) as dag:
-        # Import here to avoid slow DAG imports in Airflow.
-        from airflow.operators.dummy_operator import DummyOperator
+with DAG(dag_id=_IDENTIFIER,
+         description="Extract RampIds from LiveRamp Lookup to BQ",
+         schedule=_SCHEDULE_INTERVAL,
+         start_date=_START_DATE,
+         tags=["liveramp", "cdc"],
+         catchup=False,
+         max_active_runs=1) as dag:
 
-        start_task = DummyOperator(task_id="start",
-                                   depends_on_past=True,
-                                   wait_for_downstream=True)
+    start_task = EmptyOperator(task_id="start",
+                               depends_on_past=True,
+                               wait_for_downstream=True)
 
-        extract_data = PythonOperator(task_id=_IDENTIFIER,
-                                      python_callable=extract_liveramp_ids,
-                                      op_args=[
-                                          "${project_id}", "${dataset}",
-                                          http_timeout, liveramp_lookup_api_url,
-                                          liveramp_auth_url,
-                                          _LR_BQ_CONNECTION_ID
-                                      ],
-                                      dag=dag,
-                                      retries=execution_retry_count,
-                                      retry_delay=retry_delay_sec)
+    extract_data = PythonOperator(task_id=_IDENTIFIER,
+                                  python_callable=extract_liveramp_ids,
+                                  op_args=[
+                                      "${project_id}", "${dataset}",
+                                      http_timeout, liveramp_lookup_api_url,
+                                      liveramp_auth_url, _LR_BQ_CONNECTION_ID
+                                  ],
+                                  dag=dag,
+                                  retries=execution_retry_count,
+                                  retry_delay=retry_delay_sec)
 
-        stop_task = DummyOperator(task_id="stop")
-
-else:
-    with DAG(dag_id=_IDENTIFIER,
-             description="Extract RampIds from LiveRamp Lookup to BQ",
-             schedule=_SCHEDULE_INTERVAL,
-             start_date=_START_DATE,
-             tags=["liveramp", "cdc"],
-             catchup=False,
-             max_active_runs=1) as dag:
-
-        from airflow.operators.empty import EmptyOperator
-
-        start_task = EmptyOperator(task_id="start",
-                                   depends_on_past=True,
-                                   wait_for_downstream=True)
-
-        extract_data = PythonOperator(task_id=_IDENTIFIER,
-                                      python_callable=extract_liveramp_ids,
-                                      op_args=[
-                                          "${project_id}", "${dataset}",
-                                          http_timeout, liveramp_lookup_api_url,
-                                          liveramp_auth_url,
-                                          _LR_BQ_CONNECTION_ID
-                                      ],
-                                      dag=dag,
-                                      retries=execution_retry_count,
-                                      retry_delay=retry_delay_sec)
-
-        stop_task = EmptyOperator(task_id="stop")
+    stop_task = EmptyOperator(task_id="stop")
 
 start_task >> extract_data >> stop_task  # pylint: disable=pointless-statement

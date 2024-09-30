@@ -18,15 +18,16 @@ import logging
 import typing
 import uuid
 
-from google.cloud.exceptions import (NotFound,
-                                    BadRequest,
-                                    GoogleCloudError,
-                                    ServerError,
-                                    Unauthorized, Forbidden)
-from google.cloud import bigquery, storage
+from google.cloud import storage
+from google.cloud.exceptions import BadRequest
+from google.cloud.exceptions import Forbidden
+from google.cloud.exceptions import GoogleCloudError
+from google.cloud.exceptions import NotFound
+from google.cloud.exceptions import ServerError
+from google.cloud.exceptions import Unauthorized
 
-from py_libs import bq_helper
-
+from common.py_libs import bq_helper
+from common.py_libs import cortex_bq_client
 
 class BucketConstraints:
     """Bucket Validation Constraints"""
@@ -83,7 +84,11 @@ def validate_resources(
         bool: True if all buckets and datasets are valid.
     """
     storage_client = storage.Client()
-    bq_client = bigquery.Client()
+    bq_client = cortex_bq_client.CortexBQClient()
+
+    # Get telemetry allowed from CortexBQClient instance
+    allow_telemetry = bq_client.allow_telemetry
+
     for bucket in buckets:
         checking_on_writing = False
         try:
@@ -114,7 +119,7 @@ def validate_resources(
                 logging.info("✅ Storage bucket `%s` is writable.", bucket.name)
                 try:
                     blob.delete()
-                except Exception:
+                except Exception: #pylint: disable=broad-exception-caught
                     logging.warning("⚠️ Couldn't delete temporary file "
                                 "`gs://%s/%s`. Please delete it manually. ⚠️",
                                 bucket.name, blob.name)
@@ -122,7 +127,7 @@ def validate_resources(
             if isinstance(ex, NotFound):
                 logging.error("🛑 Storage bucket `%s` doesn't exist. 🛑",
                               bucket.name)
-            elif isinstance(ex, Unauthorized) or isinstance(ex, Forbidden):
+            elif isinstance(ex, Unauthorized, Forbidden):
                 if checking_on_writing:
                     logging.error("🛑 Storage bucket `%s` "
                                 "is not writable. 🛑", bucket.name)
@@ -153,6 +158,12 @@ def validate_resources(
         if existence != bq_helper.DatasetExistence.NOT_EXISTS:
             logging.info("✅ Dataset `%s` exists in location `%s`.",
                          dataset.full_name, dataset.location)
+
+            # Label datasets if it exists and telemetry allowed
+            if allow_telemetry:
+                bq_helper.label_dataset(bq_client=bq_client,
+                            dataset=bq_client.get_dataset(dataset.full_name))
+
         if dataset.must_be_writable and (
                 existence == bq_helper.DatasetExistence.EXISTS_IN_LOCATION):
             try:
@@ -177,4 +188,5 @@ def validate_resources(
                 logging.error("🛑 Couldn't write to dataset `%s`. 🛑",
                               dataset.full_name)
                 return False
+
     return True

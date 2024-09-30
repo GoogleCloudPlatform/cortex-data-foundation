@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.CurrencyRateMD"
+description: "Dimension table containing currency conversion rates."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "CONVERSION_DATE"
+    description: "Date that the conversion is calculated from"
+  - name: "FROM_CURRENCY"
+    description: "Source currency type"
+  - name: "TO_CURRENCY"
+    description: "Target currency type"
+  - name: "CONVERSION_TYPE"
+    description: "Currency conversion type"
+  - name: "CONVERSION_RATE"
+    description: "Currency conversion rate"

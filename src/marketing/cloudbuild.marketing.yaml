@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # This cloudbuild file generates all the necessary objects (DAG files, Bigquery
-# tables and views etc) for a Cortex deployment for a Google Ads and CM360.
+# tables and views etc) for a Cortex deployment of Marketing related data sources.
 
 # Input parameters:
 #   _GCS_LOGS_BUCKET : An existing GCS bucket where build logs will be written.
@@ -27,7 +27,13 @@ steps:
       #!/usr/bin/env bash
       set -e
       echo "Initial configuration ${_CONFIG_FILE}:"
-      cat ${_CONFIG_FILE}
+      cat "${_CONFIG_FILE}"
+
+      # Save absolute config file path to .env file
+      # that can be accessed by all Cloud Build steps since exported env
+      # variables do not persist between steps.
+
+      realpath "${_CONFIG_FILE}" > /workspace/config_file_full_path.env
 
       python3 src/common/init_deployment_config.py \
           --config-file ${_CONFIG_FILE} \
@@ -45,9 +51,8 @@ steps:
     script: |
       #!/usr/bin/env bash
       set -e
-      deploy_googleads=$(python read_deploy_parameter.py GoogleAds)
-      if [ ${deploy_googleads} = 'True' ]
-      then
+      deploy_googleads=$(jq -r .marketing.deployGoogleAds ${_CONFIG_FILE})
+      if [[ "${deploy_googleads}" == "true" ]]; then
         src/GoogleAds/deploy.sh
       else
         echo "== Skipping Google Ads =="
@@ -55,6 +60,8 @@ steps:
     env:
       - _CONFIG_FILE=${_CONFIG_FILE}
       - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+      - _WORKER_POOL_NAME=${_WORKER_POOL_NAME}
+      - _CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION}
 
   # CM360 section
 
@@ -64,9 +71,8 @@ steps:
     script: |
       #!/usr/bin/env bash
       set -e
-      deploy_cm360=$(python read_deploy_parameter.py CM360)
-      if [ ${deploy_cm360} = 'True' ]
-      then
+      deploy_cm360=$(jq -r .marketing.deployCM360 ${_CONFIG_FILE})
+      if [[ "${deploy_cm360}" == "true" ]]; then
         src/CM360/deploy.sh
       else
         echo "== Skipping CM360 =="
@@ -74,6 +80,8 @@ steps:
     env:
       - _CONFIG_FILE=${_CONFIG_FILE}
       - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+      - _WORKER_POOL_NAME=${_WORKER_POOL_NAME}
+      - _CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION}
 
   # TikTok section
 
@@ -83,9 +91,8 @@ steps:
     script: |
       #!/usr/bin/env bash
       set -e
-      deploy_tiktok=$(python read_deploy_parameter.py TikTok)
-      if [ ${deploy_tiktok} = 'True' ]
-      then
+      deploy_tiktok=$(jq -r .marketing.deployTikTok ${_CONFIG_FILE})
+      if [[ "${deploy_tiktok}" == "true" ]]; then
         src/TikTok/deploy.sh
       else
         echo "== Skipping TikTok =="
@@ -93,6 +100,8 @@ steps:
     env:
       - _CONFIG_FILE=${_CONFIG_FILE}
       - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+      - _WORKER_POOL_NAME=${_WORKER_POOL_NAME}
+      - _CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION}
 
   # LiveRamp section
 
@@ -102,9 +111,8 @@ steps:
     script: |
       #!/usr/bin/env bash
       set -e
-      deploy_liveramp=$(python read_deploy_parameter.py LiveRamp)
-      if [ ${deploy_liveramp} = 'True' ]
-      then
+      deploy_liveramp=$(jq -r .marketing.deployLiveRamp ${_CONFIG_FILE})
+      if [[ "${deploy_liveramp}" == "true" ]]; then
         src/LiveRamp/deploy.sh
       else
         echo "== Skipping LiveRamp =="
@@ -121,9 +129,8 @@ steps:
     script: |
       #!/usr/bin/env bash
       set -e
-      deploy_meta=$(python read_deploy_parameter.py Meta)
-      if [ ${deploy_meta} = 'True' ]
-      then
+      deploy_meta=$(jq -r .marketing.deployMeta ${_CONFIG_FILE})
+      if [[ "${deploy_meta}" == "true" ]]; then
         src/Meta/deploy.sh
       else
         echo "== Skipping Meta =="
@@ -131,6 +138,8 @@ steps:
     env:
       - _CONFIG_FILE=${_CONFIG_FILE}
       - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+      - _WORKER_POOL_NAME=${_WORKER_POOL_NAME}
+      - _CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION}
 
   # Salesforce Marketing Cloud section
 
@@ -140,12 +149,51 @@ steps:
     script: |
       #!/usr/bin/env bash
       set -e
-      deploy_sfmc=$(python read_deploy_parameter.py SFMC)
-      if [ ${deploy_sfmc} = 'True' ]
-      then
+      deploy_sfmc=$(jq -r .marketing.deploySFMC ${_CONFIG_FILE})
+      if [[ "${deploy_sfmc}" == "true" ]]; then
         src/SFMC/deploy.sh
       else
         echo "== Skipping SFMC =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+      - _WORKER_POOL_NAME=${_WORKER_POOL_NAME}
+      - _CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION}
+
+  # Google Analytics 4 section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: ga4_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_ga4=$(jq -r .marketing.deployGA4 ${_CONFIG_FILE})
+      if [[ ${deploy_ga4} == "true" ]]; then
+        src/GA4/deploy.sh
+      else
+        echo "== Skipping Google Analytics 4 =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+      - _WORKER_POOL_NAME=${_WORKER_POOL_NAME}
+      - _CLOUD_BUILD_REGION=${_CLOUD_BUILD_REGION}
+
+  # DV360 section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: dv360_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_dv360=$(jq -r .marketing.deployDV360 ${_CONFIG_FILE})
+      if [[ ${deploy_dv360} == "true" ]]; then
+        src/DV360/deploy.sh
+      else
+        echo "== Skipping DV360 =="
       fi
     env:
       - _CONFIG_FILE=${_CONFIG_FILE}
@@ -263,9 +311,56 @@ steps:
         echo "==Skipping Data Mesh=="
       fi
 
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "dv360_datamesh"
+    waitFor: ["dv360_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_DV360_=$(jq -r ."marketing.deployDV360" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" && \
+            ${_DEPLOY_DV360_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories src/DV360/config/tag_templates \
+            --policy-directories src/DV360/config/policy_taxonomies \
+            --lake-directories src/DV360/config/lakes \
+            --annotation-directories \
+                src/DV360/config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "ga4_datamesh"
+    waitFor: ["ga4_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_GA4_=$(jq -r ."marketing.deployGA4" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" && \
+            ${_DEPLOY_GA4_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories src/GA4/config/tag_templates \
+            --policy-directories src/GA4/config/policy_taxonomies \
+            --lake-directories src/GA4/config/lakes \
+            --annotation-directories \
+                src/GA4/config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
 logsBucket: gs://${_GCS_LOGS_BUCKET}
+serviceAccount: "${_BUILD_ACCOUNT}"
 substitutions:
   _CONFIG_FILE: config/config.json
 options:
   substitution_option: ALLOW_LOOSE
   automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"

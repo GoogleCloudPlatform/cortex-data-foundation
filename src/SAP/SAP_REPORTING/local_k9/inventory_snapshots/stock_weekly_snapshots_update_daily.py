@@ -12,58 +12,58 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## CORTEX-CUSTOMER: These procedures need to execute for inventory views to work.
-## please check the ERD linked in the README for dependencies. The procedures
-## can be scheduled with Cloud Composer with the provided templates or ported
-## into the scheduling tool of choice. These DAGs will be executed from a different
-## directory structure in future releases.
-## PREVIEW
-
+# CORTEX-CUSTOMER: These procedures need to execute for inventory views to work.
+# please check the ERD linked in the README for dependencies. The procedures
+# can be scheduled with Cloud Composer with the provided templates or ported
+# into the scheduling tool of choice. These DAGs will be executed from a
+# different directory structure in future releases.
+# PREVIEW
 """Cloud Composer DAG to regenerate stock weekly snapshot daily."""
+
+import ast
 
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
+
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
+
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email': ['airflow@example.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    "owner": "airflow",
+    "depends_on_past": False,
+    "email": ["airflow@example.com"],
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
 }
 
-with DAG(
-    'Stock_Weekly_Snapshots_Update_Daily',
-    default_args=default_args,
-    description='Update weekly inventory snapshots with new data everyday',
-    schedule_interval='@daily',
-    start_date=datetime(2023, 2, 13),
-    catchup=False,
-    max_active_runs=1
+with DAG(dag_id="Stock_Weekly_Snapshots_Update_Daily",
+         default_args=default_args,
+         description="Update weekly inventory snapshots with new data everyday",
+         schedule_interval="@daily",
+         start_date=datetime(2023, 2, 13),
+         catchup=False,
+         max_active_runs=1) as dag:
 
-) as dag:
-    start_task = DummyOperator(task_id='start')
-    if AIRFLOW_VERSION.startswith("1."):
-        t1 = BigQueryOperator(
-            task_id='snapshot_creation_daily',
-            sql='stock_weekly_snapshots_update_daily.sql',
-            create_disposition='WRITE_TRUNCATE',
-            bigquery_conn_id='sap_reporting_bq',
-            use_legacy_sql=False
-        )
-    else:
-        t1 = BigQueryOperator(
-            task_id='snapshot_creation_daily',
-            sql='stock_weekly_snapshots_update_daily.sql',
-            create_disposition='WRITE_TRUNCATE',
-            gcp_conn_id='sap_reporting_bq',
-            use_legacy_sql=False
-        )
-    stop_task = DummyOperator(task_id='stop')
-# pylint:disable=pointless-statement
-start_task >> t1 >> stop_task
+    start_task = EmptyOperator(task_id="start")
+
+    t1 = BigQueryInsertJobOperator(
+        task_id="snapshot_creation_daily",
+        gcp_conn_id="sap_reporting_bq",
+        configuration={
+            "query": {
+                "query": "stock_weekly_snapshots_update_daily.sql",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        })
+
+    stop_task = EmptyOperator(task_id="stop")
+
+    # pylint:disable=pointless-statement
+    start_task >> t1 >> stop_task  # type: ignore

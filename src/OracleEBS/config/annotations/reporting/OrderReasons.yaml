@@ -1,0 +1,22 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.OrderReasons"
+description: "Base fact view of order reasons."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Facts"
+fields:
+  - name: "REASON_ID"
+    description: "Primary key identifying the reason record"
+  - name: "REASON_TYPE"
+    description: "Reason type of associated event"
+  - name: "REASON_CODE"
+    description: "Reason code of associated event"
+  - name: "ENTITY_ID"
+    description: "Foreign key identifying the entity associated with the reason"
+  - name: "ENTITY_CODE"
+    description: "Entity type (Header, Line, Sales Credit, Price Adj, etc) to which this reason belongs"
+  - name: "CREATION_TS"
+    description: "Timestamp when the record was created in the source system"
+  - name: "LAST_UPDATE_TS"
+    description: "Timestamp when the record was last updated in the source system"

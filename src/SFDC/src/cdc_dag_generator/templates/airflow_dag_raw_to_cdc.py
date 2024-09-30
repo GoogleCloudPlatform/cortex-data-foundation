@@ -14,7 +14,9 @@
 
 # Disable pylance / pylint as errors
 # type: ignore
+"""Airlow DAG file for SFDC RAW to CDC layer."""
 
+import ast
 from datetime import timedelta
 import logging
 
@@ -25,15 +27,14 @@ except ImportError:
 from pendulum import UTC
 
 from airflow import DAG
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.exceptions import AirflowRescheduleException
 from airflow.models.dagrun import DagRun
 from airflow.models.dagbag import DagBag
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
 from airflow.utils.state import State
 from airflow.utils.db import provide_session
-from airflow.version import version as AIRFLOW_VERSION
 from airflow.utils import timezone
 
 try:
@@ -57,7 +58,11 @@ _CDC_SQL_PATH = "sql_scripts/${base_table}.sql"
 _IDENTIFIER = "SFDC_${project_id}_${cdc_dataset}_raw_to_cdc_${base_table}"
 _RAW_DAG_ID = "SFDC_${project_id}_${raw_dataset}_extract_to_raw_${base_table}"
 
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("${runtime_labels_dict}" or "{}")
 
+# pylint: disable=unused-argument
 @provide_session
 def check_raw_if_deployed(session=None, **kwargs):
     del kwargs
@@ -96,7 +101,6 @@ def check_raw_if_deployed(session=None, **kwargs):
         raise AirflowRescheduleException(now + timedelta(
             minutes=_RAW_WAITING_TIMEOUT_MINUTES))
 
-
 with DAG(dag_id=_IDENTIFIER,
          description=(
              "Merge from Salesforce RAW BQ dataset to CDC BQ dataset for "
@@ -109,18 +113,19 @@ with DAG(dag_id=_IDENTIFIER,
     check_raw = PythonOperator(task_id="check_" + _RAW_DAG_ID,
                                python_callable=check_raw_if_deployed,
                                dag=dag)
-    if AIRFLOW_VERSION.startswith("1."):
-        copy_raw_to_cdc = BigQueryOperator(
-            task_id=_IDENTIFIER,
-            sql=_CDC_SQL_PATH,
-            bigquery_conn_id="sfdc_cdc_bq",
-            use_legacy_sql=False)
-    else:
-        copy_raw_to_cdc = BigQueryOperator(
-            task_id=_IDENTIFIER,
-            sql=_CDC_SQL_PATH,
-            gcp_conn_id="sfdc_cdc_bq",
-            use_legacy_sql=False)
-    stop_task = DummyOperator(task_id="stop")
+
+    copy_raw_to_cdc = BigQueryInsertJobOperator(
+        task_id=_IDENTIFIER,
+        gcp_conn_id="sfdc_cdc_bq",
+        configuration={
+            "query": {
+                "query": _CDC_SQL_PATH,
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        }
+    )
+
+    stop_task = EmptyOperator(task_id="stop")
 
 check_raw >> copy_raw_to_cdc >> stop_task  # pylint: disable=pointless-statement

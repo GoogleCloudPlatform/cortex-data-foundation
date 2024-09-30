@@ -191,16 +191,21 @@ def calculate_query_time_range(latest_load_date: Optional[date],
     30 days of time range in case of daily granularity.
     """
 
-    # Case descriptions. t: today
-    # Case 1: Incremental load. Time range: (latest_load, t-1).
-    start_date = latest_load_date
-    end_date = today - timedelta(days=1)
+    # TikTok stores insights for a maximum amount of days.
+    earliest_available_date = today - timedelta(days=_MAX_AVAILABLE_DAYS)
 
-    # Case 2: First start. Time range: (t-30, t-1).
-    # Case 3: Latest load is older then 30 days. Time range: (t-30, t-1).
-    if not start_date or ((end_date - start_date)
-                          > timedelta(days=_MAX_AVAILABLE_DAYS)):
-        start_date = today - timedelta(days=_MAX_AVAILABLE_DAYS)
+    # For incremental load, load previous 3 days again. But no earlier
+    # than the earliest available date.
+    if latest_load_date:
+        start_date = max(latest_load_date - timedelta(days=3),
+                         earliest_available_date)
+
+    # For initial load (no latest load date), load max available days.
+    else:
+        start_date = earliest_available_date
+
+    # Load up to yesterday as today's data is not yet finalized.
+    end_date = today - timedelta(days=1)
 
     report_time_range = {
         "start_date": start_date.isoformat(),

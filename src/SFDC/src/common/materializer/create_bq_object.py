@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,25 +21,30 @@ input parameters.
 # our customers during deployment errors. Disabling those linting errors.
 #pylint: disable=raise-missing-from
 
+#TODO: Remove these. Only here to pass presubmit for intial changes.
+#pylint: disable=redundant-returns-doc
+#pylint: disable=unused-import
+
 import argparse
 import datetime
 import json
 import logging
+from pathlib import Path
 import string
 import sys
 import textwrap
 import typing
 
-from pathlib import Path
+from google.cloud import bigquery
+from google.cloud.exceptions import BadRequest
+from google.cloud.exceptions import NotFound
 
 from common.py_libs import bq_helper
 from common.py_libs import bq_materializer
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
 from common.py_libs import jinja
 from common.py_libs.dag_generator import generate_file_from_template
-
-from google.cloud.exceptions import BadRequest
-from google.cloud.exceptions import NotFound
-from google.cloud import bigquery
 
 # NOTE: All paths here are relative to the root directory, unless specified
 # otherwise.
@@ -57,7 +62,7 @@ _TEMPLATE_DIR = Path(_THIS_DIR, "templates")
 _GENERATED_DAG_DIR = Path(_CWD, "generated_materializer_dag_files")
 
 
-def _parse_args() -> tuple[str, str, str, str, dict, bool]:
+def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
     """Parses, validates and returns arguments, sets up logging."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -101,6 +106,12 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool]:
         default=False,
         action="store_true",
         help="Flag to set log level to DEBUG. Default is WARNING")
+    parser.add_argument(
+        "--allow_telemetry",
+        default=False,
+        action="store_true",
+        help="Flag to indicate if telemetry is allowed."
+    )
 
     args = parser.parse_args()
 
@@ -113,6 +124,7 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool]:
     target_dataset = args.target_dataset
     bq_object_setting_str = args.bq_object_setting
     load_test_data = args.load_test_data
+    allow_telemetry = args.allow_telemetry
 
     logging.info("Arguments:")
     logging.info("  module_name = %s", module_name)
@@ -122,6 +134,7 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool]:
     logging.info("  bq_object_setting_str = %s", bq_object_setting_str)
     logging.info("  load_test_data = %s", load_test_data)
     logging.info("  debug = %s", enable_debug)
+    logging.info("  allow_telemetry = %s", allow_telemetry)
 
     if not Path(jinja_data_file).is_file():
         raise ValueError(
@@ -133,12 +146,13 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool]:
         raise ValueError(f"🛑 Failed to read table settings. Error = {e}.")
 
     return (module_name, jinja_data_file, target_dataset_type, target_dataset,
-            bq_object_setting, load_test_data)
+            bq_object_setting, load_test_data, allow_telemetry)
 
 
 def _generate_dag_files(module_name: str, target_dataset_type: str,
                         target_dataset: str, table_name: str,
-                        table_setting: dict, table_refresh_sql: str) -> None:
+                        table_setting: dict, table_refresh_sql: str,
+                        allow_telemetry: bool) -> None:
     """Generates necessary DAG files to refresh a given table.
 
     There are two files to be generated:
@@ -174,12 +188,10 @@ def _generate_dag_files(module_name: str, target_dataset_type: str,
         table_name: Table name to refresh. (e.g. "CustomerMD")
         table_setting: Table Settings as defined in the settings file.
         table_refresh_sql: SQL with logic to populate data in the table.
-
-    Returns:
-        None
+        allow_telemetry: Bool from Cortex config file to specify if
+            telemetry is allowed.
 
     """
-
     dag_name = "_".join(
         [target_dataset.replace(".", "_"), "refresh", table_name])
     dag_full_name = "_".join(
@@ -214,8 +226,18 @@ def _generate_dag_files(module_name: str, target_dataset_type: str,
         "load_frequency": load_frequency,
         "year": today.year,
         "month": today.month,
-        "day": today.day
+        "day": today.day,
+        "runtime_labels_dict": "", # A place holder for label dict string
     }
+
+    # Add bq_labels to py_subs dict if telemetry allowed
+    # Converts CORTEX_JOB_LABEL to str for substitution purposes
+    if allow_telemetry:
+        py_subs["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
+
+
+    if target_dataset_type == "reporting":
+        py_subs["tags"] = [module_name.lower(), "reporting"]
 
     generate_file_from_template(python_dag_template_file, output_py_file,
                                 **py_subs)
@@ -261,12 +283,12 @@ def _create_table(bq_client: bigquery.Client, full_table_name: str,
                       " AS (\n   SELECT * FROM (\n" +
                       textwrap.indent(sql_str, "        ") + "\n)\n" +
                       "    WHERE FALSE\n)")
-    logging.info("temporary table sql = '%s'", temp_table_sql)
+    logging.debug("temporary table sql = '%s'", temp_table_sql)
     create_temp_table_job = bq_client.query(temp_table_sql)
     _ = create_temp_table_job.result()
     logging.info("Temporary table created.")
     table_schema = bq_client.get_table(temp_table_name).schema
-    logging.info("Table schema = \n'%s'", table_schema)
+    logging.debug("Table schema = \n'%s'", table_schema)
 
     # Create final actual table.
     # -------------------------
@@ -365,17 +387,17 @@ def main():
 
     # Parse and validate arguments.
     (module_name, jinja_data_file, target_dataset_type, target_dataset,
-     bq_object_setting, load_test_data) = _parse_args()
+     bq_object_setting, load_test_data, allow_telemetry) = _parse_args()
 
     sql_file = bq_object_setting["sql_file"]
     if not Path(sql_file).is_file():
         raise ValueError(f"🛑 sql_file '{sql_file}' does not exist.")
 
-    bq_client = bigquery.Client()
+    bq_client = cortex_bq_client.CortexBQClient()
 
     # Render core sql text from sql file after applying Jinja parameters.
     rendered_sql = jinja.apply_jinja_params_to_file(sql_file, jinja_data_file)
-    logging.info("Rendered SQL: %s", rendered_sql)
+    logging.debug("Rendered SQL: %s", rendered_sql)
     # Validate core sql.
     _validate_sql(bq_client, rendered_sql)
 
@@ -442,7 +464,7 @@ def main():
                 bq_client, object_name_full, rendered_sql)
             _generate_dag_files(module_name, target_dataset_type,
                                 target_dataset, object_name, table_setting,
-                                table_refresh_sql)
+                                table_refresh_sql, allow_telemetry)
 
             # If we create table, we also need to populate it with test data
             # if flag is set for that.

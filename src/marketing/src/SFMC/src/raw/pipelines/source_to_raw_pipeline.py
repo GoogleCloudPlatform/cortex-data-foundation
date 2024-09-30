@@ -17,7 +17,6 @@ This Beam pipeline loads data for Cortex Marketing workload from GCS bucket.
 The result is loaded to the target BigQuery table.
 """
 
-import argparse
 from datetime import datetime
 from datetime import timezone
 import logging
@@ -37,7 +36,7 @@ from helpers.pipeline_utils import transform_source_data
 _EPOCH_BEGINNING_TIMESTAMP: float = 0.0
 
 
-class RawLayerOptions(PipelineOptions):
+class SFMCRawLayerOptions(PipelineOptions):
     """Pipeline argument parser."""
 
     @classmethod
@@ -62,15 +61,21 @@ class RawLayerOptions(PipelineOptions):
                             required=True,
                             type=str,
                             help="Target BQ table name.")
+        parser.add_argument("--pipeline_logging_level",
+                            required=True,
+                            type=str,
+                            help="Logging level of pipeline.")
 
 
-def run_pipeline(args=None):
-    _ = argparse.ArgumentParser()
-    pipeline_options = PipelineOptions(args)
-    args = pipeline_options.view_as(RawLayerOptions)
+def run_pipeline():
+    args = PipelineOptions().view_as(SFMCRawLayerOptions)
 
-    logging.info("Pipeline started...")
-    logging.info("Args: %s", args)
+    logger = logging.getLogger(__name__)
+    level = getattr(logging, args.pipeline_logging_level)
+    logger.setLevel(level)
+
+    logger.info("Pipeline started...")
+    logger.info("Args: %s", args)
 
     # Gathering arguments.
     target_project = args.tgt_project
@@ -94,7 +99,7 @@ def run_pipeline(args=None):
     # yapf: disable
     # pylint: disable = no-value-for-parameter, unsupported-binary-operation
     # Beam pipeline.
-    with beam.Pipeline(options=pipeline_options) as pipeline:
+    with beam.Pipeline(options=args) as pipeline:
         raw_files = (
             pipeline
             | fileio.MatchFiles(args.input_file_path_pattern)

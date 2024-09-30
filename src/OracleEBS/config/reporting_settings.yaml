@@ -1,0 +1,212 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This settings file drives how the BQ objects (tables/views/functions) for
+# Reporting datasets are created.
+#
+# There are two sections:
+#
+#  1. "bq_independent_objects":
+#     All BiqQuery objects that can be created independently, without any
+#     other dependencies.
+#     NOTE: When "turbo_mode" is enabled, these BQ objects are created in
+#           parallel.
+#
+#  2. "bq_dependent_objects":
+#      All BiqQuery objects that need to be created in a specific order due to
+#      dependencies.
+#      NOTE: "turbo_mode" does not apply to this section - i.e. each object
+#             will be created one after another.
+#
+#  At least one of the two sections need to be present.
+
+bq_independent_objects:
+  # Oracle Reporting Layer Helper Functions.
+  - sql_file: src/reporting/ddls/udfs.sql
+    type: script
+  # EBS Base Fact Views.
+  - sql_file: src/reporting/ddls/AppliedReceivables.sql
+    type: view
+  - sql_file: src/reporting/ddls/CashReceiptHistories.sql
+    type: view
+  - sql_file: src/reporting/ddls/CashReceipts.sql
+    type: view
+  - sql_file: src/reporting/ddls/Deliveries.sql
+    type: view
+  - sql_file: src/reporting/ddls/DeliveryAssignments.sql
+    type: view
+  - sql_file: src/reporting/ddls/DeliveryDetails.sql
+    type: view
+  - sql_file: src/reporting/ddls/InvoiceHeaders.sql
+    type: view
+  - sql_file: src/reporting/ddls/InvoiceLineLedger.sql
+    type: view
+  - sql_file: src/reporting/ddls/InvoiceLines.sql
+    type: view
+  - sql_file: src/reporting/ddls/OrderHeaders.sql
+    type: view
+  - sql_file: src/reporting/ddls/OrderHolds.sql
+    type: view
+  - sql_file: src/reporting/ddls/OrderLines.sql
+    type: view
+  - sql_file: src/reporting/ddls/OrderReasons.sql
+    type: view
+  - sql_file: src/reporting/ddls/Payments.sql
+    type: view
+  # EBS Dimensional Tables.
+  # TODO: default clustering.
+  - sql_file: src/reporting/ddls/BusinessUnitMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/CurrencyRateMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/CustomerSiteUseMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/FiscalDateMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/InvoiceTypeMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/ItemMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/LedgerMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/LookupValueMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/OrderSourceMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/OrganizationMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/reporting/ddls/SalesRepMD.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+    # CORTEX-CUSTOMER:
+    # Optionally add clustering config with following structure.
+    # cluster_details: {
+    #   columns: []
+    # }
+
+bq_dependent_objects:
+  # EBS Reporting Layer Header Tables.
+  - sql_file: src/reporting/ddls/SalesOrders.sql
+    type: table
+    table_setting:
+      load_frequency: "0 1 * * *"
+      partition_details: {
+        column: "ORDERED_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+      # CORTEX-CUSTOMER:
+      # Optionally add clustering config with following structure.
+      # cluster_details: {
+      #   columns: []
+      # }
+  # Depends on SalesOrders.
+  - sql_file: src/reporting/ddls/SalesDeliveryDetails.sql
+    type: table
+    table_setting:
+      load_frequency: "0 2 * * *"
+      partition_details: {
+        column: "DELIVERED_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+  # Depends on SalesOrders.
+  - sql_file: src/reporting/ddls/SalesInvoices.sql
+    type: table
+    table_setting:
+      load_frequency: "0 2 * * *"
+      partition_details: {
+        column: "INVOICE_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+  # Depends on SalesInvoices
+  - sql_file: src/reporting/ddls/SalesAppliedReceivables.sql
+    type: table
+    table_setting:
+      load_frequency: "0 3 * * *"
+      partition_details: {
+        column: "EVENT_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+  # Depends on SalesInvoices
+  - sql_file: src/reporting/ddls/SalesPayments.sql
+    type: table
+    table_setting:
+      load_frequency: "0 3 * * *"
+      partition_details: {
+        column: "TRANSACTION_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+
+  # EBS Reporting Layer Aggregate Tables.
+  - sql_file: src/reporting/ddls/SalesOrdersDailyAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "0 4 * * *"
+      partition_details: {
+        column: "ORDERED_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+  - sql_file: src/reporting/ddls/SalesAppliedReceivablesDailyAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "0 4 * * *"
+      partition_details: {
+        column: "EVENT_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+  - sql_file: src/reporting/ddls/SalesInvoicesDailyAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "0 4 * * *"
+      partition_details: {
+        column: "INVOICE_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }
+  - sql_file: src/reporting/ddls/SalesPaymentsDailyAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "0 4 * * *"
+      partition_details: {
+        column: "TRANSACTION_DATE",
+        partition_type: "time",
+        time_grain: "day"
+      }

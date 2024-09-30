@@ -2,8 +2,8 @@
 project: "{{ project_id_src }}"
 lakes:
   - display_name: "sap"
-    ## CORTEX-CUSTOMER: Update to specific region if deployment is multiregion.
-    region: "{{ location }}"
+    ## CORTEX-CUSTOMER: Update with specific region, even if deployment is multiregion.
+    region: ""
     description: "Cortex SAP datasets"
     labels:
       - name: "sql_flavor"

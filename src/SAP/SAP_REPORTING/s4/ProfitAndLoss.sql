@@ -7,7 +7,7 @@ WITH
       LanguageKey_SPRAS
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Languages_T002`
-    WHERE LanguageKey_SPRAS {{ language }}
+    WHERE LanguageKey_SPRAS IN UNNEST({{ sap_languages }})
   ),
 
   CurrencyConversion AS (
@@ -38,7 +38,7 @@ WITH
         AND Companies.CurrencyCode_WAERS = Currency.FromCurrency_FCURR
     WHERE
       Currency.Client_MANDT = '{{ mandt }}'
-      AND Currency.ToCurrency_TCURR {{ currency }}
+      AND Currency.ToCurrency_TCURR IN UNNEST({{ sap_currencies }})
       --## CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
       AND Currency.ExchangeRateType_KURST = 'M'
     GROUP BY
@@ -132,7 +132,7 @@ SELECT
       ORDER BY
         FSV.FiscalYear ASC, FSV.FiscalPeriod ASC
       ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-  ) AS CumulativeAmountInTargetCurrency,--noqa: enable=all
+    ) AS CumulativeAmountInTargetCurrency,--noqa: enable=all
   CurrencyConversion.ToCurrency_TCURR AS TargetCurrency_TCURR
 
 FROM
@@ -160,7 +160,8 @@ FROM
       CurrencyKey
     FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FinancialStatement`
     -- PLAccountIndicator in ('P', 'N') represents GLAccount for Profit & Loss
-    WHERE PLAccountIndicator IN ('P', 'N')) AS FSV
+    WHERE PLAccountIndicator IN ('P', 'N')
+  ) AS FSV
 
 LEFT JOIN ParentId
   ON

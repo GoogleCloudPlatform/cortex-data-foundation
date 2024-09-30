@@ -15,17 +15,10 @@
 
 import copy
 import csv
-import logging
 from pathlib import Path
 from typing import List
 
-from common.py_libs.bq_materializer import add_cluster_to_table_def
-from common.py_libs.bq_materializer import add_partition_to_table_def
-from google.cloud.bigquery import Client
-from google.cloud.bigquery import DatasetReference
 from google.cloud.bigquery import SchemaField
-from google.cloud.bigquery import Table
-from google.cloud.bigquery import TableReference
 
 
 def _create_bq_schema_from_mapping(mapping_file: Path, target_field: str,
@@ -98,32 +91,3 @@ def repr_schema(schema: List[SchemaField]):
 class TableNotFoundError(KeyError):
     """Error in case of the table was not found in the actual dataset."""
     pass
-
-
-# TODO: Add create_table() to common.
-def create_table(client: Client, schema: list[SchemaField], project: str,
-                 dataset: str, table_name: str, partition_details: dict,
-                 cluster_details: dict):
-    """Creates a table in BigQuery. Skips creation if it exists.
-
-    Args:
-        client: BQ client.
-        schema: BQ schema.
-        project: BQ project id.
-        dataset: Destination dataset.
-        table_name: Destination table name.
-    """
-
-    logging.info("Creating table %s.%s.%s", project, dataset, table_name)
-
-    if "recordstamp" not in {field.name for field in schema}:
-        schema.append(SchemaField(name="recordstamp", field_type="TIMESTAMP"))
-
-    table_ref = TableReference(DatasetReference(project, dataset), table_name)
-    table = Table(table_ref, schema=schema)
-    if partition_details:
-        table = add_partition_to_table_def(table, partition_details)
-
-    if cluster_details:
-        table = add_cluster_to_table_def(table, cluster_details)
-    client.create_table(table)

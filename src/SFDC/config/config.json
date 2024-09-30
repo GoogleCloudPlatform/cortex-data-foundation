@@ -7,13 +7,6 @@
     "projectIdTarget": "",
     "targetBucket": "",
     "location": "US",
-    "languages": [
-        "E",
-        "S"
-    ],
-    "currencies": [
-        "USD"
-    ],
     "k9": {
         "datasets": {
             "processing": "K9_PROCESSING"
@@ -29,6 +22,9 @@
         "deployCDC": true,
         "createMappingViews": true,
         "createPlaceholders": true,
+        "currencies": [
+            "USD"
+        ],
         "datasets": {
             "cdc": "",
             "raw": "",

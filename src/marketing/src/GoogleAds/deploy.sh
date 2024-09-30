@@ -44,7 +44,7 @@ then
     if [ ! -z "$(shopt -s nullglob dotglob; echo _generated_dags/*)" ]
     then
         echo "Copying GoogleAds artifacts to gs://${_TGT_BUCKET}/dags/googleads..."
-        gsutil -m cp -r _generated_dags/* gs://${_TGT_BUCKET}/dags/googleads/
+        gcloud storage cp -r _generated_dags/* gs://${_TGT_BUCKET}/dags/googleads/
         echo "✅ GoogleAds artifacts have been copied."
     else
         echo "❗ No file generated. Nothing to copy."
@@ -56,12 +56,24 @@ fi
 # Deploy reporting layer
 echo "Deploying GoogleAds Reporting layer..."
 cd ../../
+declare -a _WORKER_POOL_OPTIONS
+
+if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+_WORKER_POOL_OPTIONS+=(--worker_pool_name "${_WORKER_POOL_NAME}")
+fi
+
+if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+_WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+fi
+
 src/common/materializer/deploy.sh \
     --gcs_logs_bucket ${_GCS_LOGS_BUCKET} \
     --gcs_tgt_bucket ${_TGT_BUCKET} \
     --module_name GoogleAds \
     --config_file ${_CONFIG_FILE} \
     --target_type "Reporting" \
-    --materializer_settings_file src/GoogleAds/config/reporting_settings.yaml
+    --materializer_settings_file src/GoogleAds/config/reporting_settings.yaml \
+    "${_WORKER_POOL_OPTIONS[@]}"
+
 echo "✅ GoogleAds Reporting layer deployed successfully."
 echo "==================================================="

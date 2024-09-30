@@ -24,8 +24,7 @@ import sys
 import typing
 import yaml
 
-from google.cloud import bigquery
-
+from common.py_libs import cortex_bq_client
 from common.py_libs.bq_helper import execute_sql_file, table_exists
 from common.py_libs.configs import load_config_file
 from common.py_libs.dag_generator import generate_file_from_template
@@ -184,7 +183,7 @@ def main():
         sys.exit()
     table_settings = settings["raw_to_cdc_tables"]
 
-    bq_client = bigquery.Client()
+    bq_client = cortex_bq_client.CortexBQClient()
 
     logging.info("Processing tables...")
 

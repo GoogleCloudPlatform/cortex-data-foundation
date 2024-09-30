@@ -1,4 +1,4 @@
-#-- Copyright 2023 Google LLC
+#-- Copyright 2024 Google LLC
 #--
 #-- Licensed under the Apache License, Version 2.0 (the "License");
 #-- you may not use this file except in compliance with the License.
@@ -23,7 +23,13 @@ steps:
       #!/usr/bin/env bash
       set -e
       echo "Initial configuration ${_CONFIG_FILE}:"
-      cat ${_CONFIG_FILE}
+      cat "${_CONFIG_FILE}"
+
+      # Save absolute config file path to .env file
+      # that can be accessed by all Cloud Build steps since exported env
+      # variables do not persist between steps.
+
+      realpath "${_CONFIG_FILE}" > /workspace/config_file_full_path.env
 
       python3 src/common/init_deployment_config.py \
           --config-file ${_CONFIG_FILE} \
@@ -108,13 +114,25 @@ steps:
           echo "Creating placeholder CDC tables / views in case they do not exist."
           set -e
           export PYTHONPATH=${PYTHONPATH}:./src
+          declare -a _WORKER_POOL_OPTIONS
+
+          if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+            _WORKER_POOL_OPTIONS+=(--worker_pool_name "${_WORKER_POOL_NAME}")
+          fi
+
+          if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+            _WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+          fi
+
           src/common/materializer/deploy.sh \
-              --gcs_logs_bucket ${_GCS_BUCKET} \
-              --gcs_tgt_bucket ${_TGT_BUCKET_} \
+              --gcs_logs_bucket "${_GCS_BUCKET}" \
+              --gcs_tgt_bucket "${_TGT_BUCKET_}" \
               --module_name "SFDC" \
               --target_type "CDC" \
-              --config_file ${_CONFIG_FILE} \
-              --materializer_settings_file config/cdc_placeholder_settings.yaml
+              --config_file "${_CONFIG_FILE}" \
+              --materializer_settings_file config/cdc_placeholder_settings.yaml \
+              "${_WORKER_POOL_OPTIONS[@]}"
+
           echo "✅ Placeholder CDC tables / views have been created."
         else
           echo "🔪🔪🔪Deploy CDC flag is false, or CreatePlaceholders flag is false. Skipping placeholder table / view generation.🔪🔪🔪"
@@ -137,13 +155,25 @@ steps:
         _TGT_BUCKET_=$(jq -r ."targetBucket" ${_CONFIG_FILE})
       fi
 
+      declare -a _WORKER_POOL_OPTIONS
+
+      if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--worker_pool_name "${_WORKER_POOL_NAME}")
+      fi
+
+      if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+      fi
+
       src/common/materializer/deploy.sh \
-          --gcs_logs_bucket ${_GCS_BUCKET} \
-          --gcs_tgt_bucket ${_TGT_BUCKET_} \
+          --gcs_logs_bucket "${_GCS_BUCKET}" \
+          --gcs_tgt_bucket "${_TGT_BUCKET_}" \
           --module_name "k9" \
           --target_type "processing" \
           --config_file ${_CONFIG_FILE} \
-          --materializer_settings_file config/k9_placeholder_settings.yaml
+          --materializer_settings_file config/k9_placeholder_settings.yaml \
+          "${_WORKER_POOL_OPTIONS[@]}"
+
       echo "✅ Placeholder K9 Processing tables have been created if they did not exist."
 
   # Generate SFDC Reporting bigquery views / tables via Materializer.
@@ -160,13 +190,24 @@ steps:
 
       set -e
       export PYTHONPATH=${PYTHONPATH}:./src
+      declare -a _WORKER_POOL_OPTIONS
+
+      if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--worker_pool_name "${_WORKER_POOL_NAME}")
+      fi
+
+      if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+      fi
+
       src/common/materializer/deploy.sh \
           --gcs_logs_bucket ${_GCS_BUCKET} \
           --gcs_tgt_bucket ${_TGT_BUCKET_} \
           --module_name "SFDC" \
           --target_type "Reporting" \
           --config_file ${_CONFIG_FILE} \
-          --materializer_settings_file config/reporting_settings.yaml
+          --materializer_settings_file config/reporting_settings.yaml \
+          "${_WORKER_POOL_OPTIONS[@]}"
 
   # Deploy Datamesh
   - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
@@ -189,9 +230,12 @@ steps:
       fi
 
 logsBucket: "gs://${_GCS_BUCKET}"
+serviceAccount: "${_BUILD_ACCOUNT}"
 timeout: 10200s
 substitutions:
   _CONFIG_FILE: "config/config.json"
 options:
   substitution_option: "ALLOW_LOOSE"
   automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"

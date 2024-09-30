@@ -1,0 +1,7 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FSVHrFlattening"
+description: "This procedure creates / updates the flattened financial statement version hierarchy (fsv_flattened) table."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Finance"

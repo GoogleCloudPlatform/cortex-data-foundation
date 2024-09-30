@@ -28,6 +28,7 @@ from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 
 from common.py_libs import configs
+from common.py_libs import cortex_bq_client
 
 import dag_hierarchies_module
 import generate_query
@@ -72,7 +73,7 @@ logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-bq_client = bigquery.Client()
+bq_client = cortex_bq_client.CortexBQClient()
 
 config = configs.load_config_file(sys.argv[1])
 

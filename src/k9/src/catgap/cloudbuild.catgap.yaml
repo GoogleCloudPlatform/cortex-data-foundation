@@ -1,4 +1,4 @@
-#-- Copyright 2023 Google LLC
+#-- Copyright 2024 Google LLC
 #--
 #-- Licensed under the Apache License, Version 2.0 (the "License");
 #-- you may not use this file except in compliance with the License.
@@ -27,18 +27,28 @@ steps:
       #!/bin/bash
       set -e
       echo "Deploying CATGAP."
+
+      echo "Installing dependencies..."
       export PYTHONPATH=${PYTHONPATH}:./
       python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./requirements.txt" 1>/dev/null
       python3 -m pip install --use-pep517 --require-hashes --no-deps -r "./catgap_pipeline/requirements.txt" 1>/dev/null
+
+      echo "Generating CATGAP DAGs..."
       python3 ./catgap_dag_generator.py --beam-sdk-version "2.53.0"
+
+      echo "Running DeployTemplate action"
       bash generated_dag/run_pipeline.sh DeployTemplate
       echo "CATGAP pipeline template has been deployed."
+
       # Copy generated DAG python to the Target GCS bucket
       echo "Copying DAG files to gs://${_TGT_BUCKET}/dags."
       gsutil -m cp './generated_dag/catgap_dag.py' gs://${_TGT_BUCKET}/dags/CATGAP/
       echo "✅ DAG files have been copied."
 
 logsBucket: "gs://${_GCS_BUCKET}"
+serviceAccount: "${_BUILD_ACCOUNT}"
 options:
   substitution_option: "ALLOW_LOOSE"
   automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"

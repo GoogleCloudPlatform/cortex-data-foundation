@@ -13,16 +13,17 @@
 # limitations under the License.
 """This DAG starts a Beam pipeline for processing Ads RAW layer ingestion."""
 
+import configparser
 from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
 
 from airflow.models import DAG
+from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
-from airflow.version import version as AIRFLOW_VERSION
 
-_API_VERSION = "v15"
+_API_VERSION = "v17"
 _TABLE_NAME = "${table_name}"
 _DATASET_ID = "${raw_dataset}"
 _PROJECT_ID = "${project_id}"
@@ -31,6 +32,24 @@ _THIS_DIR = Path(__file__).resolve().parent
 
 _IDENTIFIER = f"googleads_{_PROJECT_ID}_{_DATASET_ID}_extract_to_raw_{_TABLE_NAME}"
 _START_DATE = datetime.fromisoformat("${start_date}")
+
+# Read settings from ini file.
+config = configparser.ConfigParser()
+config.read(Path(_THIS_DIR, "pipelines/config.ini"), encoding="utf-8")
+
+retry_delay_sec = config.getint("googleads", "retry_delay_sec", fallback=60)
+max_retry_delay_sec = config.getint("googleads",
+                                    "max_retry_delay_sec",
+                                    fallback=3600)
+execution_retry_count = config.getint("googleads",
+                                      "execution_retry_count",
+                                      fallback=3)
+lookback_days = config.getint("googleads",
+                              "lookback_days",
+                              fallback=180)
+pipeline_logging_level = config.get("googleads",
+                                    "pipeline_logging_level",
+                                    fallback="INFO")
 
 _DAG_OPTIONS = {
     "dag_id": _IDENTIFIER,
@@ -55,18 +74,22 @@ beam_pipeline_params = {
     "tgt_dataset": _DATASET_ID,
     "tgt_table": _TABLE_NAME,
     "mapping_file": str(Path(_THIS_DIR, "${schemas_dir}", "${schema_file}")),
-    "lookback_days": "${lookback_days}",
+    "lookback_days": lookback_days,
     "resource_type": "${resource_type}",
     "setup_file": str(Path(_THIS_DIR, "${pipeline_setup}")),
     "tempLocation": "${pipeline_temp_location}",
-    "stagingLocation": "${pipeline_staging_location}"
+    "stagingLocation": "${pipeline_staging_location}",
+    "retry_delay": timedelta(seconds=retry_delay_sec),
+    "max_retry_delay": timedelta(seconds=max_retry_delay_sec),
+    "retries": execution_retry_count,
+    "pipeline_logging_level": pipeline_logging_level
 }
 
 _DATAFLOW_CONFIG = {
-    "project_id":"${project_id}",
-    "location":"${project_region}",
+    "project_id": "${project_id}",
+    "location": "${project_region}",
     "gcp_conn_id": _GCP_CONN_ID,
-    "wait_until_finished" : True,
+    "wait_until_finished": True,
     "job_name": _IDENTIFIER.lower()
 }
 
@@ -79,27 +102,16 @@ _BEAM_OPERATOR_CONFIG = {
     "dataflow_config": DataflowConfiguration(**_DATAFLOW_CONFIG),
     "py_requirements": [
         "apache-beam[gcp]==2.53.0", "google-cloud-secret-manager==2.16.3",
-        "google-ads==23.0.0"
+        "google-ads==25.0.0"
     ],
     "gcp_conn_id": _GCP_CONN_ID,
     "retry_exponential_backoff": True
 }
 
-if AIRFLOW_VERSION.startswith("1."):
-    with DAG(**_DAG_OPTIONS, schedule_interval="${load_frequency}") as dag:
+with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:
 
-        from airflow.operators.dummy_operator import DummyOperator
-
-        start_task = DummyOperator(**_START_TASK_OPTIONS)
-        extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
-        stop_task = DummyOperator(task_id="stop")
-else:
-    with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:
-
-        from airflow.operators.empty import EmptyOperator
-
-        start_task = EmptyOperator(**_START_TASK_OPTIONS)
-        extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
-        stop_task = EmptyOperator(task_id="stop")
+    start_task = EmptyOperator(**_START_TASK_OPTIONS)
+    extract_data = BeamRunPythonPipelineOperator(**_BEAM_OPERATOR_CONFIG)
+    stop_task = EmptyOperator(task_id="stop")
 
 start_task >> extract_data >> stop_task  # pylint: disable=pointless-statement

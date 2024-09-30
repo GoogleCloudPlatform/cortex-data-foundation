@@ -31,7 +31,7 @@ echo "========================================"
 if [ ! -z "$(shopt -s nullglob dotglob; echo src/LiveRamp/_generated_dags/*)" ]
 then
     echo "Copying LiveRamp artifacts to gs://${_TGT_BUCKET}/dags/liveramp."
-    gsutil -m cp -r src/LiveRamp/_generated_dags/* gs://${_TGT_BUCKET}/dags/liveramp/
+    gcloud storage cp -r src/LiveRamp/_generated_dags/* gs://${_TGT_BUCKET}/dags/liveramp/
     echo "✅ LiveRamp artifacts have been copied."
 else
     echo "❗ No file generated. Nothing to copy."

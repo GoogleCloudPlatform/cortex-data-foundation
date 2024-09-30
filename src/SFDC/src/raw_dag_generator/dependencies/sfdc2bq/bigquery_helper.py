@@ -328,11 +328,11 @@ class BigQueryHelper:
 
             self._ingestion_started = False
         except TimeoutError:
-            logging.fatal("⛔️ Operation failed with timeout error: %s\n",
+            logging.critical("⛔️ Operation failed with timeout error: %s\n",
                           exc_info=True)
             raise
         except GoogleCloudError:
-            logging.fatal("⛔️ Google Cloud Operation failed: %s\n",
+            logging.critical("⛔️ Google Cloud Operation failed: %s\n",
                           exc_info=True)
             raise
 

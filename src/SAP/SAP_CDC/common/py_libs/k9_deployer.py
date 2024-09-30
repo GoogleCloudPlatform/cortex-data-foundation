@@ -13,7 +13,6 @@
 # limitations under the License.
 """Helper library for K9 deployment functions."""
 
-from jinja2 import Environment, FileSystemLoader
 import json
 import logging
 from pathlib import Path
@@ -23,9 +22,18 @@ import typing
 import yaml
 
 from google.cloud import bigquery
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
 
-from common.py_libs import configs, jinja, bq_helper, test_harness
-from common.py_libs.test_harness import TEST_HARNESS_VERSION
+from common.py_libs import bq_helper
+from common.py_libs import configs
+from common.py_libs import constants
+from common.py_libs import cortex_bq_client
+from common.py_libs import jinja
+from common.py_libs import test_harness
+
+#TODO: Remove these. Only here to pass presubmit for intial changes.
+#pylint: disable=unused-variable
 
 def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
                               target_bucket: str, bq_client: bigquery.Client,
@@ -136,7 +144,10 @@ def deploy_k9(k9_manifest: dict,
               logs_bucket: str,
               data_source: str = "k9",
               dataset_type: str = "processing",
-              extra_settings: dict = None) -> None:
+              extra_settings: dict = None,
+              worker_pool_name: str = None,
+              region: str = None,
+              build_account: str = None) -> None:
     """Deploy a single K9 given manifest, settings, and parameters.
 
     Args:
@@ -149,9 +160,11 @@ def deploy_k9(k9_manifest: dict,
         dataset_type (str): Dataset type. Case sensitive.
                             Example: "cdc", "reporting", "processing".
         extra_settings (dict, optional): Ext settings that may apply to the k9.
-
-    Returns:
-        None.
+        worker_pool_name (str, optional): Name of Cloud Build private worker
+                                          pool to use.
+        region (str, optional): Cloud Build region to use in deployment.
+        build_account (str, optional): Service account to execute
+                                       Cloud Build deployment as.
     """
 
     config = configs.load_config_file(config_file)
@@ -162,8 +175,11 @@ def deploy_k9(k9_manifest: dict,
     location = config["location"].lower()
     target_bucket = config["targetBucket"]
     test_harness_version = config.get("testHarnessVersion",
-                                      TEST_HARNESS_VERSION)
-    bq_client = bigquery.Client(source_project, location=location)
+                                      constants.TEST_HARNESS_VERSION)
+    allow_telemetry = config.get("allowTelemetry", True)
+
+    bq_client = cortex_bq_client.CortexBQClient(source_project,
+                                                location=location)
 
     k9_id = k9_manifest["id"]
     logging.info("🐕 Deploying k9 %s 🐕", k9_id)
@@ -206,8 +222,21 @@ def deploy_k9(k9_manifest: dict,
         # Call a custom entry point.
         entry_point = k9_path.joinpath(k9_manifest["entry_point"])
         ext = entry_point.suffix.lower()
-        exec_params = [str(entry_point), str(config_file),
-                                  logs_bucket]
+        exec_params = [str(entry_point),
+                       str(config_file),
+                       logs_bucket]
+        if "build_params" in k9_manifest:
+            exec_params = [str(entry_point),
+                           "--config-file",
+                           str(config_file),
+                           "--gcs-logs-bucket",
+                           logs_bucket]
+            if region:
+                exec_params.extend(["--region", region])
+            if worker_pool_name:
+                exec_params.extend(["--worker-pool-name", worker_pool_name])
+            if build_account:
+                exec_params.extend(["--build-account", build_account])
         # Add JSON-based extra settings to command line if they exist.
         if extra_settings:
             exec_params.append(json.dumps(extra_settings))
@@ -221,6 +250,14 @@ def deploy_k9(k9_manifest: dict,
     else:
         # Perform simple deployment.
         jinja_dict = jinja.initialize_jinja_from_config(config)
+
+        # Add placeholder for proper jinja substitution if telemetry opted out
+        jinja_dict["runtime_labels_dict"] = ""
+
+        if allow_telemetry:
+            # Converts Cortex Job Label dict to string for jinja substitution
+            jinja_dict["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
+
         _simple_process_and_upload(k9_id, str(k9_path), jinja_dict,
                                   target_bucket, bq_client, data_source,
                                   dataset_type)
@@ -243,6 +280,12 @@ def deploy_k9(k9_manifest: dict,
             str(reporting_settings_file), "--target_type", "Reporting",
             "--module_name", "k9"
         ]
+        if region:
+            exec_params.extend(["--region", region])
+        if worker_pool_name:
+            exec_params.extend(["--worker_pool_name", worker_pool_name])
+        if build_account:
+            exec_params.extend(["--build_account", build_account])
         subprocess.check_call(exec_params)
 
     logging.info("🐕 k9 `%s` has been deployed! 🐕", k9_id)

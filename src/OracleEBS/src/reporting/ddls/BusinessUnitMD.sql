@@ -1,0 +1,33 @@
+-- Copyright 2024 Google LLC
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--      https://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+-- BusinessUnitMD dimension.
+
+WITH
+  FilteredProfiles AS (
+    SELECT *
+    FROM `{{ project_id_src }}.{{ oracle_ebs_datasets_cdc }}.XLE_ENTITY_PROFILES`
+    WHERE TRANSACTING_ENTITY_FLAG = 'Y'
+  )
+SELECT
+  Units.ORGANIZATION_ID AS BUSINESS_UNIT_ID,
+  Units.NAME AS BUSINESS_UNIT_NAME,
+  FilteredProfiles.NAME AS LEGAL_ENTITY,
+  Units.SET_OF_BOOKS_ID AS LEDGER_ID
+FROM
+  `{{ project_id_src }}.{{ oracle_ebs_datasets_cdc }}.HR_OPERATING_UNITS` AS Units
+LEFT JOIN
+  FilteredProfiles
+  ON
+    Units.DEFAULT_LEGAL_CONTEXT_ID = FilteredProfiles.LEGAL_ENTITY_ID

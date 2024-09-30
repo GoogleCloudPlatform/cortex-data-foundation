@@ -1,10 +1,10 @@
 name: "{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.KeywordStats"
-description: "Keywords metrics"
+description: "Keywords metrics."
 fields:
   - name: "segments"
     description: "Segments details."
   - name: "segments.date"
-    description: "Date to which metrics apply. yyyy-MM-dd format, for example, 2018-04-17."
+    description: "Date to which metrics apply."
   - name: "keyword_view"
     description: "Keyword details."
   - name: "keyword_view.resource_name"

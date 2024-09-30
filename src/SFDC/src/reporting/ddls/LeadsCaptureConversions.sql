@@ -13,9 +13,10 @@
 #-- limitations under the License.
 
 
-WITH LeadsFirstResponseDates AS (
-  SELECT LeadId, MIN(CreatedDatestamp) AS LeadFirstResponeDatestamp
-  FROM (
+WITH
+  LeadsFirstResponseDates AS (
+    SELECT LeadId, MIN(CreatedDatestamp) AS LeadFirstResponeDatestamp
+    FROM (
       SELECT WhoId AS LeadId, MIN(CreatedDatestamp) AS CreatedDatestamp
       FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.Events`
       GROUP BY 1
@@ -24,18 +25,18 @@ WITH LeadsFirstResponseDates AS (
       FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.Tasks`
       GROUP BY 1
     )
-  GROUP BY 1
-),
-CurrencyConversion AS (
-  SELECT
-    TargetCurrency,
-    SourceCurrency,
-    ConversionRate AS CurrencyExchangeRate,
-    ConversionDate AS CurrencyConversionDate
-  FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion`
-  WHERE
-    TargetCurrency IN ({{ currencies }})
-)
+    GROUP BY 1
+  ),
+  CurrencyConversion AS (
+    SELECT
+      TargetCurrency,
+      SourceCurrency,
+      ConversionRate AS CurrencyExchangeRate,
+      ConversionDate AS CurrencyConversionDate
+    FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion`
+    WHERE
+      TargetCurrency IN UNNEST({{ sfdc_currencies }})
+  )
 SELECT
   Leads.LeadId AS LeadId,
   Leads.Name AS LeadName,

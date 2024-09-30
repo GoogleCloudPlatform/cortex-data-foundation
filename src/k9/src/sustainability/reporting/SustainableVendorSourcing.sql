@@ -23,7 +23,7 @@ WITH
       Client_MANDT = '{{ mandt }}'
       --## CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
       AND ExchangeRateType_KURST = 'M'
-      AND ToCurrency_TCURR {{ currency }}
+      AND ToCurrency_TCURR IN UNNEST({{ sap_currencies }})
   ),
 
   POScheduleLine AS (
@@ -42,11 +42,11 @@ WITH
       PurchaseOrders.OverdeliveryToleranceLimit_UEBTO,
       POScheduleLine.ItemDeliveryDate_EINDT,
       COALESCE(
-        (PurchaseOrders.UnderdeliveryToleranceLimit_UNTTO * PurchaseOrders.POQuantity_MENGE) / 100,
-        0) AS UnderdeliveryToleranceLimit,
+        (PurchaseOrders.UnderdeliveryToleranceLimit_UNTTO * PurchaseOrders.POQuantity_MENGE) / 100, 0
+      ) AS UnderdeliveryToleranceLimit,
       COALESCE(
-        (PurchaseOrders.OverdeliveryToleranceLimit_UEBTO * PurchaseOrders.POQuantity_MENGE) / 100,
-        0) AS OverdeliveryToleranceLimit
+        (PurchaseOrders.OverdeliveryToleranceLimit_UEBTO * PurchaseOrders.POQuantity_MENGE) / 100, 0
+      ) AS OverdeliveryToleranceLimit
     FROM
       (
         SELECT
@@ -117,14 +117,16 @@ WITH
               --MovementType__inventoryManagement___BWART='101' represents Goods Receipt Orders
               POOrderHistory.MovementType__inventoryManagement___BWART = '101',
               MAX(POOrderHistory.PostingDateInTheDocument_BUDAT) OVER (
-                PARTITION BY POScheduleLine.Client_MANDT,
+                PARTITION BY
+                  POScheduleLine.Client_MANDT,
                   POScheduleLine.DocumentNumber_EBELN,
-                  POScheduleLine.Item_EBELP),
-              NULL),
-            POScheduleLine.PurchasingDocumentDate_BEDAT,
-            DAY),
-          0),
-        NULL) AS VendorCycleTimeInDays,
+                  POScheduleLine.Item_EBELP
+              ), NULL
+            ),
+            POScheduleLine.PurchasingDocumentDate_BEDAT, DAY
+          ), 0
+        ), NULL
+      ) AS VendorCycleTimeInDays,
 
       --Vendor Quality (Rejection)
       --MovementType__inventoryManagement___BWART='122' or '161' represents Rejected Orders
@@ -136,8 +138,10 @@ WITH
         IF(
           POOrderHistory.MovementType__inventoryManagement___BWART = '101',
           POOrderHistory.PostingDateInTheDocument_BUDAT,
-          NULL) <= POScheduleLine.ItemDeliveryDate_EINDT,
-        NULL) AS IsDeliveredOnTime,
+          NULL
+        ) <= POScheduleLine.ItemDeliveryDate_EINDT,
+        NULL
+      ) AS IsDeliveredOnTime,
 
       --Vendor InFull Delivery
       IF(
@@ -148,8 +152,8 @@ WITH
           POOrderHistory.GoodsReceivedQuantity >= POScheduleLine.POQuantity_MENGE,
           POOrderHistory.GoodsReceivedQuantity >= (POScheduleLine.POQuantity_MENGE - POScheduleLine.UnderdeliveryToleranceLimit)
           OR POOrderHistory.GoodsReceivedQuantity <= (POScheduleLine.POQuantity_MENGE + POScheduleLine.OverdeliveryToleranceLimit)
-        ),
-        NULL) AS IsDeliveredInFull,
+        ), NULL
+      ) AS IsDeliveredInFull,
 
       --Vendor Invoice Accuracy (Goods Receipt)
       IF(
@@ -162,7 +166,8 @@ WITH
           BETWEEN POScheduleLine.POQuantity_MENGE - POScheduleLine.UnderdeliveryToleranceLimit
           AND POScheduleLine.POQuantity_MENGE + POScheduleLine.OverdeliveryToleranceLimit
         ),
-        NULL) AS IsGoodsReceiptAccurate
+        NULL
+      ) AS IsGoodsReceiptAccurate
     FROM
       POScheduleLine
     LEFT JOIN

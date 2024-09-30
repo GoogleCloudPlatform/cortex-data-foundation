@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,10 @@ Options:
   -c | --config_file                 : Cortex config file
   -f | --materializer_settings_file  : Deployment settings file for Materializer
   -h | --help                        : Display this message
+  -p | --worker_pool_name            : Set worker pool for cloud build
+  -r | --region                      : Set region for worker pool. Required if worker_pool_name present
+  -u | --build_account               : Set user specified cloud build service account.
+  -g | --gcs_bucket                  : GCS bucket for the cloud build account. Required if build-account present
 
 HELP_USAGE
 
@@ -88,7 +92,7 @@ validate_args() {
 #-  -------------------
 
 set -o errexit -o noclobber -o nounset -o pipefail
-params="$(getopt -o l:t:y:m:c:f:k:h --long gcs_logs_bucket:,gcs_tgt_bucket:,target_type:,module_name:,config_file:,materializer_settings_file:,k9_manifest:,help --name "$0" -- "$@")"
+params="$(getopt -o l:t:y:m:c:f:k:h:p:r:v:g --long gcs_logs_bucket:,gcs_tgt_bucket:,target_type:,module_name:,config_file:,materializer_settings_file:,k9_manifest:,worker_pool_name:,region:,build_account:,gcs_bucket:,help --name "$0" -- "$@")"
 eval set -- "$params"
 
 while true; do
@@ -119,6 +123,22 @@ while true; do
     ;;
   -k | --k9_manifest)
     K9_MANIFEST_FILE=$2
+    shift 2
+    ;;
+  -p | --worker_pool_name)
+    _WORKER_POOL_NAME=$2
+    shift 2
+    ;;
+  -r | --region)
+    _REGION=$2
+    shift 2
+    ;;
+  -u | --build_account)
+    _BUILD_ACCOUNT=$2
+    shift 2
+    ;;
+  -g | --gcs_bucket)
+    _GCS_BUCKET=$2
     shift 2
     ;;
   -h | --help)
@@ -165,7 +185,8 @@ python3 "$THIS_DIR"/generate_build_files.py \
   --config_file "${CONFIG_FILE}" \
   --target_dataset_type "${TGT_DATASET_TYPE}" \
   --materializer_settings_file "${MATERIALIZER_SETTINGS_FILE}" \
-  --k9_manifest_file "${K9_MANIFEST_FILE}"
+  --k9_manifest_file "${K9_MANIFEST_FILE}" \
+  --private_worker_pool "${_WORKER_POOL_NAME}"
 
 echo "Build files generated successfully."
 
@@ -176,7 +197,7 @@ echo "Executing generated gcloud build files...."
 for build_file_name in "${GENERATED_FILES_PARENT_DIR}"/"${MODULE_NAME}"/cloudbuild.materializer.*.yaml; do
   [[ -e "$build_file_name" ]] || break
   echo -e "gcloud builds submit . --config=\"${build_file_name}\" --substitutions=_GCS_LOGS_BUCKET=\"${GCS_LOGS_BUCKET}\",_GCS_TGT_BUCKET=\"${GCS_TGT_BUCKET}\" "
-  gcloud builds submit . --config="${build_file_name}" --substitutions=_GCS_LOGS_BUCKET="${GCS_LOGS_BUCKET}",_GCS_TGT_BUCKET="${GCS_TGT_BUCKET}"
+  gcloud builds submit . --config="${build_file_name}" --substitutions=_GCS_LOGS_BUCKET="${GCS_LOGS_BUCKET}",_GCS_TGT_BUCKET="${GCS_TGT_BUCKET}",_WORKER_POOL_NAME="${_WORKER_POOL_NAME}",_CLOUD_BUILD_REGION="${_REGION}",_BUILD_ACCOUNT="${_BUILD_ACCOUNT}",_GCS_BUCKET="${_GCS_BUCKET}" --region="${_REGION}"
   # shellcheck disable=SC2181
   if [ $? -ne 0 ]; then
     failure=1

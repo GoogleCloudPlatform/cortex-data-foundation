@@ -13,7 +13,6 @@
 # limitations under the License.
 """Resource Configuration execution routines"""
 
-
 import logging
 import typing
 
@@ -28,7 +27,6 @@ from google.cloud import storage
 from google.cloud.bigquery.enums import EntityTypes
 import googleapiclient.discovery
 from googleapiclient.errors import HttpError
-
 
 _RETRY_TIMEOUT_SEC = 60.0  # Timeout for API retries
 SOURCE_PROJECT_APIS = ["cloudresourcemanager", "storage-component",
@@ -315,7 +313,7 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
             enable_apis(source_project, SOURCE_PROJECT_APIS)
         except HttpError as ex:
             if ex.status_code == 400 and "billing account" in ex.reason.lower():
-                logging.fatal(("Project %s doesn't have "
+                logging.critical(("Project %s doesn't have "
                             "a Billing Account linked to it."), source_project)
                 return False
             else:
@@ -327,7 +325,7 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
             except HttpError as ex:
                 if (ex.status_code == 400 and
                     "billing account" in ex.reason.lower()):
-                    logging.fatal(("Project %s doesn't have "
+                    logging.critical(("Project %s doesn't have "
                                 "a Billing Account linked to it."),
                                 source_project)
                     return False
@@ -353,6 +351,8 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
             dataset_dicts.append(config["SAP"]["datasets"])
         if config.get("deploySFDC"):
             dataset_dicts.append(config["SFDC"]["datasets"])
+        if config.get("deployOracleEBS"):
+            dataset_dicts.append(config["OracleEBS"]["datasets"])
         if config.get("deployMarketing"):
             if config["marketing"].get("deployGoogleAds"):
                 dataset_dicts.append(config["marketing"]["GoogleAds"]
@@ -368,6 +368,13 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
                 dataset_dicts.append(config["marketing"]["Meta"]["datasets"])
             if config["marketing"].get("deploySFMC"):
                 dataset_dicts.append(config["marketing"]["SFMC"]["datasets"])
+            if config["marketing"].get("deployDV360"):
+                dataset_dicts.append(config["marketing"]["DV360"]["datasets"])
+            if config["marketing"].get("deployGA4"):
+                dataset_dicts.append(
+            {"cdc": config["marketing"]["GA4"]["datasets"]["cdc"][0]["name"],
+            "reporting": config["marketing"]["GA4"]["datasets"]["reporting"]}
+                )
         for dataset_dict in dataset_dicts:
             for ds in dataset_dict.items():
                 add_to = (reporting_datasets
@@ -407,8 +414,7 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
                 raise
         else:
             message = ex.message
-        logging.fatal("You do not have sufficient permissions: %s", message)
+        logging.critical("You do not have sufficient permissions: %s", message)
         return False
 
     return True
-

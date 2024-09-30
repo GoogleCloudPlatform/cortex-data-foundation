@@ -14,14 +14,15 @@
 
 # Disable pylance / pylint as errors
 # type: ignore
+"""This is an Airflow DAG template for exrtaction pipeline to RAW layer."""
 
 from datetime import datetime, timedelta
 import importlib
 import os
 
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
 
 # Use dynamic import to account for Airflow directory structure limitations.
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -37,28 +38,26 @@ _IDENTIFIER = "SFDC_${project_id}_${raw_dataset}_extract_to_raw_${base_table}"
 
 default_args = {
    "depends_on_past": False,
-   "start_date": datetime(${year}, ${month}, ${day}),
+   "start_date": datetime(int("${year}"), int("${month}"), int("${day}")),
    "catchup": False,
    "retries": 1,
    "retry_delay": timedelta(minutes=10),
 }
 
-with DAG(
-        dag_id=_IDENTIFIER,
-        description=(
+with DAG(dag_id=_IDENTIFIER,
+         description=(
             "Data extraction from Salesforce system to BQ RAW dataset "
             "for '${base_table}' object"),
-        default_args=default_args,
-        schedule_interval="${load_frequency}",
-        tags=["sfdc", "raw"],
-        catchup = False,
-        max_active_runs=1
-) as dag:
-    start_task = DummyOperator(task_id="start")
+         default_args=default_args,
+         schedule_interval="${load_frequency}",
+         tags=["sfdc", "raw"],
+         catchup = False,
+         max_active_runs=1) as dag:
+    start_task = EmptyOperator(task_id="start")
+
     extract_data = PythonOperator(
         task_id=_IDENTIFIER,
-        python_callable=sfdc_to_bigquery_module
-                            .extract_data_from_sfdc,
+        python_callable=sfdc_to_bigquery_module.extract_data_from_sfdc,
         op_args = [
             # TODO: Load this Salesforce connection name from some config.
             "salesforce-conn",
@@ -68,8 +67,8 @@ with DAG(
             "${project_id}",
             "${raw_dataset}",
             "${base_table}"],
-        dag=dag,
-    )
-    stop_task = DummyOperator(task_id="stop")
+        dag=dag)
+
+    stop_task = EmptyOperator(task_id="stop")
 
 start_task >> extract_data >> stop_task # pylint: disable=pointless-statement

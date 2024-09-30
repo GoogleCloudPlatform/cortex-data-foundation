@@ -15,44 +15,8 @@ SELECT
   AccountingDocuments.CurrencyKey_WAERS,
   AccountingDocuments.LocalCurrency_HWAER,
   CompaniesMD.FiscalyearVariant_PERIV,
-  IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(AccountingDocuments.Client_MANDT,
-      CompaniesMD.FiscalyearVariant_PERIV,
-      AccountingDocuments.PostingDateInTheDocument_BUDAT) = 'CASE1',
-    `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case1`(AccountingDocuments.Client_MANDT,
-      CompaniesMD.FiscalyearVariant_PERIV,
-      AccountingDocuments.PostingDateInTheDocument_BUDAT),
-    IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(AccountingDocuments.Client_MANDT,
-        CompaniesMD.FiscalyearVariant_PERIV,
-        AccountingDocuments.PostingDateInTheDocument_BUDAT) = 'CASE2',
-      `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case2`(AccountingDocuments.Client_MANDT,
-        CompaniesMD.FiscalyearVariant_PERIV,
-        AccountingDocuments.PostingDateInTheDocument_BUDAT),
-      IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(AccountingDocuments.Client_MANDT,
-          CompaniesMD.FiscalyearVariant_PERIV,
-          AccountingDocuments.PostingDateInTheDocument_BUDAT) = 'CASE3',
-        `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case3`(AccountingDocuments.Client_MANDT,
-          CompaniesMD.FiscalyearVariant_PERIV,
-          AccountingDocuments.PostingDateInTheDocument_BUDAT),
-        'DATA ISSUE'))) AS Period,
-  IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(AccountingDocuments.Client_MANDT,
-      CompaniesMD.FiscalyearVariant_PERIV,
-      CURRENT_DATE()) = 'CASE1',
-    `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case1`(AccountingDocuments.Client_MANDT,
-      CompaniesMD.FiscalyearVariant_PERIV,
-      CURRENT_DATE()),
-    IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(AccountingDocuments.Client_MANDT,
-        CompaniesMD.FiscalyearVariant_PERIV,
-        CURRENT_DATE()) = 'CASE2',
-      `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case2`(AccountingDocuments.Client_MANDT,
-        CompaniesMD.FiscalyearVariant_PERIV,
-        CURRENT_DATE()),
-      IF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(AccountingDocuments.Client_MANDT,
-          CompaniesMD.FiscalyearVariant_PERIV,
-          CURRENT_DATE()) = 'CASE3',
-        `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case3`(AccountingDocuments.Client_MANDT,
-          CompaniesMD.FiscalyearVariant_PERIV,
-          CURRENT_DATE()),
-        'DATA ISSUE'))) AS Current_Period,
+  FiscalDateDimension_BUDAT.FiscalYearPeriod AS Period,
+  FiscalDateDimension_CURRENTDATE.FiscalYearPeriod AS Current_Period,
   AccountingDocuments.AccountType_KOART,
   AccountingDocuments.PostingDateInTheDocument_BUDAT,
   AccountingDocuments.DocumentDateInDocument_BLDAT,
@@ -83,4 +47,14 @@ LEFT JOIN
   ON
     AccountingDocuments.Client_MANDT = CompaniesMD.Client_MANDT
     AND AccountingDocuments.CompanyCode_BUKRS = CompaniesMD.CompanyCode_BUKRS
-WHERE AccountingDocuments.AccountType_KOART = "D"
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.fiscal_date_dim` AS FiscalDateDimension_BUDAT
+  ON AccountingDocuments.Client_MANDT = FiscalDateDimension_BUDAT.MANDT
+    AND CompaniesMD.FiscalyearVariant_PERIV = FiscalDateDimension_BUDAT.PERIV
+    AND AccountingDocuments.PostingDateInTheDocument_BUDAT = FiscalDateDimension_BUDAT.DATE
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.fiscal_date_dim` AS FiscalDateDimension_CURRENTDATE
+  ON AccountingDocuments.Client_MANDT = FiscalDateDimension_CURRENTDATE.MANDT
+    AND CompaniesMD.FiscalyearVariant_PERIV = FiscalDateDimension_CURRENTDATE.PERIV
+    AND CURRENT_DATE() = FiscalDateDimension_CURRENTDATE.DATE
+WHERE AccountingDocuments.AccountType_KOART = 'D'

@@ -1,0 +1,24 @@
+# Lakes dataclass.
+# TODO: clean up with recommended structure.
+project: {{ project_id_tgt }}
+lakes:
+  - display_name: "sap"
+    region: "us-central1"
+    description: "Cortex SAP datasets"
+    labels:
+      - name: "lake_label"
+        value: "l1"
+    zones:
+      - display_name: "zone-1"
+        description: "zone one"
+        zone_type: RAW
+        labels:
+          - name: "zone_label"
+            value: "l2"
+      - display_name: "zone-2"
+        description: "zone two"
+        zone_type: CURATED
+        location_type: MULTI_REGION
+  - display_name: "sfdc"
+    region: "us-central1"
+    description: "Cortex SFDC datasets"

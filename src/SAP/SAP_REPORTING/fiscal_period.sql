@@ -12,6 +12,8 @@
 #-- See the License for the specific language governing permissions and
 #-- limitations under the License.
 
+## Following fiscal functions are deprecated, and will be removed in the next release.
+## Use fiscal_date_dim table instead.
 
 {% if sql_flavour == 'ecc' or sql_flavour == 'union' -%}
 CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(
@@ -29,19 +31,3 @@ CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fis
 {% endif -%}
 ;
 
-## Following flavor specific functions are deprecated, and will be removed in the next release.
-
-{% if sql_flavour == 'ecc' or sql_flavour == 'union' -%}
-CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period_ecc`(
-  ip_mandt STRING, ip_periv STRING, ip_date DATE
-) AS
-{% include './ecc/fiscal_period.sql' -%}
-{% endif -%}
-
-{% if sql_flavour == 's4' or sql_flavour == 'union' -%}
-CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period_s4`(
-  ip_mandt STRING, ip_periv STRING, ip_date DATE
-) AS
-{% include './s4/fiscal_period.sql' -%}
-{% endif -%}
-;

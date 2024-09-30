@@ -16,16 +16,16 @@ Generates DAG and related files needed to copy/move CM360 data from
 DataTransferV2.0 bucket to BigQuery RAW dataset.
 """
 import argparse
-import datetime
+from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import shutil
 import sys
 
+from common.py_libs import cortex_bq_client
+from common.py_libs.bq_helper import create_table_from_schema
 from common.py_libs.bq_helper import table_exists
-from common.py_libs.bq_materializer import add_cluster_to_table_def
-from common.py_libs.bq_materializer import add_partition_to_table_def
-from google.cloud.bigquery import Client
 
 from src.constants import DATATRANSFER_BUCKET
 from src.constants import PROJECT_REGION
@@ -34,7 +34,6 @@ from src.constants import RAW_PROJECT
 from src.constants import SCHEMA_DIR
 from src.constants import SETTINGS
 from src.py_libs.utils import create_bq_schema
-from src.py_libs.utils import create_table_ref
 from src.py_libs.utils import generate_dag_from_template
 from src.py_libs.utils import repr_schema
 from src.raw.constants import DAG_TEMPLATE_DIR
@@ -89,9 +88,8 @@ def main():
     logging.info("Copying schema files...")
     shutil.copytree(src=SCHEMA_DIR, dst=SCHEMAS_OUTPUT_DIR, dirs_exist_ok=True)
 
-    now = datetime.datetime.utcnow()
-    now_date = datetime.datetime(now.year, now.month, now.day)
-    client = Client(project=RAW_PROJECT)
+    dag_start_date = datetime.now(timezone.utc).date()
+    client = cortex_bq_client.CortexBQClient(project=RAW_PROJECT)
 
     if not "source_to_raw_tables" in SETTINGS:
         logging.warning(
@@ -119,22 +117,15 @@ def main():
             schema = create_bq_schema(table_mapping_path)
             logging.debug("Raw table schema: %s\n", repr_schema(schema))
 
-            table_ref = create_table_ref(schema=schema,
-                                         project=RAW_PROJECT,
-                                         dataset=RAW_DATASET,
-                                         table_name=table_name)
-
             partition_details = raw_table_settings.get("partition_details")
-            if partition_details:
-                table_ref = add_partition_to_table_def(table_ref,
-                                                       partition_details)
-
             cluster_details = raw_table_settings.get("cluster_details")
-            if cluster_details:
-                table_ref = add_cluster_to_table_def(table_ref,
-                                                     cluster_details)
 
-            client.create_table(table_ref)
+            create_table_from_schema(bq_client=client,
+                         full_table_name=full_table_name,
+                         schema=schema,
+                         partition_details=partition_details,
+                         cluster_details=cluster_details)
+
             logging.info("Table is created successfully.")
 
         # DAG PY file generation
@@ -155,7 +146,7 @@ def main():
             "file_pattern":
                 file_pattern,
             "start_date":
-                now_date,
+                dag_start_date,
             "datatransfer_bucket":
                 DATATRANSFER_BUCKET,
             "schema_file":

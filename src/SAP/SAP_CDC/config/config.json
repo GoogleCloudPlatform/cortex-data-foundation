@@ -7,13 +7,6 @@
     "projectIdTarget": "",
     "location": "US",
     "targetBucket": "",
-    "languages": [
-        "E",
-        "S"
-    ],
-    "currencies": [
-        "USD"
-    ],
     "DataMesh": {
         "deployDescriptions": true,
         "deployLakes": false,
@@ -22,13 +15,20 @@
     },
     "SAP": {
         "deployCDC": true,
+        "SQLFlavor": "ecc",
+        "mandt": "100",
+        "languages": [
+            "E",
+            "S"
+        ],
+        "currencies": [
+            "USD"
+        ],
         "datasets": {
             "cdc": "",
             "raw": "",
             "ml": "ML_MODELS",
             "reporting": "REPORTING"
-        },
-        "SQLFlavor": "ecc",
-        "mandt": "100"
+        }
     }
 }

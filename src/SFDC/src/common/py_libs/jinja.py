@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
         "project_id_tgt": config_dict["projectIdTarget"],
         "location": config_dict["location"],
         "k9_datasets_processing": config_dict["k9"]["datasets"]["processing"],
-        "k9_datasets_reporting": config_dict["k9"]["datasets"]["reporting"],
+        "k9_datasets_reporting": config_dict["k9"]["datasets"]["reporting"]
     }
     # SFDC
     if config_dict.get("deploySFDC"):
@@ -98,12 +98,8 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 config_dict["SFDC"]["datasets"]["cdc"],
             "sfdc_datasets_reporting":
                 config_dict["SFDC"]["datasets"]["reporting"],
-            "currencies":
-                ",".join(
-                    f"'{currency}'" for currency in config_dict["currencies"]),
-            "languages":
-                ",".join(
-                    f"'{language}'" for language in config_dict["languages"])
+            "sfdc_currencies":
+                config_dict["SFDC"]["currencies"]
         })
     # SAP
     # Flavor specific fields use `get()` because they do not exist in the raw
@@ -140,16 +136,10 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 config_dict["SAP"]["SQLFlavor"].lower(),
             "sql_flavour":
                 config_dict["SAP"]["SQLFlavor"].lower(),
-            # TODO: Update SAP sql to use currency jinja variable in a
-            # readable way - e.g. "IN {{ currencies }}"
-            "currency":
-                "IN (" + ",".join(
-                    f"'{currency}'" for currency in config_dict["currencies"]) +
-                ")",
-            "language":
-                "IN (" + ",".join(
-                    f"'{language}'" for language in config_dict["languages"]) +
-                ")"
+            "sap_currencies":
+                config_dict["SAP"]["currencies"],
+            "sap_languages":
+                config_dict["SAP"]["languages"]
         })
     if config_dict.get("deployMarketing"):
         # GoogleAds
@@ -209,6 +199,40 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 "marketing_sfmc_datasets_reporting":
                     config_dict["marketing"]["SFMC"]["datasets"]["reporting"]
             })
+        # DV360
+        if config_dict["marketing"].get("deployDV360"):
+            jinja_data_file_dict.update({
+                "marketing_dv360_datasets_raw":
+                    config_dict["marketing"]["DV360"]["datasets"]["raw"],
+                "marketing_dv360_datasets_cdc":
+                    config_dict["marketing"]["DV360"]["datasets"]["cdc"],
+                "marketing_dv360_datasets_reporting":
+                    config_dict["marketing"]["DV360"]["datasets"]["reporting"]
+            })
+        # Google Analytics 4
+        if config_dict["marketing"].get("deployGA4"):
+            jinja_data_file_dict.update({
+                "marketing_ga4_datasets_cdc":
+                    config_dict["marketing"]["GA4"]["datasets"]["cdc"],
+                "marketing_ga4_datasets_reporting":
+                    config_dict["marketing"]["GA4"]["datasets"]["reporting"]
+            })
+    # Oracle EBS
+    if config_dict.get("deployOracleEBS"):
+        jinja_data_file_dict.update({
+            "oracle_ebs_datasets_cdc":
+                config_dict["OracleEBS"]["datasets"]["cdc"],
+            "oracle_ebs_datasets_reporting":
+                config_dict["OracleEBS"]["datasets"]["reporting"],
+            "oracle_ebs_item_category_set_ids":
+                config_dict["OracleEBS"]["itemCategorySetIds"],
+            "oracle_ebs_currency_conversion_type":
+                config_dict["OracleEBS"]["currencyConversionType"],
+            "oracle_ebs_currency_conversion_targets":
+                config_dict["OracleEBS"]["currencyConversionTargets"],
+            "oracle_ebs_languages":
+                config_dict["OracleEBS"]["languages"],
+        })
 
     return jinja_data_file_dict
 

@@ -3,18 +3,32 @@ steps:
   - name: gcr.io/cloud-builders/gcloud
     script: |
       #!/usr/bin/env bash
+      declare -a _WORKER_POOL_OPTIONS
+
+      if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--worker-pool-name "${_WORKER_POOL_NAME}")
+      fi
+
+      if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+        _WORKER_POOL_OPTIONS+=(--region "${_CLOUD_BUILD_REGION}")
+      fi
+
       ./deploy.sh \
-        --source-project ${_PJID_SRC} \
-        --target-project ${_PJID_TGT} \
-        --cdc-processed-dataset ${_DS_CDC} \
-        --raw-landing-dataset ${_DS_RAW} \
-        --target-reporting-dataset ${_DS_REPORTING} \
-        --target-models-dataset ${_DS_MODELS} \
-        --location ${_LOCATION} \
-        --mandt ${_MANDT} \
-        --sql-flavour ${_SQL_FLAVOUR} \
+        --source-project "${_PJID_SRC}" \
+        --target-project "${_PJID_TGT}" \
+        --cdc-processed-dataset "${_DS_CDC}" \
+        --raw-landing-dataset "${_DS_RAW}" \
+        --target-reporting-dataset "${_DS_REPORTING}" \
+        --target-models-dataset "${_DS_MODELS}" \
+        --location "${_LOCATION}" \
+        --mandt "${_MANDT}" \
+        --sql-flavour "${_SQL_FLAVOUR}" \
+        --gcs-bucket ${_GCS_BUCKET} \
+        "${_WORKER_POOL_OPTIONS[@]}" \
           ${_VIEWS_DIR}
+
 logsBucket: "gs://${_GCS_BUCKET}"
+serviceAccount: "${_BUILD_ACCOUNT}"
 timeout: 7200s
 substitutions:
   _VIEWS_DIR: src/views
@@ -26,3 +40,5 @@ substitutions:
 options:
   substitution_option: "ALLOW_LOOSE"
   automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"

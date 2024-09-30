@@ -238,7 +238,7 @@ class Zone(config_spec.ConfigSpec):
     zone_type: ZoneType = dataclasses.field(default=ZoneType.TYPE_UNSPECIFIED)
     labels: List[Label] = dataclasses.field(default_factory=list)
     location_type: ZoneLocationType = dataclasses.field(
-        default=ZoneLocationType.SINGLE_REGION)
+        default=ZoneLocationType.LOCATION_TYPE_UNSPECIFIED)
     assets: List[Asset] = dataclasses.field(default_factory=list)
 
 

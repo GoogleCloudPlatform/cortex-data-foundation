@@ -12,6 +12,8 @@
 #-- See the License for the specific language governing permissions and
 #-- limitations under the License.
 
+## Following currency decimal functions are deprecated, and will be removed in the next release.
+## Use currency_decimal table instead.
 
 {% if sql_flavour == 'ecc' or sql_flavour == 'union' -%}
 

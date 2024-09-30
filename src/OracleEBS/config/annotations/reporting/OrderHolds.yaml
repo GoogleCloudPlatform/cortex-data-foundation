@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.OrderHolds"
+description: "Base fact view of order holds."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Facts"
+fields:
+  - name: "ORDER_HOLD_ID"
+    description: "Primary key identifying the order hold"
+  - name: "HEADER_ID"
+    description: "Foreign key identifying the order header"
+  - name: "RELEASED_FLAG"
+    description: "Indicates whether the hold has been released."
+  - name: "CREATION_TS"
+    description: "Timestamp when the record was created in the source system"
+  - name: "LAST_UPDATE_TS"
+    description: "Timestamp when the record was last updated in the source system"

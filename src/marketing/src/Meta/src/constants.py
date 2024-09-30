@@ -50,3 +50,5 @@ CDC_DATASET = _SOURCE_CONFIG["datasets"]["cdc"]
 
 SCHEMA_TARGET_FIELD = "TargetField"
 SCHEMA_BQ_DATATYPE_FIELD = "DataType"
+
+SYSTEM_FIELDS = {"recordstamp": "TIMESTAMP", "report_date": "DATE"}

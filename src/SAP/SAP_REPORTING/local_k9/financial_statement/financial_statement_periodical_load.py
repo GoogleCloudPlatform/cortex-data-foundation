@@ -14,50 +14,49 @@
 """Cloud Composer DAG to generate financial_statement table.
 Executes relevant nodes to create the table.
 """
+import ast
+
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
+
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
+
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
+
 
 default_args = {
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
 }
-## This DAG does the periodical load
-## for financial_statement table.
-with DAG(
-        'financial_statement_periodical_load',
-        default_args=default_args,
-        schedule_interval='@monthly',
-        start_date=datetime(2023, 8, 30),
-        catchup=False,
-        max_active_runs=1
-) as dag:
-    start_task = DummyOperator(task_id='start')
 
-    if AIRFLOW_VERSION.startswith('1.'):
-        ## This task inserts the periodical load in financial_statement table.
-        financial_statement_periodical_load = BigQueryOperator(
-            task_id='financial_statement_periodical_load',
-            sql='financial_statement_periodical_load.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            bigquery_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
+# This DAG does the periodical load
+# for financial_statement table.
+with DAG(dag_id="financial_statement_periodical_load",
+         default_args=default_args,
+         schedule_interval="@monthly",
+         start_date=datetime(2023, 8, 30),
+         catchup=False,
+         max_active_runs=1) as dag:
 
-        stop_task = DummyOperator(task_id='stop')
-    else:
-        ## This task inserts the initial load in financial_statement table.
-        financial_statement_periodical_load = BigQueryOperator(
-            task_id='financial_statement_periodical_load',
-            sql='financial_statement_periodical_load.sql',
-            create_disposition='CREATE_IF_NEEDED',
-            write_disposition='WRITE_TRUNCATE',
-            gcp_conn_id='sap_reporting_bq',
-            use_legacy_sql=False)
+    start_task = EmptyOperator(task_id="start")
 
-        stop_task = DummyOperator(task_id='stop')
-  # pylint:disable=pointless-statement
-    (start_task >> financial_statement_periodical_load
-      >> stop_task)
+    # This task inserts the initial load in financial_statement table.
+    financial_statement_periodical_load = BigQueryInsertJobOperator(
+        task_id="financial_statement_periodical_load",
+        gcp_conn_id="sap_reporting_bq",
+        configuration={
+            "query": {
+                "query": "financial_statement_periodical_load.sql",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        })
+
+    stop_task = EmptyOperator(task_id="stop")
+
+    # pylint:disable=pointless-statement
+    (start_task >> financial_statement_periodical_load >> stop_task
+    )  # type:ignore

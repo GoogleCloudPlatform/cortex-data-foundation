@@ -1,13 +1,14 @@
-WITH AGGKONV AS (
-  SELECT
-    KONV.KNUMV,
-    KONV.KPOSN,
-    KONV.MANDT,
-    SUM(IF((KONV.koaid = 'C' AND KONV.KINAK IS NULL), KONV.kwert, NULL)) AS Rebate
-  FROM
-    `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.konv` AS KONV
-  GROUP BY knumv, kposn, mandt
-)
+WITH
+  AGGKONV AS (
+    SELECT
+      KONV.KNUMV,
+      KONV.KPOSN,
+      KONV.MANDT,
+      SUM(IF((KONV.koaid = 'C' AND KONV.KINAK IS NULL), KONV.kwert, NULL)) AS Rebate
+    FROM
+      `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.konv` AS KONV
+    GROUP BY knumv, kposn, mandt
+  )
 SELECT
   VBRK.MANDT AS Client_MANDT,
   VBRK.FKART AS BillingType_FKART,
@@ -120,9 +121,9 @@ SELECT
   COALESCE(VBRK.MWSBK * currency_decimal.CURRFIX, VBRK.MWSBK) AS TaxAmount_MWSBK,
   COALESCE(VBRP.MWSBP * currency_decimal.CURRFIX, VBRP.MWSBP) AS TaxAmountPos_MWSBP,
   COALESCE(AGGKONV.rebate * currency_decimal.CURRFIX, AGGKONV.rebate) AS Rebate,
-  COUNT(VBRK.VBELN) OVER(PARTITION BY CalendarDateDimension_FKDAT.CalYear) AS YearOrderCount,
-  COUNT(VBRK.VBELN) OVER(PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth) AS MonthOrderCount,
-  COUNT(VBRK.VBELN) OVER(PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth, CalendarDateDimension_FKDAT.CalWeek) AS WeekOrderCount
+  COUNT(VBRK.VBELN) OVER (PARTITION BY CalendarDateDimension_FKDAT.CalYear) AS YearOrderCount,
+  COUNT(VBRK.VBELN) OVER (PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth) AS MonthOrderCount,
+  COUNT(VBRK.VBELN) OVER (PARTITION BY CalendarDateDimension_FKDAT.CalYear, CalendarDateDimension_FKDAT.CalMonth, CalendarDateDimension_FKDAT.CalWeek) AS WeekOrderCount
 FROM `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.vbrk` AS VBRK
 INNER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.vbrp` AS VBRP
   ON
@@ -139,7 +140,7 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS
 --   ON VBRK.MANDT = currency_conversion.MANDT
 --     AND VBRK.WAERK = currency_conversion.FCURR
 --     AND VBRK.FKDAT = currency_conversion.conv_date
---     AND currency_conversion.TCURR {{ currency }}
+--     AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
 -- ##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
 --     AND currency_conversion.KURST = 'M'
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_FKDAT

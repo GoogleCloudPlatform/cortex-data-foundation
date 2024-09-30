@@ -1,4 +1,4 @@
-#-- Copyright 2022 Google LLC
+#-- Copyright 2024 Google LLC
 #--
 #-- Licensed under the Apache License, Version 2.0 (the "License");
 #-- you may not use this file except in compliance with the License.
@@ -12,9 +12,12 @@
 #-- See the License for the specific language governing permissions and
 #-- limitations under the License.
 
-CREATE TABLE IF NOT EXISTS `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SlowMovingThreshold`
-(
-  Client_MANDT STRING,
-  MaterialType_MTART STRING,
-  ThresholdValue NUMERIC
-);
+
+{% if sql_flavour == 'ecc' -%}
+{% include './ecc/SlowMovingThreshold.sql' -%}
+{% endif -%}
+
+{% if sql_flavour == 's4' -%}
+{% include './s4/SlowMovingThreshold.sql' -%}
+{% endif -%}
+

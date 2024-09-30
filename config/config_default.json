@@ -3,18 +3,12 @@
     "deploySAP": true,
     "deploySFDC": true,
     "deployMarketing": true,
+    "deployOracleEBS": true,
     "turboMode": true,
     "projectIdSource": "",
     "projectIdTarget": "",
     "targetBucket": "",
     "location": "US",
-    "languages": [
-        "E",
-        "S"
-    ],
-    "currencies": [
-        "USD"
-    ],
     "testDataProject": "kittycorn-public",
     "k9": {
         "datasets": {
@@ -24,19 +18,29 @@
     },
     "SAP": {
         "deployCDC": true,
+        "SQLFlavor": "ecc",
+        "mandt": "100",
+        "languages": [
+            "E",
+            "S"
+        ],
+        "currencies": [
+            "USD"
+        ],
         "datasets": {
             "cdc": "CORTEX_SAP_CDC",
             "raw": "CORTEX_SAP_RAW",
             "ml": "CORTEX_SAP_ML_MODELS",
             "reporting": "CORTEX_SAP_REPORTING"
-        },
-        "SQLFlavor": "ecc",
-        "mandt": "100"
+        }
     },
     "SFDC": {
         "deployCDC": true,
         "createMappingViews": true,
         "createPlaceholders": true,
+        "currencies": [
+            "USD"
+        ],
         "datasets": {
             "cdc": "CORTEX_SFDC_CDC",
             "raw": "CORTEX_SFDC_RAW",
@@ -50,6 +54,8 @@
         "deployLiveRamp": true,
         "deployMeta": true,
         "deploySFMC": true,
+        "deployDV360": true,
+        "deployGA4": true,
         "dataflowRegion": "",
         "GoogleAds": {
             "deployCDC": true,
@@ -98,6 +104,32 @@
                 "raw": "CORTEX_SFMC_RAW",
                 "reporting": "CORTEX_SFMC_REPORTING"
             }
+        },
+        "DV360": {
+            "deployCDC": true,
+            "datasets": {
+                "raw": "CORTEX_DV360_RAW",
+                "cdc": "CORTEX_DV360_CDC",
+                "reporting": "CORTEX_DV360_REPORTING"
+            }
+        },
+        "GA4": {
+            "datasets": {
+                "cdc": [
+                    {"property_id": 123, "name": "CORTEX_GA4_CDC"}
+                ],
+                "reporting": "CORTEX_GA4_REPORTING"
+            }
+        }
+    },
+    "OracleEBS": {
+        "itemCategorySetIds": [1100000425],
+        "currencyConversionType": "Corporate",
+        "currencyConversionTargets": ["USD"],
+        "languages": ["US"],
+        "datasets": {
+            "cdc": "CORTEX_ORACLE_EBS_CDC",
+            "reporting": "CORTEX_ORACLE_EBS_REPORTING"
         }
     }
 }

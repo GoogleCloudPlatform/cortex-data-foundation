@@ -27,7 +27,7 @@ If you are interested in exploring this solution, please contact [Cloud Cortex S
 ## Before deploying CATGAP
 
 1. **Deploy Data Foundation for SAP**.
-2. Configure [BigQuery Data Transfer](https://console.cloud.google.com/bigquery/transfers) for **Google Ads - Preview**
+2. Configure [BigQuery Data Transfer](https://cloud.google.com/bigquery/docs/google-ads-transfer) for **Google Ads**
 with a dataset in the *source project of Cortex Data Foundation* with **24 hours** transfer interval.
 ![BigQuery DTS for Google Ads](docs/images/ads-dts-config.jpg)
 3. Let configured Data Transfer run for **at least 2 days**.
@@ -124,13 +124,19 @@ with its configuration file (`config/config.json`) having common and SAP paramet
 they were used for deploying Data Foundation.
 
 ```
-src/k9/src/catgap/deploy_catgap.sh CONFIG_JSON_PATH GCS_BUCKET_NAME
+src/k9/src/catgap/deploy_catgap.sh --config-file CONFIG_JSON_PATH --gcs-logs-bucket GCS_BUCKET_NAME
 ```
 
 * `CONFIG_JSON_PATH` - config.json path. Use to be `config/config.json`.
 * `GCS_BUCKET` - GCS Bucket for Cloud Build logs. Cloud Build Service Account needs access to write here.
 
 You may use same bucket as `_GCS_BUCKET` with Data Foundation.
+
+You may also include the following optional parameters to control Cloud Build behavior during deployment:
+
+* `--worker-pool-name WORKER_POOL_NAME` - Run build in a [private pool](https://cloud.google.com/build/docs/private-pools/run-builds-in-private-pool).
+* `--region CLOUD_BUILD_REGION` - Run Cloud Build in a specific [region](https://cloud.google.com/build/docs/locations#:~:text=To%20run%20regional%20builds%2C%20specify,move%20it%20to%20another%20region.).
+* `--build-account BUILD_ACCOUNT` - Use [a specific Account](https://cloud.google.com/build/docs/securing-builds/configure-user-specified-service-accounts) for the build.
 
 ### Alternative deployment path
 
@@ -140,9 +146,16 @@ We recommend running these commands in a Python Virtual Environment.
 ```
 python3 -m pip install -U -r src/k9/src/catgap/requirements.txt
 python3 -m pip install -U -r src/k9/src/catgap/catgap_pipeline/requirements.txt
-python3 src/k9/src/catgap/catgap_dag_generator.py --beam-sdk-version "2.45.0"
+python3 src/k9/src/catgap/catgap_dag_generator.py --beam-sdk-version "2.53.0"
 bash generated_dag/run_pipeline.sh DeployTemplate
 bash generated_dag/run_pipeline.sh RunTemplate
+```
+
+Note: If you see a [setup.py is deprecated](https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html#summary)
+warning that causes dependency installation to fail, execute the following command:
+
+```
+pip install setuptools==58.2.0
 ```
 
 ## Mapping Spreadsheet

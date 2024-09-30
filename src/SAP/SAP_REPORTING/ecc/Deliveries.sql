@@ -496,7 +496,7 @@ SELECT
     COALESCE(likp.NETWR * currency_decimal.CURRFIX * -1, likp.NETWR * -1),
     COALESCE(likp.NETWR * currency_decimal.CURRFIX, likp.NETWR)
   ) AS NetValueOfTheSalesOrderInDocumentCurrency_NETWR,
-  IF(lips.SHKZG IN ('B', 'S', 'X'), (lips.NTGEW * -1), lips.NTGEW ) AS NetWeight_NTGEW,
+  IF(lips.SHKZG IN ('B', 'S', 'X'), (lips.NTGEW * -1), lips.NTGEW) AS NetWeight_NTGEW,
   IF(lips.SHKZG IN ('B', 'S', 'X'), (lips.BRGEW * -1), lips.BRGEW) AS GrossWeight_BRGEW,
   IF(lips.SHKZG IN ('B', 'S', 'X'), (lips.VOLUM * -1), lips.VOLUM) AS Volume_VOLUM,
   COALESCE(lips.WAVWR * currency_decimal.CURRFIX, lips.WAVWR) AS CostInDocumentCurrency_WAVWR,
@@ -519,7 +519,7 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS
 --   ON likp.MANDT = currency_conversion.MANDT
 --     AND likp.WAERK = currency_conversion.FCURR
 --     AND likp.LFDAT = currency_conversion.conv_date
---     AND currency_conversion.TCURR {{ currency }}
+--     AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
 -- ##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
 --     AND currency_conversion.KURST = 'M'
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_LFDAT

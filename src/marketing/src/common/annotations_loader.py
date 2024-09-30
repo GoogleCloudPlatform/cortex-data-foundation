@@ -131,7 +131,7 @@ def main(args: typing.Sequence[str]) -> int:
 
     annotations_path = pathlib.Path(options.annotations_directory)
     if not annotations_path.exists():
-        logging.fatal("Directory `%s` doesn't exist.", str(annotations_path))
+        logging.critical("Directory `%s` doesn't exist.", str(annotations_path))
         return 1
 
     client = bigquery.Client(project=config["projectIdSource"],

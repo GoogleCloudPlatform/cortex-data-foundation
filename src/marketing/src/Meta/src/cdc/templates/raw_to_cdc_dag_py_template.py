@@ -13,6 +13,7 @@
 # limitations under the License.
 """This DAG runs a BigQuery Job for Raw to CDC migration."""
 
+import ast
 import configparser
 from datetime import datetime
 from datetime import timedelta
@@ -20,13 +21,17 @@ import os
 from pathlib import Path
 
 from airflow import DAG
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
 
 _SQL_PATH = "${sql_path}"
 _TABLE_NAME = "${table_name}"
 _DATASET_ID = "${dataset}"
 _PROJECT_ID = "${project_id}"
+
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("${runtime_labels_dict}" or "{}")
 
 _IDENTIFIER = (f"meta_{_PROJECT_ID}_{_DATASET_ID}_raw_to_cdc_{_TABLE_NAME}")
 _START_DATE = datetime.fromisoformat("${start_date}")
@@ -61,29 +66,22 @@ execution_retry_count = config.getint("meta",
 
 _BQ_OPTIONS = {
     "task_id": _IDENTIFIER,
-    "sql": _SQL_PATH,
-    "use_legacy_sql": False,
+    "configuration": {
+        "query": {
+            "query": _SQL_PATH,
+            "useLegacySql": False,
+        },
+        "labels": _BQ_LABELS
+    },
     "retries": execution_retry_count,
-    "retry_delay": retry_delay_sec
+    "retry_delay": retry_delay_sec,
+    "gcp_conn_id": "meta_cdc_bq"
 }
 
-if AIRFLOW_VERSION.startswith("1."):
-    with DAG(**_DAG_OPTIONS, schedule_interval="${load_frequency}") as dag:
+with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:
 
-        from airflow.operators.dummy_operator import DummyOperator
-
-        start_task = DummyOperator(**_START_TASK_OPTIONS)
-        extract_data = BigQueryOperator(**_BQ_OPTIONS,
-                                        bigquery_conn_id="meta_cdc_bq")
-        stop_task = DummyOperator(task_id="stop")
-else:
-    with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:
-
-        from airflow.operators.empty import EmptyOperator
-
-        start_task = EmptyOperator(**_START_TASK_OPTIONS)
-        extract_data = BigQueryOperator(**_BQ_OPTIONS,
-                                        gcp_conn_id="meta_cdc_bq")
-        stop_task = EmptyOperator(task_id="stop")
+    start_task = EmptyOperator(**_START_TASK_OPTIONS)
+    extract_data = BigQueryInsertJobOperator(**_BQ_OPTIONS)
+    stop_task = EmptyOperator(task_id="stop")
 
 start_task >> extract_data >> stop_task  # pylint: disable=pointless-statement

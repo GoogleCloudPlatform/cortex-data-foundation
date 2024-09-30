@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SlowMovingThreshold"
-description: "Slow Moving Threshold view for inventory."
+description: "This view contains the user-defined threshold for slow moving material categories. The granularity is Client(System) and material type"
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -9,8 +9,8 @@ catalog_tags:
         value: "Procurement"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "MaterialType_MTART"
-    description: "Material Type"
+    description: "Material Type, PK"
   - name: "ThresholdValue"
-    description: "Threshold Value"
+    description: "User-defined Slow Moving Inventory threshold. Goods with less inventory turnover than this threshold will be marked as slow moving goods"

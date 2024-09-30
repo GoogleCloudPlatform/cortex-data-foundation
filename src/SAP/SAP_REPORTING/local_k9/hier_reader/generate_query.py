@@ -23,12 +23,14 @@ from google.cloud.exceptions import NotFound
 from google.cloud import bigquery
 from google.cloud import storage
 
+from common.py_libs import cortex_bq_client
+
 _HIER_DAG_PYTHON_TEMPLATE = ('local_k9/hier_reader/template_dag'
                              '/dag_sql_hierarchies.py')
 
 _GENERATED_DAG_DIR = 'generated_dag'
 
-client = bigquery.Client()
+client = cortex_bq_client.CortexBQClient()
 storage_client = storage.Client()
 
 

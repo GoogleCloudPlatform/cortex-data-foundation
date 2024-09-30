@@ -9,4 +9,4 @@ pyyaml==6.0.*
 yapf==0.40.*
 yq==3.2.*
 setuptools>=66.0.0
-requests==2.31.*
+requests>=2.32.*

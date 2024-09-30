@@ -1,0 +1,14 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.SalesRepMD"
+description: "Dimension table containing sales representative attributes."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "SALESREP_ID"
+    description: "Primary key component identifying the sales representative"
+  - name: "BUSINESS_UNIT_ID"
+    description: "Primary key component identifying the business unit of the sales representative"
+  - name: "NAME"
+    description: "Sales representative name"

@@ -25,7 +25,10 @@ bq_independent_objects:
 
   - sql_file: CurrencyConversion.sql
     description: "Exchange Rate for Currency Conversion"
-    type: view
+    type: table
+    table_setting:
+      cluster_details: { columns: ["ToCurrency_TCURR"] }
+      load_frequency: "@daily"
 
   - sql_file: fiscal_date_dim.sql
     type: table
@@ -92,6 +95,7 @@ bq_independent_objects:
     type: table
     table_setting:
       load_frequency: "@monthly"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: CompaniesMD.sql
     description: "Company Master Data"
@@ -130,6 +134,7 @@ bq_independent_objects:
     type: table
     table_setting:
       load_frequency: "@yearly"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: StorageLocationsMD.sql
     description: "StorageLocations Text"
@@ -178,6 +183,7 @@ bq_independent_objects:
     type: table
     table_setting:
       load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: Languages_T002.sql
     description: "Languages (T002)"
@@ -190,6 +196,7 @@ bq_independent_objects:
     type: table
     table_setting:
       load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: MaterialTypesMD.sql
     description: "Material Types and texts"
@@ -232,7 +239,7 @@ bq_independent_objects:
     type: table
     table_setting:
       load_frequency: "@yearly"
-
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: UoMMD.sql
     description: "Unit Of Measure master data"
@@ -249,6 +256,7 @@ bq_independent_objects:
     type: table
     table_setting:
       load_frequency: "@yearly"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: PurchaseDocumentTypesMD.sql
     description: "Purchase Document Types Text"
@@ -320,10 +328,6 @@ bq_independent_objects:
     table_setting:
       load_frequency: "@daily"
 
-  - sql_file: StockCharacteristicsConfig.sql
-    description: "Stock Characteristics Config"
-    type: script
-
   - sql_file: StockInHand.sql
     description: "Stock In Hand"
     type: table
@@ -333,6 +337,7 @@ bq_independent_objects:
   - sql_file: OneTouchOrder.sql
     description: "One Touch Order Reporting"
     type: view
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: FSVTextsMD.sql
     description: "Text for FSV Hierarchy Node"
@@ -341,6 +346,7 @@ bq_independent_objects:
   - sql_file: UniversalLedgersMD.sql
     description: "Text for Universal Ledgers"
     type: view
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: CostCenterHierarchiesMD.sql
     description: "Text for Cost Center Hierarchy"
@@ -349,6 +355,18 @@ bq_independent_objects:
   - sql_file: ProfitCenterHierarchiesMD.sql
     description: "Text for Profit Center Hierarchy"
     type: view
+
+  - sql_file: SlowMovingThreshold.sql
+    description: "Slow Moving Threshold for Inventory"
+    type: table
+    table_setting:
+      load_frequency: "@once"
+
+  - sql_file: StockCharacteristicsConfig.sql
+    description: "Configurations for stock characteristics (blocked, restricted etc) and their associated movement types"
+    type: table
+    table_setting:
+      load_frequency: "@daily"
 
 bq_dependent_objects:
 
@@ -405,6 +423,7 @@ bq_dependent_objects:
     type: table
     table_setting:
       load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: POVendorConfirmation.sql
     description: "Purchase Order Confirmations from Vendor"
@@ -423,12 +442,14 @@ bq_dependent_objects:
     type: table
     table_setting:
       load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: SalesOrders_V2.sql
     description: "Sales Orders Header and Items"
     type: table
     table_setting:
       load_frequency: "*/10 * * * *"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: SDStatus_Items.sql
     description: "Sales Document Status (Sales Doc, Delivery, Billing)"
@@ -507,6 +528,7 @@ bq_dependent_objects:
     type: table
     table_setting:
       load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
 
   - sql_file: SalesOrderScheduleLine.sql
     description: "Sales Orders Schedule Line"
@@ -537,6 +559,24 @@ bq_dependent_objects:
     type: table
     table_setting:
       load_frequency: "@daily"
+
+  - sql_file: AggregateMonthlyInventory.sql
+    type: script
+
+  - sql_file: UpdateMonthlyInventoryAggregation.sql
+    type: script
+
+  - sql_file: UpdateStockMonthlySnapshots.sql
+    type: script
+
+  - sql_file: AggregateWeeklyInventory.sql
+    type: script
+
+  - sql_file: UpdateWeeklyInventoryAggregation.sql
+    type: script
+
+  - sql_file: UpdateStockWeeklySnapshots.sql
+    type: script
 
   - type: k9_dawg
     k9_id: inventory_snapshots
@@ -569,13 +609,13 @@ bq_dependent_objects:
     type: table
     table_setting:
       load_frequency: "@weekly" # Make sure it runs after StockMonthlySnapshots
-      cluster_details: {columns: ["CompanyCode_BUKRS", "FiscalYear"]}
+      cluster_details: {columns: ["CompanyCode_BUKRS", "FiscalYear", "TargetCurrency_TCURR"]}
 
   - sql_file: InventoryByPlant.sql
     type: table
     table_setting:
       load_frequency: "@daily" # Make sure it runs after StockWeeklySnapshots
-      cluster_details: {columns: ["CompanyCode_BUKRS", "FiscalYear"]}
+      cluster_details: {columns: ["CompanyCode_BUKRS", "FiscalYear", "TargetCurrency_TCURR"]}
 
 
   - sql_file: AccountsPayable.sql
@@ -587,16 +627,25 @@ bq_dependent_objects:
         partition_type: "time",
         time_grain: "day"
       }
-      cluster_details: {columns: ["CompanyCode_BUKRS", "FiscalYear_GJAHR", "DocFiscPeriod"]}
+      cluster_details: {columns: ["CompanyCode_BUKRS", "FiscalYear_GJAHR", "DocFiscPeriod", "TargetCurrency_TCURR"]}
 
   - sql_file: AccountsPayableTurnover.sql
-    type: view
+    type: table
+    table_setting:
+      cluster_details: {columns: ["TargetCurrency_TCURR"]}
+      load_frequency: "@daily"
 
   - sql_file: CashDiscountUtilization.sql
-    type: view
+    type: table
+    table_setting:
+      cluster_details: {columns: ["TargetCurrency_TCURR"]}
+      load_frequency: "@daily"
 
   - sql_file: DaysPayableOutstanding.sql
-    type: view
+    type: table
+    table_setting:
+      cluster_details: {columns: ["TargetCurrency_TCURR"]}
+      load_frequency: "@daily"
 
   - sql_file: VendorPerformance.sql
     type: table
@@ -607,7 +656,7 @@ bq_dependent_objects:
         partition_type: "time",
         time_grain: "day"
       }
-      cluster_details: {columns: ["Company_BUKRS", "FiscalYear"]}
+      cluster_details: {columns: ["Company_BUKRS", "FiscalYear", "TargetCurrency_TCURR"]}
 
   - sql_file: financial_statement.sql
     type: script
@@ -630,11 +679,29 @@ bq_dependent_objects:
     type: table
     table_setting:
       load_frequency: "@monthly" # Make sure it runs after FinancialStatement
-      cluster_details: { columns: ["CompanyCode", "FiscalYear", "FiscalPeriod"] }
+      cluster_details: { columns: ["CompanyCode", "FiscalYear", "FiscalPeriod", "TargetCurrency_TCURR"] }
 
   - sql_file: ProfitAndLoss.sql
     description: "Profit And Loss"
     type: table
     table_setting:
       load_frequency: "@monthly" # Make sure it runs after FinancialStatement
-      cluster_details: { columns: ["CompanyCode", "FiscalYear", "FiscalPeriod"] }
+      cluster_details: { columns: ["CompanyCode", "FiscalYear", "FiscalPeriod", "TargetCurrency_TCURR"] }
+
+  - sql_file: FSVHierarchyFlattened.sql
+    description: "FSV Flattened Hierarchy With Hierarchy Texts"
+    type: table
+    table_setting:
+      load_frequency: "@monthly"
+
+  - sql_file: CostCenterHierarchyFlattened.sql
+    description: "Cost Center Flattened Hierarchy With Hierarchy Texts"
+    type: table
+    table_setting:
+      load_frequency: "@monthly"
+
+  - sql_file: ProfitCenterHierarchyFlattened.sql
+    description: "Profit Center Flattened Hierarchy With Hierarchy Texts"
+    type: table
+    table_setting:
+      load_frequency: "@monthly"

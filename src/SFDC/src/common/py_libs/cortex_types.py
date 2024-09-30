@@ -19,6 +19,7 @@ import enum
 
 @enum.unique
 class Workload(enum.Enum):
+    """Defines the workloads supported by Cortex."""
     UNKNOWN = enum.auto()
     SAP_ECC = enum.auto()
     SAP_S4 = enum.auto()
@@ -28,6 +29,9 @@ class Workload(enum.Enum):
     MARKETING_TIKTOK = enum.auto()
     MARKETING_META = enum.auto()
     MARKETING_SFMC = enum.auto()
+    MARKETING_DV360 = enum.auto()
+    MARKETING_GA4 = enum.auto()
+    ORACLE_EBS = enum.auto()
 
 class DataLayer(enum.Enum):
     UNKNOWN = enum.auto()

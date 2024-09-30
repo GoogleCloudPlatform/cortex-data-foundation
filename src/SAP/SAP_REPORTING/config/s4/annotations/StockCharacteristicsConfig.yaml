@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.StockCharacteristicsConfig"
-description: "Stock Characteristic configuraton view."
+description: "This view stores the configurations for various stock characteristics (blocked, restricted etc) and their associated movement types. The granularity is at Client(System), stock characteristic type and Special Stock Indicator"
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -9,10 +9,10 @@ catalog_tags:
         value: "Inventory Management"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "StockCharacteristic_BSTAUS_SG"
-    description: "Stock Characteristic"
+    description: "Stock Characteristic Type, PK"
   - name: "SpecialStockIndicator_SOBKZ"
-    description: "Special Stock Indicator"
+    description: "Special Stock Indicator, PK"
   - name: "StockCharacteristic"
-    description: "Stock Characteristic"
+    description: "The characteristics/categories of Inventory the materials are moving into/out of"

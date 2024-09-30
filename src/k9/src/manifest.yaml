@@ -26,7 +26,7 @@ dawgs:
   #
   #   workload_dependencies: (only if stage is "post") workloads that must be deployed with this k9,
   #                          separated with comma:
-  #                           SAP, SFDC, marketing, CM360, GoogleAds, TikTok, LiveRamp, Meta, SFMC.
+  #                           SAP, SFDC, marketing, CM360, GoogleAds, TikTok, LiveRamp, Meta, SFMC, GA4.
   #                          If one or more of listed workloads are not deployed,
   #                           this k9 will be skipped.
   #
@@ -50,6 +50,10 @@ dawgs:
     reporting_settings: reporting/holidays_reporting.yaml
     test_data: holiday_calendar
     stage: pre
+  - id: country_dim
+    path: country_dim
+    reporting_settings: reporting/country_dim_reporting.yaml
+    stage: pre
   - id: weather
     path: weather
     reporting_settings: reporting/weather_reporting.yaml
@@ -61,6 +65,7 @@ dawgs:
     entry_point: deploy_catgap.sh
     stage: post
     workload_dependencies: SAP
+    build_params: True
   - id: sustainability
     path: sustainability
     reporting_settings: reporting/sustainability_reporting.yaml

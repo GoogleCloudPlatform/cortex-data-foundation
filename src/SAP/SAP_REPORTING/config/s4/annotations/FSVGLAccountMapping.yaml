@@ -1,0 +1,7 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FSVGLAccountMapping"
+description: "This procedure creates/updates the G/L account to ancestor node mapping (fsv_glaccounts) table."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Finance"

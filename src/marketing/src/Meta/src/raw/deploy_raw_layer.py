@@ -17,27 +17,27 @@ to BigQuery RAW dataset.
 """
 
 import argparse
-import datetime
+from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import shutil
 import sys
 from typing import Any, Dict
 
-from google.cloud.bigquery import Client
-from google.cloud.bigquery import Table
-
+from common.py_libs import cortex_bq_client
+from common.py_libs.bq_helper import create_table_from_schema
 from common.py_libs.bq_helper import table_exists
-from common.py_libs.bq_materializer import add_cluster_to_table_def
-from common.py_libs.bq_materializer import add_partition_to_table_def
 from common.py_libs.dag_generator import generate_file_from_template
+from common.py_libs.schema_reader import read_bq_schema
 from src.constants import PROJECT_REGION
 from src.constants import RAW_DATASET
 from src.constants import RAW_PROJECT
 from src.constants import SCHEMA_DIR
+from src.constants import SCHEMA_TARGET_FIELD
 from src.constants import SETTINGS
 from src.constants import SETTINGS_FILE
-from src.py_libs.utils import read_raw_bq_schema
+from src.constants import SYSTEM_FIELDS
 from src.raw.constants import DAG_TEMPLATE_FILE
 from src.raw.constants import DEPENDENCIES_INPUT_DIR
 from src.raw.constants import DEPENDENCIES_OUTPUT_DIR
@@ -45,7 +45,6 @@ from src.raw.constants import OUTPUT_DIR_FOR_RAW
 from src.raw.constants import REQUESTS_DIR
 from src.raw.constants import REQUESTS_OUTPUT_DIR
 from src.raw.constants import SCHEMAS_OUTPUT_DIR
-
 
 def _parse_args(args) -> Dict[str, Any]:
     parser = argparse.ArgumentParser()
@@ -94,7 +93,7 @@ def main():
                     dst=REQUESTS_OUTPUT_DIR,
                     dirs_exist_ok=True)
 
-    bq_client = Client(project=RAW_PROJECT)
+    bq_client = cortex_bq_client.CortexBQClient(project=RAW_PROJECT)
 
     raw_layer_settings = SETTINGS.get("source_to_raw_tables")
     for raw_table_settings in raw_layer_settings:
@@ -137,23 +136,22 @@ def main():
         else:
             logging.info("Creating table %s...", table_name)
 
-            schema = read_raw_bq_schema(table_mapping_path)
+            schema = read_bq_schema(mapping_file=table_mapping_path,
+                                    schema_target_field=SCHEMA_TARGET_FIELD,
+                                    system_fields=SYSTEM_FIELDS,
+                                    schema_bq_datatype_field=None)
 
-            table = Table(full_table_name, schema=schema)
-
-            if partition_details:
-                table = add_partition_to_table_def(table, partition_details)
-
-            if cluster_details:
-                table = add_cluster_to_table_def(table, cluster_details)
-
-            bq_client.create_table(table)
+            create_table_from_schema(bq_client=bq_client,
+                         full_table_name=full_table_name,
+                         schema=schema,
+                         partition_details=partition_details,
+                         cluster_details=cluster_details)
 
             logging.info("Table %s processed successfully.", table_name)
 
         logging.info("Generating DAG Python file for %s", table_name)
 
-        now_date = datetime.datetime.utcnow().date()
+        dag_start_date = datetime.now(timezone.utc).date()
         pipeline_setup_file = Path(DEPENDENCIES_OUTPUT_DIR.stem, "setup.py")
 
         subs = {
@@ -166,7 +164,7 @@ def main():
             "object_id_column": object_id_column or "",
             "breakdowns": breakdowns or "",
             "action_breakdowns": action_breakdowns or "",
-            "start_date": now_date,
+            "start_date": dag_start_date,
             "schemas_dir": SCHEMAS_OUTPUT_DIR.stem,
             "requests_dir": REQUESTS_OUTPUT_DIR.stem,
             "pipeline_staging_bucket": args["pipeline_staging_bucket"],

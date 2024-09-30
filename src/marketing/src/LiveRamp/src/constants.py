@@ -30,8 +30,8 @@ DATASET = _SOURCE_CONFIG["datasets"]["cdc"]
 
 PROJECT_LOCATION = _PROJECT_CONFIG["location"]
 
-DAG_TEMPLATE_DIR = Path(_CURRENT_DIR, "templates")
-DAG_TEMPLATE_FILE = Path(DAG_TEMPLATE_DIR, "source_to_bq_dag_py_template.py")
+_DAG_TEMPLATE_DIR = Path(_CURRENT_DIR, "templates")
+DAG_TEMPLATE_FILE = Path(_DAG_TEMPLATE_DIR, "source_to_bq_dag_py_template.py")
 
 _DDLS_DIR = Path(_CURRENT_DIR, "ddls")
 _SQL_RAMPID_LOOKUP_INPUT = Path(_DDLS_DIR, "rampid_lookup_input.sql")
@@ -48,7 +48,6 @@ OUTPUT_DIR = Path(_CURRENT_DIR.parent, "_generated_dags")
 DEPENDENCIES_OUTPUT_DIR = Path(OUTPUT_DIR, "pipelines")
 
 __all__ = [
-    "PROJECT", "DATASET", "PROJECT_LOCATION", "DAG_TEMPLATE_DIR",
-    "DEPENDENCIES_INPUT_DIR", "OUTPUT_DIR", "DEPENDENCIES_OUTPUT_DIR",
-    "DDL_SQL_FILES"
+    "PROJECT", "DATASET", "PROJECT_LOCATION", "DEPENDENCIES_INPUT_DIR",
+    "OUTPUT_DIR", "DEPENDENCIES_OUTPUT_DIR", "DDL_SQL_FILES"
 ]

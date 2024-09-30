@@ -18,25 +18,28 @@ Salesforce Marketing Cloud to BigQuery RAW dataset.
 """
 
 import argparse
-import datetime
+from datetime import datetime
+from datetime import timezone
 import logging
 from pathlib import Path
 import shutil
 import sys
 from typing import Any, Dict
 
-from google.cloud.bigquery import Client
-
+from common.py_libs import cortex_bq_client
 from common.py_libs.bq_helper import table_exists
+from common.py_libs.bq_helper import create_table_from_schema
 from common.py_libs.dag_generator import generate_file_from_template
+from common.py_libs.schema_reader import read_bq_schema
+
 from src.constants import FILE_TRANSFER_BUCKET
 from src.constants import PROJECT_REGION
 from src.constants import RAW_DATASET
 from src.constants import RAW_PROJECT
 from src.constants import SCHEMA_DIR
+from src.constants import SCHEMA_TARGET_FIELD
 from src.constants import SETTINGS
-from src.py_libs.utils import create_bq_schema
-from src.py_libs.utils import create_table
+from src.constants import SYSTEM_FIELDS
 from src.py_libs.utils import repr_schema
 from src.raw.constants import DAG_TEMPLATE_PATH
 from src.raw.constants import DEPENDENCIES_INPUT_DIR
@@ -91,7 +94,7 @@ def main():
 
     raw_layer_settings = SETTINGS.get("source_to_raw_tables")
 
-    client = Client(project=RAW_PROJECT)
+    client = cortex_bq_client.CortexBQClient(project=RAW_PROJECT)
 
     for raw_table_settings in raw_layer_settings:
 
@@ -123,25 +126,25 @@ def main():
         else:
             logging.info("Creating schema...")
 
-            schema = create_bq_schema(table_mapping_path, "raw")
+            schema = read_bq_schema(mapping_file=table_mapping_path,
+                                    schema_target_field=SCHEMA_TARGET_FIELD,
+                                    system_fields=SYSTEM_FIELDS)
 
             logging.debug("RAW Table schema: %s\n", repr_schema(schema))
             logging.info("Creating RAW table...")
 
-            create_table(client=client,
-                        schema=schema,
-                        project=RAW_PROJECT,
-                        dataset=RAW_DATASET,
-                        table_name=table_name,
-                        partition_details=partition_details,
-                        cluster_details=cluster_details)
+            create_table_from_schema(bq_client=client,
+                                     full_table_name=full_table_name,
+                                     schema=schema,
+                                     partition_details=partition_details,
+                                     cluster_details=cluster_details)
 
             logging.info("Table %s is created successfully.", table_name)
 
         # DAG Python file generation
         logging.info("Generating DAG Python file for %s", table_name)
 
-        now_date = datetime.datetime.utcnow().date()
+        dag_start_date = datetime.now(timezone.utc).date()
         pipeline_setup_file = Path(DEPENDENCIES_OUTPUT_DIR.stem, "setup.py")
         pipeline_file = Path(DEPENDENCIES_OUTPUT_DIR.stem,
                              "source_to_raw_pipeline.py")
@@ -151,7 +154,7 @@ def main():
             "raw_dataset": RAW_DATASET,
             "table_name": table_name,
             "load_frequency": load_frequency,
-            "start_date": now_date,
+            "start_date": dag_start_date,
             "pipeline_file": str(pipeline_file),
             "pipeline_setup": str(pipeline_setup_file),
             "pipeline_staging_bucket": args["pipeline_staging_bucket"],

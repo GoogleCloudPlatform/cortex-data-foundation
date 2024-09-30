@@ -1,0 +1,20 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.InvoiceLineLedger"
+description: "Base fact view of invoice line ledger entries."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Facts"
+fields:
+  - name: "INVOICE_LINE_LEGER_ID"
+    description: "Primary key indicating the invoice line ledger"
+  - name: "INVOICE_LINE_ID"
+    description: "Foreign key identifying the invoice line"
+  - name: "LEDGER_ID"
+    description: "Foreign key identifying the ledger (set of books)"
+  - name: "LEDGER_DATE"
+    description: "Date when the invoice line applied to the ledger"
+  - name: "CREATION_TS"
+    description: "Timestamp when the record was created in the source system"
+  - name: "LAST_UPDATE_TS"
+    description: "Timestamp when the record was last updated in the source system"

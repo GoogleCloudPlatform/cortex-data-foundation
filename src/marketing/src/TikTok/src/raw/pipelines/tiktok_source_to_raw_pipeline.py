@@ -18,7 +18,7 @@ It calls TikTok reporting API.
 Data time range is based on current day and sampling period (days).
 Result is loaded in the provided Bigquery table.
 """
-import argparse
+
 from datetime import date
 from datetime import datetime
 from datetime import timezone
@@ -58,19 +58,24 @@ class TikTokRawLayerOptions(PipelineOptions):
                             required=True,
                             type=str,
                             help="Target BQ table name.")
+        parser.add_argument("--pipeline_logging_level",
+                            required=True,
+                            type=str,
+                            help="Logging level of pipeline.")
 
 
-def run(argv=None):
-    _ = argparse.ArgumentParser()
+def run():
+    args = PipelineOptions().view_as(TikTokRawLayerOptions)
 
-    pipeline_options = PipelineOptions(argv)
-    user_options = pipeline_options.view_as(TikTokRawLayerOptions)
+    target_project = args.tgt_project
+    target_dataset = args.tgt_dataset
+    target_table = args.tgt_table
 
-    target_project = user_options.tgt_project
-    target_dataset = user_options.tgt_dataset
-    target_table = user_options.tgt_table
+    mapping_file = args.mapping_file
 
-    mapping_file = user_options.mapping_file
+    logger = logging.getLogger(__name__)
+    level = getattr(logging, args.pipeline_logging_level)
+    logger.setLevel(level)
 
     now = datetime.now(tz=timezone.utc).timestamp()
     today = date.today()
@@ -100,12 +105,12 @@ def run(argv=None):
 
     report_query = {**REPORT_QUERIES[target_table], **report_time_range}
 
-    logging.info("Report query: %s", report_query)
+    logger.info("Report query: %s", report_query)
 
     # BigQuery schema creation.
     bq_schema = create_bq_schema(mapping_file=mapping_file)
 
-    logging.debug("BigQuery schema: %s", bq_schema)
+    logger.debug("BigQuery schema: %s", bq_schema)
 
     column_mapping = create_column_mapping(path_to_mapping=mapping_file)
 
@@ -113,7 +118,7 @@ def run(argv=None):
     advertisers = tiktok_client.get_advertisers()
 
     # yapf: disable
-    pipeline = beam.Pipeline(options=pipeline_options)
+    pipeline = beam.Pipeline(options=args)
 
     advertisers_info = (
                         pipeline
@@ -145,5 +150,4 @@ def run(argv=None):
 
 # yapf: enable
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
     run()

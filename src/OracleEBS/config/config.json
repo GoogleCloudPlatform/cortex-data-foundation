@@ -1,0 +1,33 @@
+{
+    "testData": true,
+    "deployOracleEBS": true,
+    "deployDataMesh": true,
+    "turboMode": true,
+    "projectIdSource": "",
+    "projectIdTarget": "",
+    "targetBucket": "",
+    "location": "US",
+    "testDataProject": "kittycorn-public",
+    "k9": {
+        "datasets": {
+            "processing": "K9_PROCESSING",
+            "reporting": "K9_REPORTING"
+        }
+    },
+    "DataMesh": {
+        "deployDescriptions": true,
+        "deployLakes": false,
+        "deployCatalog": false,
+        "deployACLs": false
+    },
+    "OracleEBS": {
+        "itemCategorySetIds": [],
+        "currencyConversionType": "Corporate",
+        "currencyConversionTargets": ["USD"],
+        "languages": ["US"],
+        "datasets": {
+            "cdc": "",
+            "reporting": "REPORTING_OracleEBS"
+        }
+    }
+}

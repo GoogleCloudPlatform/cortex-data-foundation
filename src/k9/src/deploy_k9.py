@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import yaml
 
 from google.cloud import bigquery
 
+from common.py_libs import bq_helper
 from common.py_libs import configs
+from common.py_libs import cortex_bq_client
 from common.py_libs import k9_deployer
 
 _DEFAULT_CONFIG = "config/config.json"  # data foundation config
@@ -33,12 +35,16 @@ _K9_MANIFEST = "manifest.yaml"
 
 
 def _create_dataset(full_dataset_name: str, location: str,
-                    bq_client: bigquery.Client) -> None:
+                    bq_client: bigquery.Client,
+                    label_dataset: bool = False) -> None:
     """Creates target (CDC/Reporting etc.) BQ target dataset if needed."""
     logging.info("Creating '%s' dataset if needed...", full_dataset_name)
     ds = bigquery.Dataset(full_dataset_name)
     ds.location = location
     ds = bq_client.create_dataset(ds, exists_ok=True, timeout=30)
+
+    if label_dataset:
+        bq_helper.label_dataset(bq_client=bq_client,dataset=ds)
 
 def _load_k9s_settings(settings_file: str) -> dict:
     with open(settings_file, encoding="utf-8") as settings_fp:
@@ -92,6 +98,14 @@ def _should_skip_k9(k9_manifest: dict,
             skip_this = skip_this or (
                 not config["deployMarketing"] or
                 not config["marketing"]["deploySFMC"])
+        elif dep == "dv360":
+            skip_this = skip_this or (
+                not config["deployMarketing"] or
+                not config["marketing"]["deployDV360"])
+        elif dep == "ga4":
+            skip_this = skip_this or (
+                not config["deployMarketing"] or
+                not config["marketing"]["deployGA4"])
         else:
             raise ValueError(f"Invalid workload dependency {dep}")
 
@@ -129,6 +143,9 @@ def main(args: typing.Sequence[str]) -> int:
         default=False,
         required=False,
     )
+    parser.add_argument("--worker-pool-name", required=False)
+    parser.add_argument("--region", required=False)
+    parser.add_argument("--build-account", required=False)
     params = parser.parse_args(args)
 
     logging.basicConfig(
@@ -156,11 +173,16 @@ def main(args: typing.Sequence[str]) -> int:
     processing_dataset = config["k9"]["datasets"]["processing"]
     reporting_dataset = config["k9"]["datasets"]["reporting"]
 
-    bq_client = bigquery.Client(source_project, location=location)
+    # Check if telemetry is allowed, default to True
+    allow_telemetry = config.get("allowTelemetry", True)
+
+    bq_client = cortex_bq_client.CortexBQClient(source_project,
+                                                location=location)
     _create_dataset(f"{source_project}.{processing_dataset}", location,
-                    bq_client)
+                    bq_client, label_dataset=allow_telemetry)
+
     _create_dataset(f"{target_project}.{reporting_dataset}", location,
-                    bq_client)
+                    bq_client, label_dataset=allow_telemetry)
 
     # Validate all K9 config before deploying.
     k9s_to_deploy = []
@@ -195,7 +217,10 @@ def main(args: typing.Sequence[str]) -> int:
     for (k9_definition, k9_setting) in k9s_to_deploy:
         k9_deployer.deploy_k9(k9_definition, k9_root_path,
                               config_file, logs_bucket,
-                              extra_settings=k9_setting)
+                              extra_settings=k9_setting,
+                              worker_pool_name=params.worker_pool_name,
+                              region=params.region,
+                              build_account=params.build_account)
 
     logging.info(("==== 🦄🐕 Deploying K9 stage "
                   "`%s` is done! 🐕🦄 ====\n"), stage)

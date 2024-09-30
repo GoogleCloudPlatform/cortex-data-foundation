@@ -3,16 +3,18 @@ steps:
     script: |
       #!/usr/bin/env bash
       ./pipeline/view.sh \
-        --source-project ${_PJID_SRC} \
-        --target-project ${_PJID_TGT} \
-        --raw-landing-dataset ${_DS_RAW} \
-        --cdc-processed-dataset ${_DS_CDC} \
-        --target-reporting-dataset ${_DS_REPORTING} \
-        --target-models-dataset ${_DS_MODELS} \
-        --location ${_LOCATION} \
-        --mandt ${_MANDT} \
-        --sql-flavour ${_SQL_FLAVOUR} \
-          ${_SQL_FILE}
+        --source-project "${_PJID_SRC}" \
+        --target-project "${_PJID_TGT}" \
+        --raw-landing-dataset "${_DS_RAW}" \
+        --cdc-processed-dataset "${_DS_CDC}" \
+        --target-reporting-dataset "${_DS_REPORTING}" \
+        --target-models-dataset "${_DS_MODELS}" \
+        --location "${_LOCATION}" \
+        --mandt "${_MANDT}" \
+        --sql-flavour "${_SQL_FLAVOUR}" \
+          "${_SQL_FILE}"
+logsBucket: "gs://${_GCS_BUCKET}"
+serviceAccount: "${_BUILD_ACCOUNT}"
 timeout: 1200s
 substitutions:
   _SQL_FILE: none
@@ -23,3 +25,5 @@ substitutions:
 options:
   substitution_option: "ALLOW_LOOSE"
   automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"

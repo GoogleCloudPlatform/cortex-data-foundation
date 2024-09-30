@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.LookupValueMD"
+description: "Dimension table containing lookup values for various codes."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "LOOKUP_TYPE"
+    description: "QuickCode lookup type"
+  - name: "LOOKUP_CODE"
+    description: "QuickCode code"
+  - name: "LANGUAGE"
+    description: "Language of the lookup value"
+  - name: "MEANING"
+    description: "QuickCode meaning"
+  - name: "DESCRIPTION"
+    description: "QuickCode description"

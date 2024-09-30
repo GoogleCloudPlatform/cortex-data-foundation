@@ -231,7 +231,7 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS
 --     ON mseg.MANDT = currency_conversion.MANDT
 --       AND mseg.WAERS = currency_conversion.FCURR
 --       AND mseg.BUDAT_MKPF = currency_conversion.conv_date
---       AND currency_conversion.TCURR {{ currency }}
+--       AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
 --##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
 --       AND currency_conversion.KURST = 'M'
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDim_BUDAT_MKPF

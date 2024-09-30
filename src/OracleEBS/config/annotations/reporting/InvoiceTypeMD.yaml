@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ oracle_ebs_datasets_reporting }}.InvoiceTypeMD"
+description: "Dimension table containing invoice type attributes."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "INVOICE_TYPE_ID"
+    description: "Primary key component identifying the invoice type"
+  - name: "BUSINESS_UNIT_ID"
+    description: "Primary key component identifying the business unit"
+  - name: "TYPE"
+    description: "Invoice type including: INV - Invoice, CM - Credit Memo, DM - Debit Memo, DEP - Deposit, GUAR - Guarantee"
+  - name: "NAME"
+    description: "Invoice type name"

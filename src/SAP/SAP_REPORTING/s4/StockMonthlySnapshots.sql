@@ -4,7 +4,7 @@ WITH
   LanguageKey AS (
     SELECT LanguageKey_SPRAS
     FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Languages_T002`
-    WHERE LanguageKey_SPRAS {{ language }}
+    WHERE LanguageKey_SPRAS IN UNNEST({{ sap_languages }})
   ),
 
   StockMonthlySnapshots AS (
@@ -29,32 +29,15 @@ WITH
       CompaniesMD.CompanyText_BUTXT,
       PlantsMD.CountryKey_LAND1,
       StockCharacteristicsConfig.StockCharacteristic,
-      CASE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Period`(
-        StockMonthlySnapshots.MANDT,
-        CompaniesMD.FiscalyearVariant_PERIV,
-        StockMonthlySnapshots.Month_End_Date)
-        WHEN 'CASE1' THEN
-          `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case1`(
-            StockMonthlySnapshots.MANDT,
-            CompaniesMD.FiscalyearVariant_PERIV,
-            StockMonthlySnapshots.Month_End_Date)
-        WHEN 'CASE2' THEN
-          `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case2`(
-            StockMonthlySnapshots.MANDT,
-            CompaniesMD.FiscalyearVariant_PERIV,
-            StockMonthlySnapshots.Month_End_Date)
-        WHEN 'CASE3' THEN
-          `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Fiscal_Case3`(
-            StockMonthlySnapshots.MANDT,
-            CompaniesMD.FiscalyearVariant_PERIV,
-            StockMonthlySnapshots.Month_End_Date)
-      END AS FiscalYearMonth,
+      FiscalDateDimension_MONTHENDDATE.FiscalYear,
+      FiscalDateDimension_MONTHENDDATE.FiscalPeriod,
       StockMonthlySnapshots.cal_year AS CalYear,
       StockMonthlySnapshots.cal_month AS CalMonth,
       StockMonthlySnapshots.Month_End_Date AS MonthEndDate,
       StockMonthlySnapshots.quantity_monthly_cumulative AS QuantityMonthlyCumulative,
       StockMonthlySnapshots.MEINS AS BaseUnitOfMeasure_MEINS,
-      COALESCE(StockMonthlySnapshots.amount_monthly_cumulative * currency_decimal.CURRFIX,
+      COALESCE(
+        StockMonthlySnapshots.amount_monthly_cumulative * currency_decimal.CURRFIX,
         StockMonthlySnapshots.amount_monthly_cumulative
       ) AS AmountMonthlyCumulative,
       StockMonthlySnapshots.WAERS AS CurrencyKey_WAERS,
@@ -63,28 +46,40 @@ WITH
       -- Quantity Issued To Delivery
       --601 - Goods issued : Delivery
       --602 - Goods issued : Reversal
-      IF(StockMonthlySnapshots.BWART IN ('601', '602'),
+      IF(
+        StockMonthlySnapshots.BWART IN ('601', '602'),
         (StockMonthlySnapshots.total_monthly_movement_quantity * -1),
-        0) AS QuantityIssuedToDelivery,
+        0
+      ) AS QuantityIssuedToDelivery,
 
       -- Stock On Hand
-      IF(StockCharacteristicsConfig.StockCharacteristic = 'Unrestricted',
+      IF(
+        StockCharacteristicsConfig.StockCharacteristic = 'Unrestricted',
         StockMonthlySnapshots.quantity_monthly_cumulative,
-        0) AS StockOnHand,
+        0
+      ) AS StockOnHand,
 
       -- Stock On Hand Value
-      IF(StockCharacteristicsConfig.StockCharacteristic = 'Unrestricted',
-        COALESCE(StockMonthlySnapshots.amount_monthly_cumulative * currency_decimal.CURRFIX,
-          StockMonthlySnapshots.amount_monthly_cumulative),
-        0) AS StockOnHandValue,
+      IF(
+        StockCharacteristicsConfig.StockCharacteristic = 'Unrestricted',
+        COALESCE(
+          StockMonthlySnapshots.amount_monthly_cumulative * currency_decimal.CURRFIX,
+          StockMonthlySnapshots.amount_monthly_cumulative
+        ),
+        0
+      ) AS StockOnHandValue,
 
       -- Total Consumption Quantity
       --261- Goods issued for order
       --262- Goods issued Reversal
-      IF(MaterialsMD.MaterialType_MTART IN ('FERT', 'HALB') AND StockMonthlySnapshots.BWART IN('601', '602'),
+      IF(
+        MaterialsMD.MaterialType_MTART IN ('FERT', 'HALB') AND StockMonthlySnapshots.BWART IN ('601', '602'),
         (StockMonthlySnapshots.total_monthly_movement_quantity * -1),
-        IF(MaterialsMD.MaterialType_MTART IN ('ROH', 'HIBE') AND StockMonthlySnapshots.BWART IN('261', '262'),
-          (StockMonthlySnapshots.total_monthly_movement_quantity * -1), 0)
+        IF(
+          MaterialsMD.MaterialType_MTART IN ('ROH', 'HIBE') AND StockMonthlySnapshots.BWART IN ('261', '262'),
+          (StockMonthlySnapshots.total_monthly_movement_quantity * -1),
+          0
+        )
       ) AS TotalConsumptionQuantity
     FROM
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.stock_monthly_snapshots` AS StockMonthlySnapshots
@@ -108,6 +103,12 @@ WITH
       ON
         StockMonthlySnapshots.MANDT = CompaniesMD.Client_MANDT
         AND StockMonthlySnapshots.BUKRS = CompaniesMD.CompanyCode_BUKRS
+    LEFT JOIN
+      `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.fiscal_date_dim` AS FiscalDateDimension_MONTHENDDATE
+      ON
+        StockMonthlySnapshots.MANDT = FiscalDateDimension_MONTHENDDATE.MANDT
+        AND CompaniesMD.FiscalyearVariant_PERIV = FiscalDateDimension_MONTHENDDATE.PERIV
+        AND StockMonthlySnapshots.Month_End_Date = FiscalDateDimension_MONTHENDDATE.DATE
     LEFT JOIN
       `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PlantsMD` AS PlantsMD
       ON
@@ -156,14 +157,8 @@ SELECT
   StockMonthlySnapshots.BaseUnitOfMeasure_MEINS,
   StockMonthlySnapshots.StockCharacteristic,
   StockMonthlySnapshots.CurrencyKey_WAERS,
-  IF(
-    StockMonthlySnapshots.FiscalYearMonth IS NOT NULL,
-    SUBSTRING(StockMonthlySnapshots.FiscalYearMonth, 1, 4),
-    'DATA ISSUE') AS FiscalYear,
-  IF(
-    StockMonthlySnapshots.FiscalYearMonth IS NOT NULL,
-    SUBSTRING(StockMonthlySnapshots.FiscalYearMonth, 6, 2),
-    'DATA ISSUE') AS FiscalPeriod,
+  StockMonthlySnapshots.FiscalYear,
+  StockMonthlySnapshots.FiscalPeriod,
   StockMonthlySnapshots.CalYear,
   StockMonthlySnapshots.CalMonth,
   StockMonthlySnapshots.MonthEndDate,
@@ -193,7 +188,8 @@ GROUP BY
   StockMonthlySnapshots.CompanyText_BUTXT,
   StockMonthlySnapshots.CountryKey_LAND1,
   StockMonthlySnapshots.StockCharacteristic,
-  StockMonthlySnapshots.FiscalYearMonth,
+  StockMonthlySnapshots.FiscalYear,
+  StockMonthlySnapshots.FiscalPeriod,
   StockMonthlySnapshots.CalYear,
   StockMonthlySnapshots.CalMonth,
   StockMonthlySnapshots.MonthEndDate,

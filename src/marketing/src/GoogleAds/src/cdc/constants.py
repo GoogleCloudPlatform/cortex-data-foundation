@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ from pathlib import Path
 _current_dir = Path(__file__).resolve().parent
 
 # Template files
-DAG_TEMPLATE_DIR = Path(_current_dir, "templates")
-DAG_TEMPLATE_PATH = Path(DAG_TEMPLATE_DIR, "raw_to_cdc_dag_py_template.py")
-CDC_SQL_TEMPLATE_DIR = Path(DAG_TEMPLATE_DIR, "sql")
-CDC_SQL_TEMPLATE_PATH = Path(CDC_SQL_TEMPLATE_DIR,
+_DAG_TEMPLATE_DIR = Path(_current_dir, "templates")
+DAG_TEMPLATE_PATH = Path(_DAG_TEMPLATE_DIR, "raw_to_cdc_dag_py_template.py")
+CDC_SQL_TEMPLATE_PATH = Path(_DAG_TEMPLATE_DIR, "sql",
                              "raw_to_cdc_sql_template.sql")
 
 # Directories under which all the generated dag files and related files
@@ -32,7 +31,13 @@ _output_dir_for_airflow = Path(_current_dir.parent.parent, "_generated_dags")
 OUTPUT_DIR_FOR_CDC = Path(_output_dir_for_airflow, "cdc")
 CDC_SQL_SCRIPTS_OUTPUT_DIR = Path(OUTPUT_DIR_FOR_CDC, "cdc_sql_scripts")
 
+# DAG config file.
+_DAG_CONFIG_FILE = "config.ini"
+DAG_CONFIG_INI_INPUT_PATH = Path(_current_dir, _DAG_CONFIG_FILE)
+DAG_CONFIG_INI_OUTPUT_PATH = Path(OUTPUT_DIR_FOR_CDC, _DAG_CONFIG_FILE)
+
 __all__ = [
     "OUTPUT_DIR_FOR_CDC", "CDC_SQL_SCRIPTS_OUTPUT_DIR", "CDC_SQL_TEMPLATE_PATH",
-    "DAG_TEMPLATE_PATH"
+    "DAG_TEMPLATE_PATH", "DAG_CONFIG_INI_INPUT_PATH",
+    "DAG_CONFIG_INI_OUTPUT_PATH"
 ]

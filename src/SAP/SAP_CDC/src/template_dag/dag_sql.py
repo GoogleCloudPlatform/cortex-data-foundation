@@ -15,42 +15,42 @@
 # pylint: disable-all
 
 from __future__ import print_function
-from airflow.operators.dummy_operator import DummyOperator
 
+import ast
 from datetime import timedelta, datetime
 import airflow
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.version import version as AIRFLOW_VERSION
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.operators.empty import EmptyOperator
 
+# BigQuery Job Labels - converts generated string to dict
+# If string is empty, assigns empty dict
+_BQ_LABELS = ast.literal_eval("${runtime_labels_dict}" or "{}")
 
 default_dag_args = {
-   'depends_on_past': False,
-   'start_date': datetime(${year}, ${month}, ${day}),
-   'catchup': False,
-   'retries': 1,
-   'retry_delay': timedelta(minutes=30),
+    "depends_on_past": False,
+    "start_date": datetime(${year}, ${month}, ${day}),
+    "catchup": False,
+    "retries": 1,
+    "retry_delay": timedelta(minutes=30),
 }
 
-with airflow.DAG("CDC_BigQuery_${base_table}",
-                 template_searchpath=['/home/airflow/gcs/data/bq_data_replication/'],
+with airflow.DAG(dag_id="CDC_BigQuery_${base_table}",
+                 template_searchpath=["/home/airflow/gcs/data/bq_data_replication/"],
                  default_args=default_dag_args,
                  catchup=False,
                  max_active_runs=1,
                  schedule_interval="${load_frequency}") as dag:
-    start_task = DummyOperator(task_id="start")
-    if AIRFLOW_VERSION.startswith("1."):
-        copy_records = BigQueryOperator(
-            task_id='merge_query_records',
-            sql="${query_file}",
-            create_disposition='CREATE_IF_NEEDED',
-            bigquery_conn_id="sap_cdc_bq",
-            use_legacy_sql=False)
-    else:
-        copy_records = BigQueryOperator(
-            task_id='merge_query_records',
-            sql="${query_file}",
-            create_disposition='CREATE_IF_NEEDED',
-            gcp_conn_id="sap_cdc_bq",
-            use_legacy_sql=False)
-    stop_task = DummyOperator(task_id="stop")
-    start_task >> copy_records >> stop_task
+    start_task = EmptyOperator(task_id="start")
+    copy_records = BigQueryInsertJobOperator(
+        task_id="merge_query_records",
+        gcp_conn_id="sap_cdc_bq",
+        configuration={
+            "query": {
+                "query": "${query_file}",
+                "useLegacySql": False
+            },
+            "labels": _BQ_LABELS
+        }
+    )
+    stop_task = EmptyOperator(task_id="stop")
+    start_task >> copy_records >> stop_task # type: ignore
