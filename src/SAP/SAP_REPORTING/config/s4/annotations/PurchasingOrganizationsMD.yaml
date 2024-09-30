@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PurchasingOrganizationsMD"
+description: "Purchasing Organizations Text"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "PurchasingOrganization_EKORG"
+    description: "Purchasing Organization"
+  - name: "PurchasingOrganizationText_EKOTX"
+    description: "Purchasing Organization Text"
+  - name: "CompanyCode_BUKRS"
+    description: "Company Code"

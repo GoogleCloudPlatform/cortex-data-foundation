@@ -1,0 +1,22 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CurrenciesMD"
+description: "Currencies Master Data"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "CurrencyCode_WAERS"
+    description: "Currency"
+  - name: "CurrencyISO_ISOCD"
+    description: "ISO Code"
+  - name: "CurrencyDecimals_CURRDEC"
+    description: "Decimals"
+  - name: "Language"
+    description: "Language"
+  - name: "CurrShortText_KTEXT"
+    description: "Short text"
+  - name: "CurrLongText_LTEXT"
+    description: "Long Text"

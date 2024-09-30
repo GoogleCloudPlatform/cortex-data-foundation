@@ -1,0 +1,5 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tbdls"
+description: "Logical system"
+fields:
+  - name: "logsys"
+    description: "Logical system"

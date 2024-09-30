@@ -1,0 +1,18 @@
+# Lakes dataclass.
+project: {{ project_id_tgt }}
+lakes:
+  - display_name: "sap"
+    ## CORTEX-CUSTOMER: Update to specific region if deployment is multiregion.
+    region: "{{ location }}"
+    description: "Cortex SAP datasets"
+    labels:
+      - name: "sql_flavor"
+        value: "s4"
+    zones:
+      - display_name: "reporting-sap"
+        description: "Cortex SAP Reporting dataset"
+        zone_type: CURATED
+        location_type: MULTI_REGION
+        assets:
+          - display_name: "reporting-bq-dataset"
+            asset_name: "{{ dataset_reporting_tgt }}"

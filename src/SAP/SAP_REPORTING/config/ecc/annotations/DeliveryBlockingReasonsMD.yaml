@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DeliveryBlockingReasonsMD"
+description: "Deliveries: Blocking reasons texts"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "LanguageKey_SPRAS"
+    description: "Language Key"
+  - name: "DefaultDeliveryBlock_LIFSP"
+    description: "Delivery block"
+  - name: "DeliveryBlockReason_VTEXT"
+    description: "Delivery block desc."

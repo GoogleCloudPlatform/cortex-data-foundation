@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t161t"
+description: "Texts for Purchasing Document Types"
+fields:
+  - name: "batxt"
+    description: "Doc. Type Descript."
+  - name: "bsart"
+    description: "Purchasing Doc. Type"
+  - name: "bstyp"
+    description: "Purch. doc. category"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"

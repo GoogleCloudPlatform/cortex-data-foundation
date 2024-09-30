@@ -1,0 +1,14 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProductHierarchy_Flatten"
+description: "Product Hierarchy Flattener"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Utility"
+fields:
+  - name: "prodh1"
+    description: "prodh1"
+  - name: "prodh2"
+    description: "prodh2"
+  - name: "prodh3"
+    description: "prodh3"

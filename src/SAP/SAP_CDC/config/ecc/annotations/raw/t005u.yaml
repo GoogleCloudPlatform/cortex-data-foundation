@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t005u"
+description: "Taxes: Region Key: Texts"
+fields:
+  - name: "bezei"
+    description: "Description"
+  - name: "bland"
+    description: "Region"
+  - name: "land1"
+    description: "Country Key"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"

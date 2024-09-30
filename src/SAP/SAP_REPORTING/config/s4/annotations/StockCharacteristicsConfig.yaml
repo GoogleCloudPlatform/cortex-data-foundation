@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.StockCharacteristicsConfig"
+description: "Stock Characteristic configuraton view."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Supply Chain"
+      - display_name: "domain"
+        value: "Inventory Management"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "StockCharacteristic_BSTAUS_SG"
+    description: "Stock Characteristic"
+  - name: "SpecialStockIndicator_SOBKZ"
+    description: "Special Stock Indicator"
+  - name: "StockCharacteristic"
+    description: "Stock Characteristic"

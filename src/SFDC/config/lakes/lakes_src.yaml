@@ -1,0 +1,24 @@
+# Lakes dataclass.
+project: {{ project_id_src }}
+lakes:
+  - display_name: "sfdc"
+    ## CORTEX-CUSTOMER: Update to specific region if deployment is multiregion.
+    region: "{{ location }}"
+    description: "Cortex Salesforce datasets"
+    zones:
+      - display_name: "raw-sfdc"
+        description: "Cortex Salesforce Raw dataset"
+        zone_type: RAW
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "raw-bq-dataset"
+            asset_name: "{{ sfdc_datasets_raw }}"
+      - display_name: "cdc-sfdc"
+        description: "Cortex Salesforce CDC dataset"
+        zone_type: CURATED
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "cdc-bq-dataset"
+            asset_name: "{{ sfdc_datasets_cdc }}"

@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProductHierarchiesMD"
+description: "Product Hierarchies Master Data"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "Hierarchy_PRODH"
+    description: "Hierarchy"
+  - name: "Level_STUFE"
+    description: "Level"
+  - name: "Language_SPRAS"
+    description: "Language"
+  - name: "Description_VTEXT"
+    description: "Description"

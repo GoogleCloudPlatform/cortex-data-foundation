@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tstc"
+description: "SAP Transaction Codes"
+fields:
+  - name: "arbgb"
+    description: "Message class"
+  - name: "cinfo"
+  - name: "dypno"
+    description: "Dynpro No."
+  - name: "menue"
+  - name: "pgmna"
+    description: "Program"
+  - name: "tcode"
+    description: "Transaction Code"

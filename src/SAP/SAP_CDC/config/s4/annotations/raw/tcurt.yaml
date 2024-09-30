@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tcurt"
+description: "Currency Code Names"
+fields:
+  - name: "ktext"
+    description: "Short text"
+  - name: "ltext"
+    description: "Long Text"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"
+  - name: "waers"
+    description: "Currency"

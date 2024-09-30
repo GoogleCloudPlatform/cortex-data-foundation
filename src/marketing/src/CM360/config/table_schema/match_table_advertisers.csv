@@ -1,0 +1,6 @@
+SourceField,TargetField,DataType
+Floodlight Configuration,floodlight_configuration,INT64
+Advertiser ID,advertiser_id,INT64
+Advertiser,advertiser,STRING
+Advertiser Group ID,advertiser_group_id,INT64
+Advertiser Group,advertiser_group,STRING

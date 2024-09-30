@@ -1,0 +1,86 @@
+{
+    "testData": true,
+    "deployMarketing": true,
+    "deployDataMesh": true,
+    "turboMode": true,
+    "projectIdSource": "",
+    "projectIdTarget": "",
+    "targetBucket": "",
+    "location": "US",
+    "languages": [
+        "E",
+        "S"
+    ],
+    "currencies": [
+        "USD"
+    ],
+    "k9": {
+        "datasets": {
+            "processing": "K9_PROCESSING",
+            "reporting": "K9_REPORTING"
+        }
+    },
+    "DataMesh": {
+        "deployDescriptions": true,
+        "deployLakes": false,
+        "deployCatalog": false,
+        "deployACLs": false
+    },
+    "marketing": {
+        "deployGoogleAds": true,
+        "deployCM360": true,
+        "deployTikTok": true,
+        "deployLiveRamp": true,
+        "deployMeta": true,
+        "deploySFMC": true,
+        "dataflowRegion": "",
+        "GoogleAds": {
+            "deployCDC": true,
+            "lookbackDays": 180,
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_GoogleAds"
+            }
+        },
+        "CM360": {
+            "deployCDC": true,
+            "dataTransferBucket": "",
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_CM360"
+            }
+        },
+        "TikTok": {
+            "deployCDC": true,
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_TikTok"
+            }
+        },
+        "LiveRamp": {
+            "datasets": {
+                "cdc": ""
+            }
+        },
+        "Meta": {
+            "deployCDC": true,
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_Meta"
+            }
+        },
+        "SFMC": {
+            "deployCDC": true,
+            "fileTransferBucket": "",
+            "datasets": {
+                "cdc": "",
+                "raw": "",
+                "reporting": "REPORTING_SFMC"
+            }
+        }
+    }
+}

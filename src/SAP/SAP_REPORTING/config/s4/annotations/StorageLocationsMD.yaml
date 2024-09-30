@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.StorageLocationsMD"
+description: "StorageLocations Text"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "Plant_WERKS"
+    description: "Plant"
+  - name: "StorageLocation_LGORT"
+    description: "Storage Location"
+  - name: "StorageLocationText_LGOBE"
+    description: "Storage Location Text"

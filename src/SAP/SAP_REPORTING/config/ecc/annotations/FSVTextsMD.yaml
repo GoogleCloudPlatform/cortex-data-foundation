@@ -1,0 +1,22 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FSVTextsMD"
+description: "Text for FSV Hierarchy Node"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "FinancialStatementVersion_VERSN"
+    description: "FS Version"
+  - name: "LanguageKey_SPRAS"
+    description: "Language Key"
+  - name: "FinancialStatementItem_ERGSL"
+    description: "Financial Statement Item"
+  - name: "TextType_TXTYP"
+    description: "Text type"
+  - name: "FinancialStatementItemLineNumber_ZEILE"
+    description: "Line"
+  - name: "FinancialStatementItemText_TXT45"
+    description: "Text"

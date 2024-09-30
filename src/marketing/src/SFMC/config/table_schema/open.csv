@@ -1,0 +1,13 @@
+SourceField,TargetField,DataType
+AccountID,AccountID,INT64
+OYBAccountID,OYBAccountID,INT64
+JobID,JobID,INT64
+ListID,ListID,INT64
+BatchID,BatchID,INT64
+SubscriberID,SubscriberID,INT64
+SubscriberKey,SubscriberKey,STRING
+EventDate,EventDate,TIMESTAMP
+Domain,Domain,STRING
+IsUnique,IsUnique,BOOL
+TriggererSendDefinitionObjectID,TriggererSendDefinitionObjectID,STRING
+TriggeredSendCustomerKey,TriggeredSendCustomerKey,STRING

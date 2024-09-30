@@ -1,0 +1,20 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProfitCenterHierarchiesMD"
+description: "Text for Profit Center Hierarchy"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "SetClass_SETCLASS"
+    description: "Set class"
+  - name: "OrganizationalUnit_SUBCLASS"
+    description: "Organizational Unit"
+  - name: "SetName_SETNAME"
+    description: "Set Name"
+  - name: "LanguageKey_LANGU"
+    description: "Language Key"
+  - name: "ShortDescriptionOfSet_DESCRIPT"
+    description: "Description"

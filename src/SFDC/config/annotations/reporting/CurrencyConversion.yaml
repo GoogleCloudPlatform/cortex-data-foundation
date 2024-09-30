@@ -1,0 +1,20 @@
+name: "{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion"
+description: "Currency conversion rates by date with source and target currencies."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Utility"
+fields:
+  - name: "SourceCurrency"
+    description: "Source currency."
+  - name: "TargetCurrency"
+    description: "Target currency."
+  - name: "ConversionDate"
+    description: "The date on which the conversion happened"
+  - name: "ConversionRate"
+    description: "The conversion rate between the currency and the base currency."
+  - name: "StartDate"
+    description: "The date on which the conversion rate takes effect."
+  - name: "EndDate"
+    description: "The date on which the current conversion rate ends."

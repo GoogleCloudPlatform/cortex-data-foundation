@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SpecialStocksMD"
+description: "Special Stocks Master Data"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "LanguageKey_SPRAS"
+    description: "Language Key"
+  - name: "SpecialStockIndicator_SOBKZ"
+    description: "Special Stock"
+  - name: "DescriptionOfSpecialStock_SOTXT"
+    description: "Special stock descr."

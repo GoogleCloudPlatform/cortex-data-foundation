@@ -1,0 +1,9 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CostCenterAmountsHierarchy_SAMPLE"
+description: "Sample view using Python-based hierarchy flattener (local k9). Not meant to be deployed."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Finance"
+      - display_name: "domain"
+        value: "Cost Accounting"

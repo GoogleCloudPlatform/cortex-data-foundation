@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tbdls"
+description: "Logical system"
+fields:
+  - name: "isprel"
+    description: "Release"
+  - name: "isprfcdes"
+    description: "RFC Destination"
+  - name: "isprfcdesf"
+    description: "RFC Destination"
+  - name: "isprfctype"
+    description: "System Type"
+  - name: "logsys"
+    description: "Logical System"

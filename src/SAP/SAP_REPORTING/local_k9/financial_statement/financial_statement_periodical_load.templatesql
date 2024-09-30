@@ -1,0 +1,5 @@
+--## CORTEX-CUSTOMER: Update the start and end date for periodical load as per your requirement
+-- For periodical load, start date is current date - 90 days
+CALL `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FinancialStatement`(
+  DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH), MONTH),
+  CURRENT_DATE());

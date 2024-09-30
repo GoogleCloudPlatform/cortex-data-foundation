@@ -1,0 +1,131 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+source_to_raw_tables:
+  - load_frequency: "@daily"
+    api_name: customer
+    table_name: customer
+    schema_file: customer.csv
+    key: resource_name
+    resource_type: dimension
+  - load_frequency: "@daily"
+    api_name: campaign
+    table_name: campaign
+    schema_file: campaign.csv
+    key: resource_name
+    resource_type: dimension
+  - load_frequency: "@daily"
+    api_name: ad_group
+    table_name: adgroup
+    schema_file: ad_group.csv
+    key: resource_name
+    resource_type: dimension
+  - load_frequency: "@daily"
+    api_name: ad_group_criterion
+    table_name: adgroup_criterion
+    schema_file: ad_group_criterion.csv
+    key: resource_name
+    resource_type: dimension
+  - load_frequency: "@daily"
+    api_name: ad_group_ad
+    table_name: adgroup_ad
+    schema_file: ad_group_ad.csv
+    key: resource_name
+    resource_type: dimension
+  - load_frequency: "@daily"
+    api_name: customer_user_access
+    table_name: customer_user_access
+    schema_file: customer_user_access.csv
+    key: resource_name
+    resource_type: dimension
+  - load_frequency: "@daily"
+    api_name: keyword_view
+    table_name: keyword_stats
+    schema_file: keyword_stats.csv
+    key: keyword_view,segments
+    resource_type: metric
+  - load_frequency: "@daily"
+    api_name: campaign
+    table_name: campaign_stats
+    schema_file: campaign_stats.csv
+    key: campaign,segments
+    resource_type: metric
+  - load_frequency: "@daily"
+    api_name: user_location_view
+    table_name: campaign_stats_by_user_country
+    schema_file: campaign_stats_by_user_country.csv
+    key: campaign,user_location_view,segments
+    resource_type: metric
+  - load_frequency: "@once"
+    api_name: geo_target_constant
+    table_name: geo_target_constant
+    schema_file: geo_target_constant.csv
+    key: id
+    resource_type: constant
+    # CORTEX-CUSTOMER:
+    # You may alternatively load the geo constants into your Reporting
+    # dataset directly from a CSV provided by Google. In this case, please comment out
+    # or remove this entry. See README for details.
+
+raw_to_cdc_tables:
+  - table_name: customer
+    raw_table: customer
+    key: resource_name
+    load_frequency: "@daily"
+    schema_file: customer.csv
+  - table_name: campaign
+    raw_table: campaign
+    key: resource_name
+    load_frequency: "@daily"
+    schema_file: campaign.csv
+  - table_name: adgroup
+    raw_table: adgroup
+    key: resource_name
+    load_frequency: "@daily"
+    schema_file: ad_group.csv
+  - table_name: adgroup_ad
+    raw_table: adgroup_ad
+    key: resource_name
+    load_frequency: "@daily"
+    schema_file: ad_group_ad.csv
+  - table_name: adgroup_criterion
+    raw_table: adgroup_criterion
+    key: resource_name
+    load_frequency: "@daily"
+    schema_file: ad_group_criterion.csv
+  - table_name: customer_user_access
+    raw_table: customer_user_access
+    key: resource_name,user_id
+    load_frequency: "@daily"
+    schema_file: customer_user_access.csv
+  - table_name: keyword_stats
+    raw_table: keyword_stats
+    key: keyword_view.resource_name,segments.date
+    load_frequency: "@daily"
+    schema_file: keyword_stats.csv
+  - table_name: campaign_stats
+    raw_table: campaign_stats
+    key: campaign.resource_name,segments.date
+    load_frequency: "@daily"
+    schema_file: campaign_stats.csv
+  - table_name: campaign_stats_by_user_country
+    raw_table: campaign_stats_by_user_country
+    key: campaign.resource_name,user_location_view.resource_name,segments.date
+    load_frequency: "@daily"
+    schema_file: campaign_stats_by_user_country.csv
+  - table_name: geo_target_constant
+    raw_table: geo_target_constant
+    key: resource_name
+    load_frequency: "@once"
+    schema_file: geo_target_constant.csv

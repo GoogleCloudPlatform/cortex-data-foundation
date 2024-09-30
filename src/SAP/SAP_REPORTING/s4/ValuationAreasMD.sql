@@ -1,0 +1,26 @@
+SELECT
+  T001K.MANDT AS Client_MANDT,
+  T001K.BWKEY AS ValuationArea_BWKEY,
+  T001K.BUKRS AS CompanyCode_BUKRS,
+  T001K.BWMOD AS ValuationGroupingCode_BWMOD,
+  T001K.XBKNG AS NegativeStocksInValuationAreaAllowed_XBKNG,
+  T001K.MLBWA AS MaterialLedgerActivatedInValuationArea_MLBWA,
+  T001K.MLBWV AS MaterialLedgerActivatedInValuationArea__compulsory___MLBWV,
+  T001K.XVKBW AS SalesPriceValuationActive_XVKBW,
+  T001K.ERKLAERKOM AS ExplanationFacilityForMaterialLedgerActiveinactive_ERKLAERKOM,
+  T001K.UPROF AS RetailRevalutionProfile_UPROF,
+  T001K.WBPRO AS ProfileForValueBasedInventoryManagement_WBPRO,
+  T001K.MLAST AS MaterialPriceDetermination_Control_MLAST,
+  T001K.MLASV AS PriceDeterminationIsBindingInValuationArea_MLASV,
+  T001K.BDIFP AS StockCorrectionTolerance_BDIFP,
+  T001K.XLBPD AS PriceDifferencePostingInGrForSubcontractOder_XLBPD,
+  T001K.XEWRX AS PostPurchaseAccountWithReceiptValue_XEWRX,
+  T001K.X2FDO AS TwoFiDocumentsWithPurchaseAccount_X2FDO,
+  T001K.PRSFR AS PriceRelease_PRSFR,
+  T001K.MLCCS AS ActiveActualCostComponentSplit_MLCCS,
+  T001K.XEFRE AS DelCostsToPriceDiffAcctWhenPurchAcctActive_XEFRE,
+  T001K.EFREJ AS StartOfValidityPeriodFDelCostsInPriceDiffAcct_EFREJ,
+  T001K.FMP_PRSFR AS PriceReleaseFlexibleMaterialPrices_FMP_PRSFR,
+  T001K.FMP_PRFRGR AS PriceReleaseGroup_FMP_PRFRGR
+FROM
+  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.t001k` AS T001K

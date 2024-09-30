@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tj20t"
+description: "Texts for Status Profiles"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"
+  - name: "stsma"
+    description: "Status Profile"
+  - name: "txt"
+    description: "Text"

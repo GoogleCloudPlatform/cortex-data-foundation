@@ -1,0 +1,16 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Languages_T002"
+description: "Languages (T002)"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "LanguageKey_SPRAS"
+    description: "Language Key"
+  - name: "LanguageSpecifications_LASPEZ"
+    description: "Language Specifications"
+  - name: "DegreeOfTranslationOfLanguage_LAHQ"
+    description: "Degree Of Translation Of Language"
+  - name: "TwoCharacterSapLanguageCode_LAISO"
+    description: "Two Character Sap Language Code"

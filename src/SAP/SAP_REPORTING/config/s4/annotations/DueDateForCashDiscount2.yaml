@@ -1,0 +1,6 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DueDateForCashDiscount2"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Utility"

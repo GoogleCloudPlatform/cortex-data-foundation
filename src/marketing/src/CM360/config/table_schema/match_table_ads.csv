@@ -1,0 +1,9 @@
+SourceField,TargetField,DataType
+Advertiser ID,advertiser_id,INT64
+Campaign ID,campaign_id,INT64
+Ad ID,ad_id,INT64
+Ad,ad,STRING
+Ad Click URL,ad_click_url,STRING
+Ad Type,ad_type,STRING
+Creative Pixel Size,creative_pixel_size,STRING
+Ad Comments,ad_comments,STRING

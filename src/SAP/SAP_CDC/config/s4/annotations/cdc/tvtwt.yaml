@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_cdc_processed }}.tvtwt"
+description: "Organizational Unit: Distribution Channels: Texts"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"
+  - name: "vtext"
+    description: "Name"
+  - name: "vtweg"
+    description: "Distribution Channel"

@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t001t"
+description: "Company code-dependent texts"
+fields:
+  - name: "bukrs"
+    description: "Company Code"
+  - name: "ltext"
+    description: "Usage"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "txtna"
+    description: "Text name"

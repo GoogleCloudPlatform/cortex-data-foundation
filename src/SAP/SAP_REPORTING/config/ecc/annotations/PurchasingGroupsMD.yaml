@@ -1,0 +1,14 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PurchasingGroupsMD"
+description: "Purchasing Groups Text"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "PurchasingGroup_EKGRP"
+    description: "Purchasing Group"
+  - name: "PurchasingGroupText_EKNAM"
+    description: "Description p. group"

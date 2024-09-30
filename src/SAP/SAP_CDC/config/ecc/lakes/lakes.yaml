@@ -1,0 +1,27 @@
+# Lakes dataclass.
+project: "{{ project_id_src }}"
+lakes:
+  - display_name: "sap"
+    ## CORTEX-CUSTOMER: Update to specific region if deployment is multiregion.
+    region: "{{ location }}"
+    description: "Cortex SAP datasets"
+    labels:
+      - name: "sql_flavor"
+        value: "ecc"
+    zones:
+      - display_name: "raw-sap"
+        description: "Cortex SAP Raw dataset"
+        zone_type: RAW
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "raw-bq-dataset"
+            asset_name: "{{ dataset_raw_landing }}"
+      - display_name: "cdc-sap"
+        description: "Cortex SAP CDC dataset"
+        zone_type: CURATED
+        ## CORTEX-CUSTOMER: Update to MULTI_REGION if deployment is multiregion.
+        location_type: SINGLE_REGION
+        assets:
+          - display_name: "cdc-bq-dataset"
+            asset_name: "{{ dataset_cdc_processed }}"

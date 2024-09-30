@@ -1,0 +1,85 @@
+id:
+account_id:
+ad_active_time:
+ad_review_feedback:
+  global:
+  placement_specific:
+    account_admin:
+    ad:
+    ads_conversion_experiences:
+    b2c:
+    b2c_commerce_unified:
+    bsg:
+    city_community:
+    commerce:
+    daily_deals:
+    daily_deals_legacy:
+    dpa:
+    dri_copyright:
+    dri_counterfeit:
+    facebook:
+    facebook_pages_live_shopping:
+    independent_work:
+    instagram:
+    instagram_shop:
+    job_search:
+    lead_gen_honeypot:
+    marketplace:
+    marketplace_home_rentals:
+    marketplace_home_sales:
+    marketplace_motors:
+    marketplace_shops:
+    neighborhoods:
+    page_admin:
+    product:
+    product_service:
+    profile:
+    seller:
+    shops:
+    traffic_quality:
+    unified_commerce_content:
+    whatsapp:
+adlabels:
+  id:
+  account:
+    id:
+    account_id:
+    name:
+  created_time:
+  name:
+  updated_time:
+adset:
+  id:
+adset_id:
+bid_amount:
+campaign:
+  id:
+campaign_id:
+configured_status:
+conversion_domain:
+created_time:
+creative:
+  id:
+effective_status:
+issues_info:
+  error_code:
+  error_message:
+  error_summary:
+  error_type:
+  level:
+last_updated_by_app_id:
+name:
+preview_shareable_link:
+recommendations:
+  blame_field:
+  code:
+  confidence:
+  importance:
+  message:
+  recommendation_data:
+  title:
+source_ad:
+source_ad_id:
+status:
+tracking_specs:
+updated_time:

@@ -1,0 +1,149 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This settings file drives how the BQ objects (tables/views/functions) for
+# Reporting datasets are created.
+#
+# There are two sections:
+#
+#  1. "bq_independent_objects":
+#     All BiqQuery objects that can be created independently, without any
+#     other dependencies.
+#     NOTE: When "turbo_mode" is enabled, these BQ objects are created in
+#           parallel.
+#
+#  2. "bq_dependent_objects":
+#      All BiqQuery objects that need to be created in a specific order due to
+#      dependencies.
+#      NOTE: "turbo_mode" does not apply to this section - i.e. each object
+#             will be created one after another.
+#
+#  At least one of the two sections need to be present.
+
+bq_independent_objects:
+  # Meta Reporting Layer 1 Helper Function.
+  - sql_file: src/Meta/src/reporting/ddls/TransformMetaActionStats.sql
+    type: script
+  # Meta Reporting Layer 2 Helper Functions.
+  - sql_file: src/Meta/src/reporting/ddls/AggregateActions.sql
+    type: script
+  - sql_file: src/Meta/src/reporting/ddls/AggregateVideoViews.sql
+    type: script
+  - sql_file: src/Meta/src/reporting/ddls/TransformMetaActionStatsDailyAgg.sql
+    type: script
+  # Meta Reporting Layer 1 Dimensional Tables.
+  - sql_file: src/Meta/src/reporting/ddls/AdAccount.sql
+    type: view
+  - sql_file: src/Meta/src/reporting/ddls/AdCreative.sql
+    type: view
+  - sql_file: src/Meta/src/reporting/ddls/Ads.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/Adset.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/Campaign.sql
+    type: view
+  - sql_file: src/Meta/src/reporting/ddls/CustomAudience.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+    # CORTEX-CUSTOMER:
+    # Optionally add clustering config with following structure.
+    # cluster_details: {
+    #   columns: []
+    # }
+
+bq_dependent_objects:
+  # Meta Reporting Layer 1 Fact Tables.
+  - sql_file: src/Meta/src/reporting/ddls/AdInsights.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+      # CORTEX-CUSTOMER:
+      # Optionally add clustering config with following structure.
+      # cluster_details: {
+      #   columns: []
+      # }
+  - sql_file: src/Meta/src/reporting/ddls/AdInsightsByAgeAndGender.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdInsightsByCountry.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdInsightsByPlacement.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdInsightsByPlatform.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdsetInsights.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdsetInsightsByAgeAndGender.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdsetInsightsByCountry.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdsetInsightsByPlacement.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/AdsetInsightsByPlatform.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/CampaignInsights.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/CampaignInsightsByAgeAndGender.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/CampaignInsightsByCountry.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/CampaignInsightsByPlacement.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  - sql_file: src/Meta/src/reporting/ddls/CampaignInsightsByPlatform.sql
+    type: table
+    table_setting:
+      load_frequency: "@daily"
+  # Meta Reporting Layer 2 Fact Tables.
+  - sql_file: src/Meta/src/reporting/ddls/CampaignInsightsDailyAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "0 2 * * *"
+  - sql_file: src/Meta/src/reporting/ddls/AdsetInsightsDailyAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "0 2 * * *"
+  - sql_file: src/Meta/src/reporting/ddls/AdInsightsDailyAgg.sql
+    type: table
+    table_setting:
+      load_frequency: "0 2 * * *"

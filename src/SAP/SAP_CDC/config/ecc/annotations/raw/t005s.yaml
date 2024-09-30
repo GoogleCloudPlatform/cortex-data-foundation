@@ -1,0 +1,13 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.t005s"
+description: "Taxes: Region (Province) Key"
+fields:
+  - name: "bland"
+    description: "Region"
+  - name: "fprcd"
+    description: "Provincial tax code"
+  - name: "herbl"
+    description: "State of manufacture"
+  - name: "land1"
+    description: "Country Key"
+  - name: "mandt"
+    description: "Client (Mandant)"

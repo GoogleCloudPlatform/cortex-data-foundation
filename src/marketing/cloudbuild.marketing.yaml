@@ -1,0 +1,271 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This cloudbuild file generates all the necessary objects (DAG files, Bigquery
+# tables and views etc) for a Cortex deployment for a Google Ads and CM360.
+
+# Input parameters:
+#   _GCS_LOGS_BUCKET : An existing GCS bucket where build logs will be written.
+
+---
+steps:
+  # Validate configs.
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "init_deploy_config"
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      echo "Initial configuration ${_CONFIG_FILE}:"
+      cat ${_CONFIG_FILE}
+
+      python3 src/common/init_deployment_config.py \
+          --config-file ${_CONFIG_FILE} \
+          --sub-validator "src"
+
+      echo "Processed configuration:"
+      cat ${_CONFIG_FILE}
+      echo -e "\n--------------------------------"
+
+  # Google Ads section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: googleads_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_googleads=$(python read_deploy_parameter.py GoogleAds)
+      if [ ${deploy_googleads} = 'True' ]
+      then
+        src/GoogleAds/deploy.sh
+      else
+        echo "== Skipping Google Ads =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+
+  # CM360 section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: cm360_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_cm360=$(python read_deploy_parameter.py CM360)
+      if [ ${deploy_cm360} = 'True' ]
+      then
+        src/CM360/deploy.sh
+      else
+        echo "== Skipping CM360 =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+
+  # TikTok section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: tiktok_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_tiktok=$(python read_deploy_parameter.py TikTok)
+      if [ ${deploy_tiktok} = 'True' ]
+      then
+        src/TikTok/deploy.sh
+      else
+        echo "== Skipping TikTok =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+
+  # LiveRamp section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: liveramp_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_liveramp=$(python read_deploy_parameter.py LiveRamp)
+      if [ ${deploy_liveramp} = 'True' ]
+      then
+        src/LiveRamp/deploy.sh
+      else
+        echo "== Skipping LiveRamp =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+
+  # Meta section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: meta_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_meta=$(python read_deploy_parameter.py Meta)
+      if [ ${deploy_meta} = 'True' ]
+      then
+        src/Meta/deploy.sh
+      else
+        echo "== Skipping Meta =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+
+  # Salesforce Marketing Cloud section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: sfmc_deploy
+    waitFor: ["init_deploy_config"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      deploy_sfmc=$(python read_deploy_parameter.py SFMC)
+      if [ ${deploy_sfmc} = 'True' ]
+      then
+        src/SFMC/deploy.sh
+      else
+        echo "== Skipping SFMC =="
+      fi
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _GCS_LOGS_BUCKET=${_GCS_LOGS_BUCKET}
+
+  # Data Mesh section
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "googleads_datamesh"
+    waitFor: ["googleads_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_GOOGLE_ADS_=$(jq -r ."marketing.deployGoogleAds" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" && \
+            ${_DEPLOY_GOOGLE_ADS_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories src/GoogleAds/config/tag_templates \
+            --policy-directories src/GoogleAds/config/policy_taxonomies \
+            --lake-directories src/GoogleAds/config/lakes \
+            --annotation-directories \
+                src/GoogleAds/config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "cm360_datamesh"
+    waitFor: ["cm360_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_CM360_=$(jq -r ."marketing.deployCM360" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" && \
+            ${_DEPLOY_CM360_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories src/CM360/config/tag_templates \
+            --policy-directories src/CM360/config/policy_taxonomies \
+            --lake-directories src/CM360/config/lakes \
+            --annotation-directories \
+                src/CM360/config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "tiktok_datamesh"
+    waitFor: ["tiktok_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_TIKTOK_=$(jq -r ."marketing.deployTikTok" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" && \
+            ${_DEPLOY_TIKTOK_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories src/TikTok/config/tag_templates \
+            --policy-directories src/TikTok/config/policy_taxonomies \
+            --lake-directories src/TikTok/config/lakes \
+            --annotation-directories \
+                src/TikTok/config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "meta_datamesh"
+    waitFor: ["meta_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_META_=$(jq -r ."marketing.deployMeta" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" && \
+            ${_DEPLOY_META_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories src/Meta/config/tag_templates \
+            --policy-directories src/Meta/config/policy_taxonomies \
+            --lake-directories src/Meta/config/lakes \
+            --annotation-directories \
+                src/Meta/config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+  - name: "gcr.io/kittycorn-public/deploy-kittycorn:v2.0"
+    id: "sfmc_datamesh"
+    waitFor: ["sfmc_deploy"]
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" ${_CONFIG_FILE})
+      _DEPLOY_SFMC_=$(jq -r ."marketing.deploySFMC" ${_CONFIG_FILE})
+
+      if [[ ${_DEPLOY_DATA_MESH_} == "true" && \
+            ${_DEPLOY_SFMC_} == "true" ]]; then
+        python3 src/common/data_mesh/deploy_data_mesh.py \
+            --config-file ${_CONFIG_FILE} \
+            --tag-template-directories src/SFMC/config/tag_templates \
+            --policy-directories src/SFMC/config/policy_taxonomies \
+            --lake-directories src/SFMC/config/lakes \
+            --annotation-directories \
+                src/SFMC/config/annotations/reporting
+      else
+        echo "==Skipping Data Mesh=="
+      fi
+
+logsBucket: gs://${_GCS_LOGS_BUCKET}
+substitutions:
+  _CONFIG_FILE: config/config.json
+options:
+  substitution_option: ALLOW_LOOSE
+  automapSubstitutions: true

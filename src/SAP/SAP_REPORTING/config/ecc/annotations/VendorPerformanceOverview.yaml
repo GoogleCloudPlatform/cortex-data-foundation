@@ -1,0 +1,9 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorPerformanceOverview"
+description: "Overview view for Vendor Performance. This view is not meant to be deployed, it is a sample to mimic the report delivered in Looker as part of the SAP block."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Supply Chain"
+      - display_name: "domain"
+        value: "Vendor Performance"

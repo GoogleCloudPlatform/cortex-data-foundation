@@ -1,0 +1,21 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.StockCharacteristicsConfig"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Supply Chain"
+      - display_name: "domain"
+        value: "Inventory Management"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "StockType_INSMK"
+    description: "Stock Type"
+  - name: "Debit_CreditIndicator_SHKZG"
+    description: "Debit/Credit ind"
+  - name: "SpecialStockIndicator_SOBKZ"
+    description: "Special Stock"
+  - name: "MovementType_BWART"
+    description: "Movement type"
+  - name: "StockCharacteristic"
+    description: "Stock Characteristic"

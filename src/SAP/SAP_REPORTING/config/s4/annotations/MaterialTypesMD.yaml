@@ -1,0 +1,20 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.MaterialTypesMD"
+description: "Material Types and texts"
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Master Data"
+fields:
+  - name: "Client_MANDT"
+    description: "Client (Mandant)"
+  - name: "MaterialType_MTART"
+    description: "Material Type"
+  - name: "ReferenceMaterialType_MTREF"
+    description: "Reference Material Type"
+  - name: "ScreenReferenceDependingOnTheMaterialType_MBREF"
+    description: "Screen Reference Depending On The Material Type"
+  - name: "LanguageKey_SPRAS"
+    description: "Language Key"
+  - name: "DescriptionOfMaterialType_MTBEZ"
+    description: "Description Of Material Type"

@@ -1,0 +1,11 @@
+name: "{{ project_id_src }}.{{ dataset_raw_landing }}.tvstt"
+description: "Organizational Unit: Shipping Points: Texts"
+fields:
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "spras"
+    description: "Language Key"
+  - name: "vstel"
+    description: "Shipping Point/Receiving Pt"
+  - name: "vtext"
+    description: "Description"

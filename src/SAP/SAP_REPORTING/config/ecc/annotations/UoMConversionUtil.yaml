@@ -1,0 +1,18 @@
+name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.UoMConversionUtil"
+description: "View to convert UoM when conversion needs to be inline and table function canot be used. See UoMUsage_SAMPLE."
+catalog_tags:
+  - display_name: "line_of_business"
+    fields:
+      - display_name: "group"
+        value: "Utility"
+fields:
+  - name: "unit_to"
+    description: "unit"
+  - name: "unit_from"
+    description: "unit"
+  - name: "mandt"
+    description: "Client (Mandant)"
+  - name: "dimension"
+    description: "dimension"
+  - name: "val_out"
+    description: "val"
