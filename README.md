@@ -64,11 +64,10 @@ is not suitable for production environments*.
 You can customize your Cortex Framework deployment with the following optional steps:
 
 *   [Use different projects to segregate access](https://cloud.google.com//cortex/docs/optional-step-segregate-access).
-*   [Create a Service Account for deployment with impersonation](https://cloud.google.com//cortex/docs/optional-step-deployment-with-impersonation).
 *   [Use Cloud Build features](https://cloud.google.com//cortex/docs/optional-step-cloud-build-features).
 *   [Configure external datasets for K9](https://cloud.google.com//cortex/docs/optional-step-external-datasets).
-*   [Configure Credly badger](https://cloud.google.com//cortex/docs/optional-step-credly-badger).
 *   [Enable Turbo Mode](https://cloud.google.com/cortex/docs/optional-step-turbo-mode).
+*   [Telemetry](https://cloud.google.com/cortex/docs/optional-step-telemetry).
 
 ## Looker Blocks and Dashboards
 
