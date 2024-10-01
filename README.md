@@ -28,7 +28,7 @@ of them.
 *   [TikTok](https://cloud.google.com/cortex/docs/marketing-tiktok)
 *   [Meta](https://cloud.google.com/cortex/docs/marketing-meta)
 *   [LiveRamp](https://cloud.google.com/cortex/docs/marketing-liveramp)
-*   [Youtube in Display & Video 360](https://cloud.google.com/cortex/docs/marketing-dv360)
+*   [YouTube (with DV360)](https://cloud.google.com/cortex/docs/marketing-dv360)
 *   [Google Analytics 4](https://cloud.google.com/cortex/docs/marketing-google-analytics)
 
 **Operational**:
@@ -85,7 +85,7 @@ The following are the Looker Blocks and Dashboards available in Cortex Framework
     *   **Marketing**
         *   [Looker Block for Salesforce Marketing Cloud](https://cloud.google.com/cortex/docs/looker-block-salesforce-marketing)
         *   [Looker Block for Meta](https://cloud.google.com/cortex/docs/looker-block-meta)
-        *   [Looker Block for YouTube in DV360](https://cloud.google.com/cortex/docs/looker-block-youtube)
+        *   [Looker Block for YouTube (with DV360)](https://cloud.google.com/cortex/docs/looker-block-youtube)
 * Looker Studio Dashboards
     *   **Sustainability**
         *   [Looker Studio Dashboard for Dun & Bradstreet](https://cloud.google.com/cortex/docs/looker-dashboard-dun-and-bradstreet)
