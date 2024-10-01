@@ -52,23 +52,22 @@ For Cortex Framework deployment instructions, see the following:
 test the Cortex Framework set up process with sample data within just a few clicks. *This demo deployment
 is not suitable for production environments*.
 *   **Deployment steps**: after reading the [prerequisites](https://cloud.google.com/cortex/docs/prerequisites) for Cortex Data Foundation deployment, follow the steps for deployment in production environments:
-    1. [Establish workloads](https://cloud.google.com/cortex/docs/deployment-step-one).
-    2. [Clone repository](https://cloud.google.com/cortex/docs/deployment-step-two).
-    3. [Determine integration mechanism](https://cloud.google.com/cortex/docs/deployment-step-three).
-    4. [Set up components](https://cloud.google.com/cortex/docs/deployment-step-four).
-    5. [Configure deployment](https://cloud.google.com/cortex/docs/deployment-step-five).
-    6. [Execute deployment](https://cloud.google.com/cortex/docs/deployment-step-six).
+    1. [Establish workloads](https://cloud.google.com/cortex/docs/deployment-step-one)
+    2. [Clone repository](https://cloud.google.com/cortex/docs/deployment-step-two)
+    3. [Determine integration mechanism](https://cloud.google.com/cortex/docs/deployment-step-three)
+    4. [Set up components](https://cloud.google.com/cortex/docs/deployment-step-four)
+    5. [Configure deployment](https://cloud.google.com/cortex/docs/deployment-step-five)
+    6. [Execute deployment](https://cloud.google.com/cortex/docs/deployment-step-six)
 
 ## Optional steps
 
 You can customize your Cortex Framework deployment with the following optional steps:
 
-*   [Use different projects to segregate access](https://cloud.google.com//cortex/docs/optional-step-segregate-access).
-*   [Create a Service Account for deployment with impersonation](https://cloud.google.com//cortex/docs/optional-step-deployment-with-impersonation).
-*   [Use Cloud Build features](https://cloud.google.com//cortex/docs/optional-step-cloud-build-features).
-*   [Configure external datasets for K9](https://cloud.google.com//cortex/docs/optional-step-external-datasets).
-*   [Configure Credly badger](https://cloud.google.com//cortex/docs/optional-step-credly-badger).
-*   [Enable Turbo Mode](https://cloud.google.com/cortex/docs/optional-step-turbo-mode).
+*   [Use different projects to segregate access](https://cloud.google.com//cortex/docs/optional-step-segregate-access)
+*   [Use Cloud Build features](https://cloud.google.com//cortex/docs/optional-step-cloud-build-features)
+*   [Configure external datasets for K9](https://cloud.google.com//cortex/docs/optional-step-external-datasets)
+*   [Enable Turbo Mode](https://cloud.google.com/cortex/docs/optional-step-turbo-mode)
+*   [Telemetry](https://cloud.google.com/cortex/docs/optional-step-telemetry)
 
 ## Looker Blocks and Dashboards
 
