@@ -16,6 +16,7 @@ data_to_replicate:
 {% if sql_flavour.upper() == 'S4' %}
   - base_table: acdoca
     load_frequency: "@hourly"
+    partition_flg: "Y" 
     cluster_details: {columns: ["rclnt", "rbukrs"]}
   - base_table: finsc_ld_cmp
     load_frequency: "@daily"

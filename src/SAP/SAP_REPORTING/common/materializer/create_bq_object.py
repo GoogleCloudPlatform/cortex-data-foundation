@@ -228,6 +228,12 @@ def _generate_dag_files(module_name: str, target_dataset_type: str,
         "month": today.month,
         "day": today.day,
         "runtime_labels_dict": "", # A place holder for label dict string
+        #CUSTOM CHANGES for handling dag dependencies 
+        "table_name": table_name, 
+        "target_dataset": target_dataset,
+        "module_name": module_name,
+        "target_dataset_type": target_dataset_type
+        # CUSTOM CHANGES end of addition by Google Team for handling dag dependencies
     }
 
     # Add bq_labels to py_subs dict if telemetry allowed

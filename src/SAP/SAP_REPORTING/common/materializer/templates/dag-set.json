@@ -1,0 +1,770 @@
+{
+    "CurrencyConversion": [
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "AccountingDocuments": [
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "CustomersMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "CompaniesMD",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "AccountingDocumentsReceivable": [
+        {
+            "parent_table": "AccountingDocuments",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "InvoiceDocuments_Flow": [
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "PurchaseDocumentsHistory": [
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "AccountsPayable": [
+        {
+            "parent_table": "CurrencyConversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "VendorsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "VendorConfig",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "InvoiceDocuments_Flow",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "PurchaseDocumentsHistory",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "AccountingDocuments",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "AccountsPayableTurnover": [
+        {
+            "parent_table": "AccountsPayable",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "MaterialLedger": [
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "CashDiscountUtilization": [
+        {
+            "parent_table": "Languages_T002",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "AccountsPayable",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "PurchaseDocuments": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "POSchedule": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "VendorPerformance": [
+        {
+            "parent_table": "Languages_T002",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "CurrencyConversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "PurchaseDocuments",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "POSchedule",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "PurchasingOrganizationsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "PurchasingGroupsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "PurchaseDocumentsHistory",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "VendorsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "CompaniesMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialTypesMD",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "MaterialsMovement": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "MaterialsValuation": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "Stock_NonValuated": [
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "PlantsMD",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "Stock_PerPlant": [
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "PlantsMD",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "SalesOrders_V2": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "Deliveries": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "Billing": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "PricingConditions": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "SalesOrderPricing": [
+        {
+            "parent_table": "PricingConditions",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "SalesOrderScheduleLine": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "BusinessPartnersMD": [
+        {
+            "parent_table": "AddressesMD",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "DeliveriesStatus_PerSalesOrg": [
+        {
+            "parent_table": "Deliveries",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "SDStatus_Items",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "SalesOrganizationsMD",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "OrderToCash":[
+        {
+            "parent_table": "SalesOrders",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "CustomersMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "SalesOrganizationsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "DistributionChannelsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "CountriesMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "OneTouchOrder",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "DivisionsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "DeliveryBlockingReasonsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "BillingBlockingReasonsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "Deliveries",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "Billing",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "POFulfillment": [
+        {
+            "parent_table": "POSchedule",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "PurchaseDocuments",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "POOrderHistory": [
+        {
+            "parent_table": "PurchaseDocuments",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "POVendorConfirmation": [
+        {
+            "parent_table": "PurchaseDocuments",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "VendorsMD",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "SalesStatus_Items": [
+        {
+            "parent_table": "SDDocumentFlow",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "SalesOrders",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "SDStatus_Items",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "SalesFulfillment": [
+        {
+            "parent_table": "SalesStatus_Items",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "SalesFulfillment_perOrder": [
+        {
+            "parent_table": "SalesStatus_Items",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "Stock_Unrestricted_vs_Sales": [
+        {
+            "parent_table": "Stock_NonValuated",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "SalesStatus_Items",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "stock_weekly_snapshots": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "stock_monthly_snapshots": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "StockMonthlySnapshots": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "Languages_T002",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "Stock_Characteristics_Config",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "StorageLocationsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "PlantsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialTypesMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialGroupsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "CompaniesMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "Stock_Monthly_Snapshots_Daily_Update",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "InventoryKeyMetrics": [
+        {
+            "parent_table": "Slow_Moving_Threshold",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "MaterialLedger",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "StockMonthlySnapshots",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "financial_statement_periodical_load": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "fiscal_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "FinancialStatement": [
+        {
+            "parent_table": "FSVTextsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "GLAccountsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "financial_statement_version",  
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "financial_statement_periodical_load",  
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "StockWeeklySnapshots": [
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "CompaniesMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "Stock_Weekly_Snapshots_Update_Daily",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "InventoryByPlant": [
+        {
+            "parent_table": "StockWeeklySnapshots",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "Languages_T002",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialPlantsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "PlantsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "StorageLocationsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "MaterialsBatchMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialTypesMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialGroupsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "MaterialLedger",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "BalanceSheet": [
+        {
+            "parent_table": "FinancialStatement",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "CompaniesMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "Languages_T002",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "CurrencyConversion",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "ProfitAndLoss": [
+        {
+            "parent_table": "FinancialStatement",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "CompaniesMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "Languages_T002",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "CurrencyConversion",
+            "schedule_frequency": "0 1 * * *"
+        }        
+    ],
+    "GrossProfitOverview": [
+        {
+            "parent_table": "ProfitAndLoss",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "NetProfitOverview": [
+        {
+            "parent_table": "GrossProfitOverview",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "ProfitAndLossOverview": [
+        {
+            "parent_table": "ProfitAndLoss",
+            "schedule_frequency": "0 2 * * *"
+        }        
+    ],
+    "DaysPayablePutstanding": [
+        {
+            "parent_table": "InventoryKeyMetrics",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "AccountsPayableTurnover",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "CurrencyConvUtil": [
+        {
+            "parent_table": "CurrencyConversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "currency_conversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "calendar_date_dim",
+            "schedule_frequency": "0 1 * * *"
+        }
+    ],
+    "CostCenterAmountsHierarchy_SAMPLE": [
+        {
+            "parent_table": "AccountingDocuments",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "CostCentersMD",
+            "schedule_frequency": "0 1 * * *"
+        }        
+    ],
+    "ProfitAndLossOverview_CostCenterHierarchy": [
+        {
+            "parent_table": "CostCentersMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "ProfitAndLoss",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "CostCenterHierarchiesMD",
+            "schedule_frequency": "30 1 * * *"
+        }      
+    ],
+    "ProfitAndLossOverview_ProfitCenterHierarchy": [
+        {
+            "parent_table": "ProfitAndLoss",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "profit_center",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "ProfitCentersMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "ProfitCenterHierarchiesMD",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "SalesOrderDetails_SAMPLE": [
+        {
+            "parent_table": "SalesOrders_V2",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "Deliveries",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "Billing",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "CurrencyConversion",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "Billing",
+            "schedule_frequency": "0 2 * * *"
+        },
+        {
+            "parent_table": "CustomersMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "MaterialsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "SalesOrganizationsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "DistributionChannelsMD",
+            "schedule_frequency": "0 1 * * *"
+        },
+        {
+            "parent_table": "DivisionsMD",
+            "schedule_frequency": "30 1 * * *"
+        },
+        {
+            "parent_table": "CountriesMD",
+            "schedule_frequency": "30 1 * * *"
+        }
+    ],
+    "UoMUsage_SAMPLE": [
+        {
+            "parent_table": "SalesFulfillment",
+            "schedule_frequency": "0 2 * * *"
+        }
+    ],
+    "VendorLeadTimeOverview": [
+        {
+            "parent_table": "VendorPerformance",
+            "schedule_frequency": "0 2 * * *"
+        }        
+    ],
+    "VendorPerformanceOverview": [
+        {
+            "parent_table": "VendorPerformance",
+            "schedule_frequency": "0 2 * * *"
+        }        
+    ]
+}

@@ -37,6 +37,8 @@ from common.py_libs import cortex_exceptions as cortex_exc
 
 _SQL_DAG_PYTHON_TEMPLATE = 'src/template_dag/dag_sql.py'
 _SQL_DAG_SQL_TEMPLATE = 'src/template_sql/cdc_sql_template.sql'
+#CUSTOM CHANGES - path for the partition enabled cdc template is added below
+_SQL_DAG_PARTITION_SQL_TEMPLATE = 'src/template_sql/cdc_partition_sql_template.sql'
 _VIEW_SQL_TEMPLATE = 'src/template_sql/runtime_query_view.sql'
 
 _GENERATED_DAG_DIR = 'generated_dag'
@@ -119,7 +121,7 @@ def generate_runtime_view(raw_table_name, cdc_table_name):
     print(f'Created view {cdc_table_name}')
 
 
-def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
+def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency, partition_flg,
                            gen_test, allow_telemetry):
     """Generates file containing DAG code to refresh CDC table from RAW table.
 
@@ -186,10 +188,16 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
     primary_keys_join_clause = ' AND '.join(primary_key_join_list)
     primary_keys_not_null_clause = ' AND '.join(primary_key_not_null_list)
 
-    with open(_SQL_DAG_SQL_TEMPLATE, mode='r',
+    #CUSTOM CHANGES for enabling partition template 
+    #check the value of partition flag. If it is Y then use the optimized cdc template for paritioned tables else use the default template
+    if partition_flg == "Y":
+        template_sql_file = _SQL_DAG_PARTITION_SQL_TEMPLATE
+    else:
+        template_sql_file = _SQL_DAG_SQL_TEMPLATE
+    with open(template_sql_file, mode='r',
               encoding='utf-8') as sql_template_file:
         sql_template = Template(sql_template_file.read())
-
+    
     generated_sql = sql_template.substitute(
         base_table=raw_table_name,
         target_table=cdc_table_name,
@@ -198,7 +206,7 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
         fields=', '.join(fields),
         update_fields=', '.join(update_fields),
         primary_keys=', '.join(primary_keys))
-
+    
     # Create sql file containing the query
     cdc_sql_file = _GENERATED_SQL_DIR + '/' + dag_sql_file_name
     with open(cdc_sql_file, mode='w+', encoding='utf-8') as generated_sql_file:

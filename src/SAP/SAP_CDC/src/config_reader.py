@@ -65,7 +65,14 @@ def process_table(table_config: dict, source_dataset: str, target_dataset: str,
 
         partition_details = table_config.get("partition_details")
         cluster_details = table_config.get("cluster_details")
-
+        
+        #CUSTOM CHANGES for using the partitioning template
+        # Check for partition_flg. if it does not exist, then default the value to "N"
+        if "partition_flg" in table_config:
+            partition_flg = table_config.get("partition_flg")
+        else:
+            partition_flg = "N"
+        
         load_frequency = table_config.get("load_frequency")
         if load_frequency == "RUNTIME":
             generate_runtime_view(raw_table, cdc_table)
@@ -77,7 +84,11 @@ def process_table(table_config: dict, source_dataset: str, target_dataset: str,
             # tables.
             logging.info("Generating required files for DAG with %s ",
                          cdc_table)
-            generate_cdc_dag_files(raw_table, cdc_table, load_frequency,
+            #CUSTOM CHANGES for using partitioning template - pass the
+            # partition flag to the method
+            # generate_cdc_dag_files(raw_table, cdc_table, load_frequency,
+            #                        gen_test)
+            generate_cdc_dag_files(raw_table, cdc_table, load_frequency, partition_flg,
                                    gen_test, allow_telemetry)
 
         logging.info("✅ == Processed %s ==", raw_table)
