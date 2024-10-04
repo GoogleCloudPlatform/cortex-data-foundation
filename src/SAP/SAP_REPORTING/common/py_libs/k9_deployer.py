@@ -37,7 +37,7 @@ from common.py_libs import test_harness
 
 def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
                               target_bucket: str, bq_client: bigquery.Client,
-                              data_source = "k9", dataset_type="processing"):
+                              data_source = "k9", dataset_type="processing", upload_tmp: bool = False):
     """Process and upload simple (traditional) K9.
 
     Recursively processes all files in k9_dir,
@@ -92,9 +92,24 @@ def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
                                  f"{dataset_type}/{k9_id}")
         logging.info("Copying generated files to %s",
                      target_path)
-        subprocess.check_call([
-            "gsutil", "-m", "cp", "-r", f"{tmp_dir}/", target_path
-        ])
+         # TODO: Shift to leveraging a cloud storage client
+        gsutil_command = [
+            "gsutil",
+            "-m",
+            "cp",
+            f"{tmp_dir}/*",
+            target_path
+        ]
+        if upload_tmp:
+            gsutil_command = [
+                "gsutil",
+                "-m",
+                "cp",
+                "-r",
+                f"{tmp_dir}/",
+                target_path
+            ]
+        subprocess.check_call(gsutil_command)
 
 def load_k9s_manifest(manifest_file:str) -> dict:
     """Load K9 Manifest and format into dict.
