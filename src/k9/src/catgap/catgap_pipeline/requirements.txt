@@ -128,7 +128,7 @@ google-api-core==2.19.0 \
 google-api-python-client==2.80.0 \
     --hash=sha256:51dd62d467da7ad3df63c3f0e6fca84266ce50c2218691204b2e8cd651a0719a \
     --hash=sha256:b9cd2550c2cdfeb78c3150d8c52208841082dabe597063a116476937170907ab
-    # via -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    # via -r requirements.in
 google-auth==2.29.0 \
     --hash=sha256:672dff332d073227550ffc7457868ac4218d6c500b155fe6cc17d2b13602c360 \
     --hash=sha256:d452ad095688cd52bae0ad6fafe027f6a6d6f560e810fec20914e17a09526415
@@ -154,12 +154,12 @@ gspread==5.7.2 \
     --hash=sha256:ce76f9c16b88ccb792350142224a59afa8e69f7463f3d3417148cbe892efc7cb \
     --hash=sha256:dbeedd08c6a7f7b0bfc1a54e17c29205362250c77bf98e11125c5d99fd7f4ba7
     # via
-    #   -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    #   -r requirements.in
     #   gspread-formatting
 gspread-formatting==1.1.2 \
     --hash=sha256:4d954d8c283880c4189f5684652b114c3889ffa4b442f339b80e2371782cb4c0 \
     --hash=sha256:e5d14477f18ec2f08db0a00d22470d1c621d53b0633412c4873d86712c9a7bca
-    # via -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    # via -r requirements.in
 httplib2==0.22.0 \
     --hash=sha256:14ae0a53c1ba8f3d37e9e27cf37eabb0fb9980f435ba405d546948b009dd64dc \
     --hash=sha256:d7a10bc5ef5ab08322488bde8c726eeee5c8618723fdb399597ec58f3d82df81
@@ -183,9 +183,9 @@ joblib==1.4.2 \
     # via
     #   nltk
     #   scikit-learn
-nltk==3.8.1 \
-    --hash=sha256:1834da3d0682cba4f2cede2f9aad6b0fafb6461ba451db0efb6f9c39798d64d3 \
-    --hash=sha256:fd5c9109f976fa86bcadba8f91e47f5e9293bd034474752e92a520f81c93dda5
+nltk==3.9 \
+    --hash=sha256:d17863e861bb33ac617893329d71d06a3dfb7e3eb9ee0b8105281c53944a45a1 \
+    --hash=sha256:e98acac454407fa38b76cccb29208d377731cf7fab68f323754a3681f104531f
     # via sentence-transformers
 numpy==1.26.4 \
     --hash=sha256:03a8c78d01d9781b28a6989f6fa1bb2c4f2d51201cf99d3dd875df6fbd96b23b \
@@ -487,7 +487,7 @@ requests==2.31.0 \
     --hash=sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f \
     --hash=sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
     # via
-    #   -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    #   -r requirements.in
     #   google-api-core
     #   huggingface-hub
     #   requests-oauthlib
@@ -657,7 +657,7 @@ scipy==1.13.0 \
     #   sentence-transformers
 sentence-transformers==2.2.2 \
     --hash=sha256:dbc60163b27de21076c9a30d24b5b7b6fa05141d68cf2553fa9a77bf79a29136
-    # via -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    # via -r requirements.in
 sentencepiece==0.2.0 \
     --hash=sha256:0461324897735512a32d222e3d886e24ad6a499761952b6bda2a9ee6e4313ea5 \
     --hash=sha256:0993dbc665f4113017892f1b87c3904a44d0640eda510abcacdfb07f74286d36 \
@@ -716,7 +716,7 @@ sentencepiece==0.2.0 \
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
-    # via -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    # via -r requirements.in
 threadpoolctl==3.5.0 \
     --hash=sha256:082433502dd922bf738de0d8bcc4fdcbf0979ff44c42bd40f5af8a282f6fa107 \
     --hash=sha256:56c1e26c150397e58c4926da8eeee87533b1e32bef131bd4bf6a2f45f3185467
@@ -834,7 +834,7 @@ torch==1.13.1+cpu \
     --hash=sha256:988ee77c0975b4c3f570dfc62277b1e300bbbe7cc000ce2720e2e8c730fb9ce5 \
     --hash=sha256:dc185f2fdbb1f84855929d3ba7b36c74f218789d26a0e0268cb0586d466c8c24
     # via
-    #   -r src/k9/src/catgap/catgap_pipeline/requirements.in
+    #   -r requirements.in
     #   sentence-transformers
     #   torchvision
 torchvision==0.14.1+cpu \
