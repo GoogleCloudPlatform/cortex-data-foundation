@@ -32,7 +32,8 @@ _RETRY_TIMEOUT_SEC = 60.0  # Timeout for API retries
 SOURCE_PROJECT_APIS = ["cloudresourcemanager", "storage-component",
                         "bigquery", "cloudbuild"]
 TARGET_PROJECT_APIS = ["storage-component", "bigquery"]
-PROJECT_ROLES = ["roles/bigquery.user"]
+PROJECT_ROLES = ["roles/bigquery.user", "roles/cloudbuild.builds.builder",
+ "roles/iam.serviceAccountUser"]
 
 
 
