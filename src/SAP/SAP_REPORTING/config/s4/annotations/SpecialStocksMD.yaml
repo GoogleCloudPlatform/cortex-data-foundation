@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SpecialStocksMD"
-description: "Special Stocks Master Data"
+description: "This view showcases special stock master data and includes information such as consignment stocks, in-transit stocks, orders on hand, etc. This view has a granularity of Client(System), language key and special stock indicator."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,10 +7,10 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "LanguageKey_SPRAS"
-    description: "Language Key"
+    description: "Language Key, PK"
   - name: "SpecialStockIndicator_SOBKZ"
-    description: "Special Stock Indicator"
+    description: "Special Stock Indicator, PK"
   - name: "DescriptionOfSpecialStock_SOTXT"
-    description: "Description Of Special Stock"
+    description: "Description of Special Stock"

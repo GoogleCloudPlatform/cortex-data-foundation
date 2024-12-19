@@ -540,7 +540,8 @@ INNER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.rbkp` AS RBKP
     AND RSEG_RBCO.belnr = RBKP.belnr
     AND RSEG_RBCO.gjahr = RBKP.gjahr
 LEFT JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.prps` AS PRPS
-  ON RSEG_RBCO.ps_psp_pnr = PRPS.pspnr
+  ON RSEG_RBCO.mandt = PRPS.mandt
+    AND RSEG_RBCO.ps_psp_pnr = PRPS.pspnr
 -- Joining to this table(currency_decimal) is necesssary to fix the decimal place of
 -- amounts for non-decimal-based currencies. SAP stores these amounts
 -- offset by a factor  of 1/100 within the system (FYI this gets

@@ -22,6 +22,7 @@ import sys
 import yaml
 
 from concurrent import futures
+from exceptiongroup import ExceptionGroup
 
 # Make sure common modules are in Python path
 sys.path.append(str(pathlib.Path(__file__).parent.parent))
@@ -82,10 +83,8 @@ def process_table(table_config: dict, source_dataset: str, target_dataset: str,
 
         logging.info("✅ == Processed %s ==", raw_table)
     except Exception as e:
-        logging.error("⛔️ Error generating dag/sql for %s.\nError: %s",
-                      raw_table, str(e))
         raise SystemExit(
-            "⛔️ Error while generating sql and dags. Please check the logs."
+            "⛔️ Error while generating sql and dags. Please check the logs. ⛔️"
         ) from e
 
 
@@ -95,22 +94,30 @@ def main():
     logger.setLevel(logging.INFO)
 
     logging.info("Starting config_reader...")
+    exceptions = []
 
     if not sys.argv[1]:
-        raise SystemExit("ERROR: No Source Project argument provided!")
-    source_project = sys.argv[1]
-    generate_query_bq_client.project = source_project
+        exceptions.append(
+            ValueError("ERROR: No Source Project argument provided!"))
 
     if not sys.argv[2]:
-        raise SystemExit("ERROR: No Source Dataset argument provided!")
-    source_dataset = source_project + "." + sys.argv[2]
+        exceptions.append(
+            ValueError("ERROR: No Source Dataset argument provided!"))
 
     if not sys.argv[3]:
-        raise SystemExit("ERROR: No Target Dataset argument provided!")
-    target_dataset = source_project + "." + sys.argv[3]
+        exceptions.append(
+            ValueError("ERROR: No Target Dataset argument provided!"))
 
     if not sys.argv[4]:
-        raise SystemExit("ERROR: No Test flag argument provided")
+        exceptions.append(ValueError("ERROR: No Test flag argument provided"))
+
+    if exceptions:
+        raise ExceptionGroup("⛔ Invalid configurations:", exceptions)
+
+    source_project = sys.argv[1]
+    generate_query_bq_client.project = source_project
+    source_dataset = f"{source_project}.{sys.argv[2]}"
+    target_dataset = f"{source_project}.{sys.argv[3]}"
     gen_test = sys.argv[4]
 
     if not sys.argv[5]:
@@ -148,9 +155,9 @@ def main():
     try:
         configs = yaml.load(resolved_configs, Loader=yaml.SafeLoader)
     except Exception as e:
-        logging.error("⛔️ Error reading '%s' file.\nError %s:", _CONFIG_FILE,
-                      str(e))
-        raise SystemExit() from e
+        raise SystemExit(
+            f"⛔️ Error reading '{_CONFIG_FILE}' file."
+            ) from e
 
     table_configs = configs["data_to_replicate"]
 
@@ -161,9 +168,8 @@ def main():
     error_message = validate_table_configs(table_configs)
     if error_message:
         exit_message = (f"⛔ Invalid configurations in '{_CONFIG_FILE}'!! "
-                        f"Reason: {error_message}")
-        logging.error(exit_message)
-        raise SystemExit()
+                        f"Reason: {error_message} ⛔")
+        raise SystemExit(exit_message)
 
     # Process each table entry in the settings to create CDC table/view.
     # This is done in parallel using multiple threads.
@@ -184,7 +190,7 @@ def main():
     for t in threads:
         _ = t.result()
 
-    logging.info("✅ config_reader done.")
+    logging.info("✅ config_reader done. ✅")
 
 
 if __name__ == "__main__":

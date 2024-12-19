@@ -17,4 +17,5 @@ CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Net
         WHEN Ip_ZBD1T IS NULL THEN 0
         END) AS INT64) DAY)
   )
-);
+)
+OPTIONS (description = "This function returns date for which actual payment is due.")

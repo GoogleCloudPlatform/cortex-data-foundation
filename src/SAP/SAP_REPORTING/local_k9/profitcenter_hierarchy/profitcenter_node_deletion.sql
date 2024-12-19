@@ -1,5 +1,6 @@
 CREATE OR REPLACE PROCEDURE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DeleteProfitCenterNode`(
   input_setclass STRING, input_subclass STRING, input_node STRING)
+OPTIONS (description = "This procedure deletes the hierarchy node and its children(if exist).")
 BEGIN
   DECLARE delete_node ARRAY< STRUCT < node STRING(50), hiername STRING(50), flag BOOL > >;
   DECLARE node_length INT64 DEFAULT NULL;

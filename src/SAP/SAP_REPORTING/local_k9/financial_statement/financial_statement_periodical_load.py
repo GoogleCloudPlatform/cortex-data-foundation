@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Cloud Composer DAG to generate financial_statement table.
-Executes relevant nodes to create the table.
-"""
+"""Cloud Composer DAG to periodically update the financial_statement table."""
 import ast
 
 from airflow import DAG
@@ -32,8 +30,6 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# This DAG does the periodical load
-# for financial_statement table.
 with DAG(dag_id="financial_statement_periodical_load",
          default_args=default_args,
          schedule_interval="@monthly",
@@ -43,7 +39,6 @@ with DAG(dag_id="financial_statement_periodical_load",
 
     start_task = EmptyOperator(task_id="start")
 
-    # This task inserts the initial load in financial_statement table.
     financial_statement_periodical_load = BigQueryInsertJobOperator(
         task_id="financial_statement_periodical_load",
         gcp_conn_id="sap_reporting_bq",
@@ -58,5 +53,4 @@ with DAG(dag_id="financial_statement_periodical_load",
     stop_task = EmptyOperator(task_id="stop")
 
     # pylint:disable=pointless-statement
-    (start_task >> financial_statement_periodical_load >> stop_task
-    )  # type:ignore
+    start_task >> financial_statement_periodical_load >> stop_task

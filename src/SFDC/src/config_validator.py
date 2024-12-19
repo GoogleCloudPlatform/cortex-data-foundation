@@ -24,6 +24,8 @@ from common.py_libs import resource_validation_helper
 def validate(cfg: dict) -> Union[dict, None]:
     """Validates and processes configuration.
 
+    It will discover and log all issues before returning.
+
     Args:
         cfg (dict): Config dictionary.
 
@@ -32,6 +34,7 @@ def validate(cfg: dict) -> Union[dict, None]:
         None: In case of validation failure
     """
 
+    failed = False
     if not cfg.get("deploySFDC"):
         logging.info("SFDC is not being deployed. Skipping validation.")
         return cfg
@@ -51,7 +54,7 @@ def validate(cfg: dict) -> Union[dict, None]:
     if missing_sfdc_attrs:
         logging.error("🛑 Missing 'SFDC values: %s' in the config file. 🛑",
                       missing_sfdc_attrs)
-        return None
+        failed = True
 
     datasets = sfdc.get("datasets")
 
@@ -60,13 +63,13 @@ def validate(cfg: dict) -> Union[dict, None]:
     if not cdc:
         logging.error("🛑 Missing 'SFDC/datasets/cdc' values "
                       "in the config file. 🛑")
-        return None
+        failed = True
 
     raw = datasets.get("raw")
     if not raw:
         logging.error("🛑 Missing 'SFDC/datasets/raw' values "
                       "in the config file. 🛑")
-        return None
+        failed = True
 
     reporting = datasets.get("reporting", "REPORTING_SFDC")
     datasets["reporting"] = reporting
@@ -83,8 +86,12 @@ def validate(cfg: dict) -> Union[dict, None]:
                                                       False, True, location)
     ]
     if not resource_validation_helper.validate_resources([], datasets):
+        logging.error("🛑 'SFDC' resource validation failed. 🛑")
+        failed = True
+
+    if failed:
+        logging.error("🛑 SFDC configuration is invalid. 🛑")
         return None
-
-    logging.info("✅ SFDC configuration is good.")
-
-    return cfg
+    else:
+        logging.info("✅ SFDC configuration is good. ✅")
+        return cfg

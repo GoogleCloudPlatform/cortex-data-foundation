@@ -17,10 +17,9 @@
 ## can be scheduled with Cloud Composer with the provided templates or ported
 ## into the scheduling tool of choice. These DAGs will be executed from a different
 ## directory structure in future releases.
-## PREVIEW
 
 CREATE OR REPLACE TABLE
-`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.stock_weekly_snapshots`(
+`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.stock_weekly_snapshots`( --noqa:disable=LT01
   mandt STRING,
   werks STRING,
   matnr STRING,
@@ -36,14 +35,16 @@ CREATE OR REPLACE TABLE
   total_weekly_movement_quantity NUMERIC,
   total_weekly_movement_amount NUMERIC,
   amount_weekly_cumulative NUMERIC,
-  quantity_weekly_cumulative NUMERIC);
+  quantity_weekly_cumulative NUMERIC
+);
 
 CALL `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.AggregateWeeklyInventory`();
 
 CALL `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.UpdateStockWeeklySnapshots`(
-{% if sql_flavour == 'ecc' -%}
+  {% if sql_flavour == 'ecc' -%} --noqa:disable=LT02
   (SELECT MIN(budat_mkpf) FROM `{{ project_id_src }}.{{ dataset_cdc_processed }}.mseg`),
-{% else -%}
+  {% else -%}
   (SELECT MIN(budat) FROM `{{ project_id_src }}.{{ dataset_cdc_processed }}.matdoc`),
-{% endif -%}
-  LAST_DAY(CURRENT_DATE, WEEK));
+  {% endif -%}
+  LAST_DAY(CURRENT_DATE, WEEK)
+);

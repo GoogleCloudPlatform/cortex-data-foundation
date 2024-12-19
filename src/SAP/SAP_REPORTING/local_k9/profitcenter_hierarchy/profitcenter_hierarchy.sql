@@ -1,6 +1,7 @@
 CREATE OR REPLACE PROCEDURE
 `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProfitCenterHrFlattening`
 (input_setclass STRING, input_subclass STRING)
+OPTIONS (description = "This procedure creates the 'profitcenter_flattened' table.")
 BEGIN
   DECLARE level_id INT64 DEFAULT 0;
   DECLARE max_level INT64 DEFAULT 0;

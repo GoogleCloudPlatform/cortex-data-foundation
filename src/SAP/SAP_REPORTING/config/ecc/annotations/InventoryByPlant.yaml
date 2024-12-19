@@ -81,7 +81,7 @@ fields:
   - name: "AmountWeeklyCumulativeInTargetCurrency"
     description: "Aggregated Amount of stock till the week end date in Target Currency"
   - name: "StandardCostInTargetCurrency_STPRS"
-    description: "Standard price in Taget Currency"
+    description: "Standard price in Target Currency"
   - name: "MovingAveragePriceInTargetCurrency_VERPR"
     description: "Moving Average Price in Target Currency"
   - name: "InventoryValueInTargetCurrency"

@@ -22,4 +22,5 @@ CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Due
       END AS SK2DT
 
   )
-);
+)
+OPTIONS (description = "This function returns date for which cash discount 2 is due.")

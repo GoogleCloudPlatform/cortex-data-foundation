@@ -1,5 +1,6 @@
 CREATE OR REPLACE PROCEDURE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DeleteFSVNode`(
   input_chartofaccounts STRING, input_node STRING)
+OPTIONS (description = "This procedure deletes the hierarchy node and its children(if exist) based on the user input of chart of accounts and node.")
 BEGIN
   DECLARE delete_node ARRAY< STRUCT < node STRING(50), flag BOOL > >;
   DECLARE len INT64 DEFAULT NULL;

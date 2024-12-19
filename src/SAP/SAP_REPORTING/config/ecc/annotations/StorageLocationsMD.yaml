@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.StorageLocationsMD"
-description: "StorageLocations Text"
+description: "This view gives storage locations master data, i.e., where the stocks are physically stored within a plant. This view is at the granularity of Client(System), plant and storage location."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,10 +7,10 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "Plant_WERKS"
-    description: "Plant"
+    description: "Plant, PK"
   - name: "StorageLocation_LGORT"
-    description: "Storage Location"
+    description: "Storage Location, PK"
   - name: "StorageLocationText_LGOBE"
-    description: "Descr. of Storage Loc."
+    description: "Name of Storage Location"

@@ -45,17 +45,6 @@ SELECT
   mseg.BWTAR AS ValuationType_BWTAR,
   mseg.KZZUG AS ReceiptIndicator_KZZUG,
   mseg.BUDAT_MKPF AS PostingDate_BUDAT_MKPF,
-  --##CORTEX-CUSTOMER Consider adding other dimensions from the calendar_date_dim table as per your requirement
-  CalendarDateDim_BUDAT_MKPF.CalYear AS YearOfPostingDate_BUDAT_MKPF,
-  CalendarDateDim_BUDAT_MKPF.CalMonth AS MonthOfPostingDate_BUDAT_MKPF,
-  CalendarDateDim_BUDAT_MKPF.CalWeek AS WeekOfPostingDate_BUDAT_MKPF,
-  CalendarDateDim_BUDAT_MKPF.CalQuarter AS QuarterOfPostingDate_BUDAT_MKPF,
-  CAST(FORMAT_DATE('%Y%m%d', CalendarDateDim_BUDAT_MKPF.WeekEndDate) AS INT64) AS WeekEndDateOfPostingDate_BUDAT_MKPF,
-  --##CORTEX-CUSTOMER If you prefer to use currency conversion, uncomment below
-  -- currency_conversion.UKURS AS ExchangeRate_UKURS,
-  -- currency_conversion.TCURR AS TargetCurrency_TCURR,
-  -- currency_conversion.conv_date AS Conversion_date,
-  -- mseg.DMBTR * currency_conversion.UKURS AS AmountInTargetCurrency_DMBTR,
   -- mseg.LINE_ID AS UniqueIdentificationOfDocument_Line_LINE_ID,
   -- mseg.PARENT_ID AS IdentifierOfImmediatelySuperiorLine_PARENT_ID,
   -- mseg.lINE_DEPTH AS HierarchyLevelOfLineInDocument_lINE_DEPTH,
@@ -220,6 +209,17 @@ SELECT
   -- mseg.WRF_CHARSTC1 AS CharacteristicValue1_WRF_CHARSTC1,
   -- mseg.WRF_CHARSTC2 AS CharacteristicValue2_WRF_CHARSTC2,
   -- mseg.WRF_CHARSTC3 AS CharacteristicValue3_WRF_CHARSTC3,
+  --##CORTEX-CUSTOMER Consider adding other dimensions from the calendar_date_dim table as per your requirement
+  CalendarDateDim_BUDAT_MKPF.CalYear AS YearOfPostingDate_BUDAT_MKPF,
+  CalendarDateDim_BUDAT_MKPF.CalMonth AS MonthOfPostingDate_BUDAT_MKPF,
+  CalendarDateDim_BUDAT_MKPF.CalWeek AS WeekOfPostingDate_BUDAT_MKPF,
+  CalendarDateDim_BUDAT_MKPF.CalQuarter AS QuarterOfPostingDate_BUDAT_MKPF,
+  CAST(FORMAT_DATE('%Y%m%d', CalendarDateDim_BUDAT_MKPF.WeekEndDate) AS INT64) AS WeekEndDateOfPostingDate_BUDAT_MKPF,
+  --##CORTEX-CUSTOMER If you prefer to use currency conversion, uncomment below
+  -- currency_conversion.UKURS AS ExchangeRate_UKURS,
+  -- currency_conversion.TCURR AS TargetCurrency_TCURR,
+  -- currency_conversion.conv_date AS Conversion_date,
+  -- COALESCE(mseg.DMBTR * currency_decimal.CURRFIX, mseg.DMBTR) * currency_conversion.UKURS AS AmountInTargetCurrency_DMBTR,
   COALESCE(mseg.DMBTR * currency_decimal.CURRFIX, mseg.DMBTR) AS AmountInLocalCurrency_DMBTR
 FROM `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mseg` AS mseg
 --Fix the decimal place of amounts for non-decimal-based currencies such as JPY, IDR, KRW, TWD etc.

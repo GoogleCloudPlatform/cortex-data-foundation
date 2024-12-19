@@ -274,11 +274,9 @@ def prompt_for_datasets(session: PromptSession,
         current_value = _get_json_value(config, dataset[1])
         if not current_value:
             current_value = ""
+        if dataset[2] == "GA4 CDC":
+            current_value = current_value[0].get("name")
         while True:
-            if dataset[2] == "GA4 CDC":
-                dataset_name = [{"property_id": "123",
-                              "name": dataset_name}]
-                break
             dataset_name = get_value(session, f"{dataset[2]} Dataset",
                                 (target_completer
                                     if dataset[3] else source_completer),
@@ -296,6 +294,9 @@ def prompt_for_datasets(session: PromptSession,
                 else:
                     return None
             else:
+                if dataset[2] == "GA4 CDC":
+                    dataset_name = [{"property_id": "123",
+                                     "name": dataset_name}]
                 break
 
         config = _set_json_value(config, dataset[1], dataset_name)

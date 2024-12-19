@@ -13,9 +13,6 @@
 #-- limitations under the License.
 
 CREATE OR REPLACE TABLE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.UoMConversion`(mandt_in STRING, unit_in STRING, unit_out STRING, val_in NUMERIC)
-OPTIONS(
-  description = "Function for Unit of measure conversion - VAL_OUT is the output"
-)
 AS
 {% if sql_flavour == 'ecc' or sql_flavour == 'union' -%}
 {% include './ecc/UoMConversion.sql' -%}
@@ -28,4 +25,4 @@ UNION ALL
 {% if sql_flavour == 's4' or sql_flavour == 'union' -%}
 {% include './s4/UoMConversion.sql' -%}
 {% endif -%}
-
+OPTIONS (description = "This function returns the equivalent value of a quantity in a different unit of measurement, after applying specific conversion factor.")

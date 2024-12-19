@@ -25,6 +25,7 @@ CREATE OR REPLACE TABLE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.financ
 
 CREATE OR REPLACE PROCEDURE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FinancialStatement`(
   input_startdate DATE, input_enddate DATE)
+OPTIONS (description = "This procedure creates the financial_statement table.")
 BEGIN
   --This procedure creates table having transaction data at fiscal year, period level
   --including copying missing records from one period to another.

@@ -1,7 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.BalanceSheet"
-description: "A balance sheet view provides important Financial KPIs including comapany's assests, liabilitlies and equity at specific
- point of time at the granularity of Client(System), Company Code, Fiscal Year, Fiscal Period, ChartOfAccount, Hierarchy, Business Area,
- Node, Node ID and Language Key (Coming from system Settings)"
+description: "This view provides important financial KPIs including comapany's assests, liabilitlies and equity at specific point of time at the granularity of Client(System), Company Code, Fiscal Year, Fiscal Period, ChartOfAccount, Hierarchy Name, Ledger, Business Area, Node, Target Currency and Language Key."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -28,6 +26,8 @@ fields:
     description: "Node Id (includes both hierarchy node and glaccounts), PK"
   - name: "LanguageKey_SPRAS"
     description: "Language Key, PK"
+  - name: "TargetCurrency_TCURR"
+    description: "To-currency, PK"
   - name: "Parent"
     description: "Parent Node"
   - name: "NodeText"
@@ -58,8 +58,6 @@ fields:
     description: "Amount in target currency"
   - name: "CumulativeAmountInTargetCurrency"
     description: "Aggregated amount till the given fiscal period in target currency"
-  - name: "TargetCurrency_TCURR"
-    description: "To-currency, PK"
 ## CORTEX-CUSTOMER: Update asset policy example to fit your use case.
 asset_policies:
   - role: READER

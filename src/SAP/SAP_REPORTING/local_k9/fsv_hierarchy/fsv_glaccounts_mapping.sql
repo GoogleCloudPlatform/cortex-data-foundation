@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 CREATE OR REPLACE PROCEDURE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FSVGLAccountMapping`() --noqa:LT01
+OPTIONS (description = "This procedure creates/updates the G/L account to ancestor node mapping (fsv_glaccounts) table.")
 BEGIN
   --This procedure generates table having glaccounts mapped to fsv hierarchy nodes.
 

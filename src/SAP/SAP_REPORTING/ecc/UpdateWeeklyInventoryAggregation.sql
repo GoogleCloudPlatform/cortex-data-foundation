@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## PREVIEW
-
 # Partially update (refresh) the weekly inventory aggregation intermediate table.
 #
 # Week start date is defined in the Calendar Date Dimension table (`calendar_date_dim`).
@@ -23,6 +21,7 @@ CREATE OR REPLACE PROCEDURE
 `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.UpdateWeeklyInventoryAggregation` (
   week_start_date_cut_off DATE
 )
+OPTIONS (description = "This procedure updates the 'weekly_inventory_aggregation' table.")
 BEGIN
   CREATE TABLE IF NOT EXISTS `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.weekly_inventory_aggregation`
   (

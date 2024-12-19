@@ -12,11 +12,6 @@ bq_independent_objects:
   - type: k9_dawg
     k9_id: prod_hierarchy_texts
 
-  ## hier_reader is now deprecated and will be removed in the next release.
-  ## See README for migration options.
-  - type: k9_dawg
-    k9_id: hier_reader
-
   - sql_file: is_leap_year.sql
     type: script
 

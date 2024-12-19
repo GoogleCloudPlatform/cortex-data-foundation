@@ -74,7 +74,7 @@ SELECT
   -- currency_conversion.UKURS AS ExchangeRate_UKURS,
   -- currency_conversion.conv_date AS Conversion_date,
   -- currency_conversion.TCURR AS TargetCurrency_TCURR,
-  -- konv.KWERT * currency_conversion.UKURS AS ConditionValueInTargetCurrency_KWERT,
+  -- COALESCE(konv.KWERT * currency_decimal.CURRFIX, konv.KWERT) * currency_conversion.UKURS AS ConditionValueInTargetCurrency_KWERT,
   CAST(NULL AS STRING) AS ProcessConditionsWithValueEqualToZero_VAL_ZERO,
   CAST(NULL AS STRING) AS StatisticalAndRelevantForAccountDetermination_IS_ACCT_DETN_RELEVANT,
   CAST(NULL AS STRING) AS TaxReportingCountry_TAX_COUNTRY,

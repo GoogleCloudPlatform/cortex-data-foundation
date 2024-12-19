@@ -17,4 +17,5 @@ CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.is_
 RETURNS BOOL
 AS (
   (MOD(YEAR, 4) = 0 AND MOD(YEAR, 100) != 0) OR MOD(YEAR, 400) = 0
-);
+)
+OPTIONS (description = "The function returns 'True' if the provided year is a leap year, or 'False' otherwise.");

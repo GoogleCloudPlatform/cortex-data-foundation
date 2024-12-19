@@ -36,24 +36,6 @@ bq_independent_objects:
     table_setting:
       load_frequency: "@yearly"
 
-  - sql_file: fiscal_period.sql
-    type: script
-
-  - sql_file: fiscal_case1.sql
-    type: script
-
-  - sql_file: fiscal_case2.sql
-    type: script
-
-  - sql_file: fiscal_case3.sql
-    type: script
-
-  - sql_file: currency_decimal.sql
-    type: script
-
-  - sql_file: currency_conversion.sql
-    type: script
-
   - sql_file: AddressesMD.sql
     description: "Addresses Master Data"
     type: table
@@ -661,9 +643,6 @@ bq_dependent_objects:
       cluster_details: { columns: ["Company_BUKRS", "FiscalYear", "TargetCurrency_TCURR"] }
 
   - sql_file: financial_statement.sql
-    type: script
-
-  - sql_file: financial_statement_initial_load.sql
     type: script
 
   - type: k9_dawg

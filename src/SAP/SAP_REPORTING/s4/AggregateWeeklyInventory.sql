@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## PREVIEW
-
 # Fully update (refresh) the weekly inventory aggregation intermediate table.
 #
 # Week start date is defined in Date Dimension table (`calendar_date_dim`).
 CREATE OR REPLACE PROCEDURE
 `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.AggregateWeeklyInventory` ()
+OPTIONS (description = "This procedure creates the weekly_inventory_aggregation table, an intermediate table for downstream calculation of weekly stock quantity / value snapshots and performance KPIs.")
 BEGIN
   CREATE OR REPLACE TABLE
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.weekly_inventory_aggregation` AS
