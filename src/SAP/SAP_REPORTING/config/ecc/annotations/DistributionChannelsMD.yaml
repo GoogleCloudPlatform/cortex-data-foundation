@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DistributionChannelsMD"
-description: "Distribution Channel Details"
+description: "This view shows the master data about the different distribution channels. The granularity is client(System), language key and distribution channel."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,10 +7,10 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "DistributionChannel_VTWEG"
-    description: "Distribution Channel"
+    description: "Distribution Channel, PK"
   - name: "Language_SPRAS"
-    description: "Language Key"
+    description: "Language Key, PK"
   - name: "DistributionChannelName_VTEXT"
-    description: "Name"
+    description: "Distribution Channel Name"

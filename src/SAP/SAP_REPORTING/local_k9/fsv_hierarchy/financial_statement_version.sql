@@ -1,5 +1,6 @@
 CREATE OR REPLACE PROCEDURE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.FSVHrFlattening`(
   input_chartofaccounts STRING, input_hiername STRING)
+OPTIONS (description = "This procedure creates / updates the flattened financial statement version hierarchy (fsv_flattened) table.")
 BEGIN
   {% if sql_flavour == 'ecc' -%}
     --This procedure generates the flattened financial statement version hierarchy table.

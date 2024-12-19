@@ -24,4 +24,5 @@ AS (
           )
       END AS SK1DT
   )
-);
+)
+OPTIONS (description = "This function returns date for which cash discount 1 is due.");

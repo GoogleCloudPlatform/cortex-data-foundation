@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Languages_T002"
-description: "Languages (T002)"
+description: "This view showcases details about languages supported by the system. It has a granularity of language key."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,10 +7,10 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "LanguageKey_SPRAS"
-    description: "Language Key"
+    description: "Language Key, PK"
   - name: "LanguageSpecifications_LASPEZ"
-    description: "Language specifications"
+    description: "Language Specifications"
   - name: "DegreeOfTranslationOfLanguage_LAHQ"
-    description: "Degree of Translation of Lang."
+    description: "Degree of Translation of Language"
   - name: "TwoCharacterSapLanguageCode_LAISO"
-    description: "Lang. (ISO 639)"
+    description: "2-Character SAP Language Code"

@@ -74,7 +74,7 @@ SELECT
   -- currency_conversion.UKURS AS ExchangeRate_UKURS,
   -- currency_conversion.conv_date AS Conversion_date,
   -- currency_conversion.TCURR AS TargetCurrency_TCURR,
-  -- prcd_elements.KWERT * currency_conversion.UKURS AS ConditionValueInTargetCurrency_KWERT,
+  -- COALESCE(prcd_elements.KWERT * currency_decimal.CURRFIX, prcd_elements.KWERT) * currency_conversion.UKURS AS ConditionValueInTargetCurrency_KWERT,
   prcd_elements.VAL_ZERO AS ProcessConditionsWithValueEqualToZero_VAL_ZERO,
   prcd_elements.IS_ACCT_DETN_RELEVANT AS StatisticalAndRelevantForAccountDetermination_IS_ACCT_DETN_RELEVANT,
   prcd_elements.TAX_COUNTRY AS TaxReportingCountry_TAX_COUNTRY,
@@ -93,7 +93,7 @@ LEFT JOIN
 -- LEFT JOIN
 --   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_conversion` AS currency_conversion
 -- ON
---   prcd_elements.MANDT = currency_conversion.MANDT
+--   prcd_elements.CLIENT = currency_conversion.MANDT
 --   AND COALESCE(prcd_elements.WAERS, '') = currency_conversion.FCURR
 --   AND PARSE_DATE('%Y%m%d', SUBSTRING(prcd_elements.KDATU, 1, 8)) = currency_conversion.conv_date
 --   AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})

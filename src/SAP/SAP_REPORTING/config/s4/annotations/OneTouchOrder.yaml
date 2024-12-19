@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.OneTouchOrder"
-description: "Find if a sales order and its delviery were created and not updated. This view depends on the RAW datasets to contain history. Comment it out from SalesOrders* if the RAW dataset is not available. Replace or update with CDPOS if this history is required."
+description: "This view shows the sales documents which are one touch in nature (i.e.,The sales orders which were fulfilled in one go from sales order creation to delivery and billing). This view has granularity of Client(system), sales document number and item."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -9,14 +9,14 @@ catalog_tags:
         value: "Order to Cash"
 fields:
   - name: "VBAPClient_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "VBAPSalesDocument_VBELN"
-    description: "VBAP Sales Document"
+    description: "Sales Document, PK"
   - name: "VBAPSalesDocument_Item_POSNR"
-    description: "VBAP Sales Document"
+    description: "Sales Document Item, PK"
   - name: "VBAPTotalOrder_KWMENG"
-    description: "VBAP Total Order"
+    description: " Total Order Quantity in Sales Units"
   - name: "ActualBilledQuantity_FKIMG"
     description: "Actual Billed Quantity"
   - name: "OneTouchOrderCount"
-    description: "One Touch Order Count"
+    description: "Number of One Touch orders for the sales document and item"

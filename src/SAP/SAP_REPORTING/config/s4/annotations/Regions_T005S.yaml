@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.Regions_T005S"
-description: "Regions (T005S)"
+description: "This view gives details about the regions master data at the granularity of Client(System), country key and region."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,11 +7,11 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "CountryKey_LAND1"
-    description: "Country Key"
+    description: "Country Key, PK"
   - name: "Region_BLAND"
-    description: "Region"
+    description: "Region, PK"
   - name: "ProvincialTaxCode_FPRCD"
     description: "Provincial Tax Code"
   - name: "StateOfManufacture_HERBL"

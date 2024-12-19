@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## PREVIEW
-
 # Fully update (refresh) the monthly inventory aggregation intermediate table.
 CREATE OR REPLACE PROCEDURE
 `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.AggregateMonthlyInventory` ()
+OPTIONS (description = "This procedure creates the monthly_inventory_aggregation table, an intermediate table for downstream calculation of monthly stock quantity / value snapshots and performance KPIs.")
 BEGIN
   CREATE OR REPLACE TABLE
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.monthly_inventory_aggregation`

@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PurchasingGroupsMD"
-description: "Purchasing Groups Text"
+description: "This view gives details about the purchasing group master data at the granularity of Client(System) and purchasing group."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,8 +7,8 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "PurchasingGroup_EKGRP"
-    description: "Purchasing Group"
+    description: "Purchasing Group, PK"
   - name: "PurchasingGroupText_EKNAM"
-    description: "Description p. group"
+    description: "Description of  Purchasing Group"

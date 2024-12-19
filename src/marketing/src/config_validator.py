@@ -13,6 +13,8 @@
 # limitations under the License.
 """
 Processes and validates Marketing config.json.
+
+It discover and will log all issues before returning.
 """
 
 import logging
@@ -54,17 +56,13 @@ def _validate_googleads(cfg: dict) -> None:
     location = cfg["location"]
     datasets = [
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["raw"]}',
-            True, True, location),
+            f'{source}.{datasets["raw"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["cdc"]}',
-            True, True, location),
+            f'{source}.{datasets["cdc"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{target}.{datasets["reporting"]}',
-            False, True, location)
-        ]
-    if not resource_validation_helper.validate_resources([],
-                                                            datasets):
+            f'{target}.{datasets["reporting"]}', False, True, location)
+    ]
+    if not resource_validation_helper.validate_resources([], datasets):
         raise ValueError("Resource validation failed.")
 
     logging.info("✅ Config file validated for GoogleAds and is looking good.")
@@ -100,22 +98,19 @@ def _validate_cm360(cfg: dict) -> None:
     source = cfg["projectIdSource"]
     target = cfg["projectIdTarget"]
     location = cfg["location"]
-    buckets = [resource_validation_helper.BucketConstraints(
-        cm360["dataTransferBucket"], True, location
-    )]
+    buckets = [
+        resource_validation_helper.BucketConstraints(
+            cm360["dataTransferBucket"], True, location)
+    ]
     datasets = [
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["raw"]}',
-            True, True, location),
+            f'{source}.{datasets["raw"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["cdc"]}',
-            True, True, location),
+            f'{source}.{datasets["cdc"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{target}.{datasets["reporting"]}',
-            False, True, location)
-        ]
-    if not resource_validation_helper.validate_resources(buckets,
-                                                            datasets):
+            f'{target}.{datasets["reporting"]}', False, True, location)
+    ]
+    if not resource_validation_helper.validate_resources(buckets, datasets):
         raise ValueError("Resource validation failed.")
 
     logging.info("✅ Config file validated for GoogleAds and is looking good.")
@@ -154,17 +149,13 @@ def _validate_tiktok(cfg: dict) -> None:
     location = cfg["location"]
     datasets = [
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["raw"]}',
-            True, True, location),
+            f'{source}.{datasets["raw"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["cdc"]}',
-            True, True, location),
+            f'{source}.{datasets["cdc"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{target}.{datasets["reporting"]}',
-            False, True, location)
-        ]
-    if not resource_validation_helper.validate_resources([],
-                                                            datasets):
+            f'{target}.{datasets["reporting"]}', False, True, location)
+    ]
+    if not resource_validation_helper.validate_resources([], datasets):
         raise ValueError("Resource validation failed.")
 
     logging.info("Config file validated for TikTok and is looking good.")
@@ -202,11 +193,9 @@ def _validate_liveramp(cfg: dict) -> None:
     location = cfg["location"]
     datasets = [
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["cdc"]}',
-            True, True, location)
-        ]
-    if not resource_validation_helper.validate_resources([],
-                                                            datasets):
+            f'{source}.{datasets["cdc"]}', True, True, location)
+    ]
+    if not resource_validation_helper.validate_resources([], datasets):
         raise ValueError("Resource validation failed.")
 
     logging.info("Config file validated for LiveRamp and is looking good.")
@@ -236,26 +225,21 @@ def _validate_meta(cfg: dict) -> None:
             missing_datasets_attrs.append(attr)
 
     if missing_datasets_attrs:
-        raise ValueError(
-            "Config file is missing some Meta datasets attributes "
-            f"or has empty value: {missing_datasets_attrs} ")
+        raise ValueError("Config file is missing some Meta datasets attributes "
+                         f"or has empty value: {missing_datasets_attrs} ")
 
     source = cfg["projectIdSource"]
     target = cfg["projectIdTarget"]
     location = cfg["location"]
     datasets = [
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["raw"]}',
-            True, True, location),
+            f'{source}.{datasets["raw"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["cdc"]}',
-            True, True, location),
+            f'{source}.{datasets["cdc"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{target}.{datasets["reporting"]}',
-            False, True, location)
-        ]
-    if not resource_validation_helper.validate_resources([],
-                                                            datasets):
+            f'{target}.{datasets["reporting"]}', False, True, location)
+    ]
+    if not resource_validation_helper.validate_resources([], datasets):
         raise ValueError("Resource validation failed.")
 
     logging.info("Config file validated for Meta and is looking good.")
@@ -285,27 +269,24 @@ def _validate_sfmc(cfg: dict) -> None:
             missing_datasets_attrs.append(attr)
 
     if missing_datasets_attrs:
-        raise ValueError(
-            "Config file is missing some SFMC datasets attributes "
-            f"or has empty value: {missing_datasets_attrs} ")
+        raise ValueError("Config file is missing some SFMC datasets attributes "
+                         f"or has empty value: {missing_datasets_attrs} ")
 
     source = cfg["projectIdSource"]
     target = cfg["projectIdTarget"]
     location = cfg["location"]
-    buckets = [resource_validation_helper.BucketConstraints(
-        sfmc["fileTransferBucket"], True, location
-    )]
+    buckets = [
+        resource_validation_helper.BucketConstraints(sfmc["fileTransferBucket"],
+                                                     True, location)
+    ]
     datasets = [
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["raw"]}',
-            True, True, location),
+            f'{source}.{datasets["raw"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{source}.{datasets["cdc"]}',
-            True, True, location),
+            f'{source}.{datasets["cdc"]}', True, True, location),
         resource_validation_helper.DatasetConstraints(
-            f'{target}.{datasets["reporting"]}',
-            False, True, location)
-        ]
+            f'{target}.{datasets["reporting"]}', False, True, location)
+    ]
     if not resource_validation_helper.validate_resources(buckets, datasets):
         raise ValueError("Resource validation failed.")
 
@@ -372,9 +353,8 @@ def _validate_ga4(cfg: dict) -> None:
     datasets = ga4["datasets"]
 
     if not datasets.get("reporting"):
-        raise ValueError(
-            "Config file is missing Google Analytics 4"
-            "reporting datasets attributes")
+        raise ValueError("Config file is missing Google Analytics 4"
+                         "reporting datasets attributes")
 
     cdc_dataset_list = []
     cdc_property_id_list = []
@@ -385,12 +365,14 @@ def _validate_ga4(cfg: dict) -> None:
             cdc_dataset_list.append(dataset_name)
         else:
             raise ValueError(
-            "Config file contains identical Google Analytics 4 CDC datasets")
+                "Config file contains identical Google Analytics 4 CDC datasets"
+            )
         if property_id not in cdc_property_id_list:
             cdc_property_id_list.append(property_id)
         else:
             raise ValueError(
-            "Config file contains identical Google Analytics 4 CDC property_ids"
+                "Config file contains identical Google Analytics 4 CDC \
+                    property_ids"
             )
     if not cdc_dataset_list:
         raise ValueError(
@@ -399,9 +381,11 @@ def _validate_ga4(cfg: dict) -> None:
     source = cfg["projectIdSource"]
     target = cfg["projectIdTarget"]
     location = cfg["location"]
-    cdc_datasets = [resource_validation_helper.DatasetConstraints(
-                    f"{source}.{cdc_dataset}", True, True, location)
-                    for cdc_dataset in cdc_dataset_list]
+    cdc_datasets = [
+        resource_validation_helper.DatasetConstraints(f"{source}.{cdc_dataset}",
+                                                      True, True, location)
+        for cdc_dataset in cdc_dataset_list
+    ]
     datasets = cdc_datasets + [
         resource_validation_helper.DatasetConstraints(
             f'{target}.{datasets["reporting"]}', False, True, location)
@@ -422,7 +406,7 @@ def validate(cfg: dict) -> Union[dict, None]:
     Returns:
         dict: Processed config dictionary.
     """
-
+    failed = False
     if not cfg.get("deployMarketing", False):
         logging.info("'marketing' is not being deployed. Skipping validation.")
         return cfg
@@ -442,136 +426,99 @@ def validate(cfg: dict) -> Union[dict, None]:
             missing_marketing_attr.append(attr)
 
     if missing_marketing_attr:
-        logging.error(
-            "🛑 Config file is missing some Marketing attributes or "
-            "has empty value: %s. 🛑", missing_marketing_attr)
-        return None
+        logging.warning(
+            "⚠️ Config file is missing some Marketing attributes or "
+            "has empty value: %s. ⚠️", missing_marketing_attr)
 
     # Google Ads
     deploy_googleads = marketing.get("deployGoogleAds")
     if deploy_googleads:
         googleads = marketing.get("GoogleAds")
         if not googleads:
-            logging.error(
-                "🛑 Missing 'marketing' 'GoogleAds' attribute "
-                "in the config file. 🛑")
-            return None
+            logging.error("🛑 Missing 'marketing' 'GoogleAds' attribute "
+                          "in the config file. 🛑")
+            failed = True
         else:
             try:
                 _validate_googleads(cfg)
-            except ValueError as e:
-                logging.error("🛑 GoogleAds config validation failed: %s 🛑",
-                              str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("🛑 GoogleAds config validation failed. 🛑")
-                logging.error(e)
-                return None
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("🛑 GoogleAds config validation failed. 🛑")
+                failed = True
 
     # CM360
     deploy_cm360 = marketing.get("deployCM360")
     if deploy_cm360:
         cm360 = marketing.get("CM360")
         if not cm360:
-            logging.error(
-                "🛑 Missing 'marketing' 'CM360' attribute "
-                "in the config file. 🛑")
-            return None
+            logging.error("🛑 Missing 'marketing' 'CM360' attribute "
+                          "in the config file. 🛑")
+            failed = True
         else:
             try:
                 _validate_cm360(cfg)
-            except ValueError as e:
-                logging.error("🛑 CM360 config validation failed: %s 🛑",
-                              str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("🛑 CM360 config validation failed. 🛑")
-                logging.error(e)
-                return None
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("🛑 CM360 config validation failed. 🛑")
+                failed = True
 
     # TikTok
     deploy_tiktok = marketing.get("deployTikTok")
     if deploy_tiktok:
         tiktok = marketing.get("TikTok")
         if not tiktok:
-            logging.error(
-                "🛑 Missing 'marketing' 'TikTok' attribute "
-                "in the config file. 🛑")
-            return None
+            logging.error("🛑 Missing 'marketing' 'TikTok' attribute "
+                          "in the config file. 🛑")
+            failed = True
         else:
             try:
                 _validate_tiktok(cfg)
-            except ValueError as e:
-                logging.error("🛑 TikTok config validation failed: %s 🛑",
-                              str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("🛑 TikTok config validation failed. 🛑")
-                logging.error(e)
-                return None
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("🛑 TikTok config validation failed. 🛑")
+                failed = True
 
     # LiveRamp
     deploy_liveramp = marketing.get("deployLiveRamp")
     if deploy_liveramp:
         liveramp = marketing.get("LiveRamp")
         if not liveramp:
-            logging.error(
-                "🛑 Missing 'marketing' 'LiveRamp' attribute "
-                "in the config file. 🛑")
-            return None
+            logging.error("🛑 Missing 'marketing' 'LiveRamp' attribute "
+                          "in the config file. 🛑")
+            failed = True
         else:
             try:
                 _validate_liveramp(cfg)
-            except ValueError as e:
-                logging.error("🛑 LiveRamp config validation failed: %s 🛑",
-                              str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("🛑 LiveRamp config validation failed. 🛑")
-                logging.error(e)
-                return None
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("🛑 LiveRamp config validation failed. 🛑")
+                failed = True
 
     # Meta
     deploy_meta = marketing.get("deployMeta")
     if deploy_meta:
         meta = marketing.get("Meta")
         if not meta:
-            logging.error(
-                "🛑 Missing 'marketing' 'Meta' attribute "
-                "in the config file. 🛑")
-            return None
+            logging.error("🛑 Missing 'marketing' 'Meta' attribute "
+                          "in the config file. 🛑")
+            failed = True
         else:
             try:
                 _validate_meta(cfg)
-            except ValueError as e:
-                logging.error("🛑 Meta config validation failed: %s 🛑",
-                              str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("🛑 Meta config validation failed. 🛑")
-                logging.error(e)
-                return None
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("🛑 Meta config validation failed. 🛑")
+                failed = True
 
     # SFMC
     deploy_sfmc = marketing.get("deploySFMC")
     if deploy_sfmc:
         sfmc = marketing.get("SFMC")
         if not sfmc:
-            logging.error(
-                "🛑 Missing 'marketing' 'SFMC' attribute "
-                "in the config file. 🛑")
-            return None
+            logging.error("🛑 Missing 'marketing' 'SFMC' attribute "
+                          "in the config file. 🛑")
+            failed = True
         else:
             try:
                 _validate_sfmc(cfg)
-            except ValueError as e:
-                logging.error("🛑 SFMC config validation failed: %s 🛑",
-                              str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("🛑 SFMC config validation failed. 🛑")
-                logging.error(e)
-                return None
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("🛑 SFMC config validation failed. 🛑")
+                failed = True
 
     # DV360
     deploy_dv360 = marketing.get("deployDV360")
@@ -580,18 +527,13 @@ def validate(cfg: dict) -> Union[dict, None]:
         if not dv360:
             logging.error("🛑 Missing 'marketing' 'DV360' attribute "
                           "in the config file. 🛑")
-            return None
+            failed = True
         else:
             try:
                 _validate_dv360(cfg)
-            except ValueError as e:
-                logging.error("🛑 DV360 config validation failed: %s 🛑",
-                              str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error("🛑 DV360 config validation failed. 🛑")
-                logging.error(e)
-                return None
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("🛑 DV360 config validation failed. 🛑")
+                failed = True
 
     # Google Analytics 4
     deploy_ga4 = marketing.get("deployGA4")
@@ -600,40 +542,38 @@ def validate(cfg: dict) -> Union[dict, None]:
         if not ga4:
             logging.error("🛑 Missing 'marketing' 'GA4' attribute "
                           "in the config file. 🛑")
-            return None
+            failed = True
         else:
             try:
                 _validate_ga4(cfg)
-            except ValueError as e:
-                logging.error(
-                    "🛑 Google Analytics 4 config validation failed: %s 🛑",
-                    str(e))
-                return None
-            except Exception as e:  # pylint: disable=broad-except
-                logging.error(
+            except Exception:  # pylint: disable=broad-except
+                logging.exception(
                     "🛑 Google Analytics 4 config validation failed. 🛑")
-                logging.error(e)
-                return None
+                failed = True
 
     # dataflowRegion is only required for certain data sources.
     if (deploy_googleads or deploy_cm360 or deploy_liveramp or deploy_meta or
             deploy_tiktok or deploy_sfmc):
 
         if not marketing.get("dataflowRegion"):
-            logging.error(
-                "🛑 Config file is missing or has empty value for "
-                "required attribute: dataflowRegion. 🛑")
-            return None
+            logging.error("🛑 Config file is missing or has empty value for "
+                          "required attribute: dataflowRegion. 🛑")
+            failed = True
 
-        region = marketing["dataflowRegion"].lower()
-        location = cfg["location"].lower()
-        if region != location and not region.startswith(f"{location}-"):
-            logging.error(
-                "🛑 Invalid `dataflowRegion`: `%s`. "
-                "It's expected to be in `%s`. 🛑", marketing["dataflowRegion"],
-                cfg["location"])
-            return None
+        else:
+            region = marketing["dataflowRegion"].lower()
+            location = cfg["location"].lower()
+            if region != location and not region.startswith(f"{location}-"):
+                logging.error(
+                    "🛑 Invalid `dataflowRegion`: `%s`. "
+                    "It's expected to be in `%s`. 🛑",
+                    marketing["dataflowRegion"], cfg["location"])
+                failed = True
 
-    logging.info("✅ 'marketing' config validated successfully. Looks good.")
-
-    return cfg
+    if failed:
+        logging.error("🛑 'marketing' config is invalid. 🛑")
+        return None
+    else:
+        logging.info(
+            "✅ 'marketing' config validated successfully. Looks good. ✅")
+        return cfg

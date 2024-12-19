@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProductHierarchiesMD"
-description: "Product Hierarchies Master Data"
+description: "This view gives details about the product hierarchies master data at the granularity of Client(System), product hierarchy and language key."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,12 +7,12 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "Hierarchy_PRODH"
-    description: "Hierarchy"
-  - name: "Level_STUFE"
-    description: "Level"
+    description: "Product Hierarchy, PK"
   - name: "Language_SPRAS"
-    description: "Language"
+    description: "Language Key, PK"
+  - name: "Level_STUFE"
+    description: "Number of the level in the product hierarchy"
   - name: "Description_VTEXT"
     description: "Description"

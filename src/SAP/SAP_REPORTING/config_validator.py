@@ -24,6 +24,8 @@ from common.py_libs import resource_validation_helper
 def validate(cfg: dict) -> Union[dict, None]:
     """Validates and processes configuration.
 
+    It will discover and log all issues before returning.
+
     Args:
         cfg (dict): Config dictionary.
 
@@ -32,6 +34,7 @@ def validate(cfg: dict) -> Union[dict, None]:
         None: In case of validation failure
     """
 
+    failed = False
     if not cfg.get("deploySAP", False):
         logging.info("SAP is not being deployed. Skipping validation.")
         return cfg
@@ -51,7 +54,7 @@ def validate(cfg: dict) -> Union[dict, None]:
     if missing_sap_attrs:
         logging.error("🛑 Missing 'SAP values: %s' in the config file. 🛑",
                       missing_sap_attrs)
-        return None
+        failed = True
 
     datasets = sap.get("datasets")
 
@@ -76,7 +79,7 @@ def validate(cfg: dict) -> Union[dict, None]:
     if not cfg_sap_ds_cdc:
         logging.error(("🛑 Cannot resolve SAP/datasets/cdc|cdcECC|cdcS4 values "
                        "in the config file. 🛑"))
-        return None
+        failed = True
 
     datasets["cdc"] = cfg_sap_ds_cdc
     datasets["cdcECC"] = cfg_sap_ds_cdc_ecc
@@ -90,6 +93,7 @@ def validate(cfg: dict) -> Union[dict, None]:
         if not cfg_sap_ds_raw_ecc or not cfg_sap_ds_raw_s4:
             logging.error("🛑 SAP/SQLFlavor=union requires "
                           "all parameters for both ECC and S4. 🛑")
+            failed = True
     elif flavor == "ecc":
         if cfg_sap_ds_raw and not cfg_sap_ds_raw_ecc:
             cfg_sap_ds_raw_ecc = cfg_sap_ds_raw
@@ -104,7 +108,7 @@ def validate(cfg: dict) -> Union[dict, None]:
     if not cfg_sap_ds_raw:
         logging.error(("🛑 Cannot resolve SAP/datasets/raw|rawECC|rawS4 values "
                        "in the config file. 🛑"))
-        return None
+        failed = True
 
     datasets["raw"] = cfg_sap_ds_raw
     datasets["rawECC"] = cfg_sap_ds_raw_ecc
@@ -122,11 +126,11 @@ def validate(cfg: dict) -> Union[dict, None]:
         if not cfg_sap_mandt_ecc or not cfg_sap_mandt_s4:
             logging.error(("🛑 SAP/SQLFlavor=union requires "
                            "all parameters for both ECC and S4. 🛑"))
-            return None
+            failed = True
         elif cfg_sap_mandt_ecc == cfg_sap_mandt_s4:
             logging.error(("🛑 Same ECC and S4 MANDT "
                            "is not allowed for UNION workloads. 🛑"))
-            return None
+            failed = True
     elif flavor == "ecc":
         if cfg_sap_mandt and not cfg_sap_mandt_ecc:
             cfg_sap_mandt_ecc = cfg_sap_mandt
@@ -159,8 +163,12 @@ def validate(cfg: dict) -> Union[dict, None]:
             f"{target}.{cfg_sap_ds_reporting}", False, True, location)
     ]
     if not resource_validation_helper.validate_resources([], datasets):
+        logging.error("🛑 'SAP' resource validation failed. 🛑")
+        failed = True
+
+    if failed:
+        logging.error("🛑 SAP configuration is invalid. 🛑")
         return None
-
-    logging.info("✅ SAP configuration is good.")
-
-    return cfg
+    else:
+        logging.info("✅ SAP configuration is good. ✅")
+        return cfg

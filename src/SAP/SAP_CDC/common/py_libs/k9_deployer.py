@@ -93,7 +93,8 @@ def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
         logging.info("Copying generated files to %s",
                      target_path)
         subprocess.check_call([
-            "gsutil", "-m", "cp", "-r", f"{tmp_dir}/", target_path
+            "gcloud", "storage", "cp", "--recursive", f"{tmp_dir}/*",
+            f"{target_path}/"
         ])
 
 def load_k9s_manifest(manifest_file:str) -> dict:

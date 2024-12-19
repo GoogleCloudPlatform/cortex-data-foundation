@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## PREVIEW
-
 SELECT DISTINCT
   mandt AS Client_MANDT,
   bstaus_sg AS StockCharacteristic_BSTAUS_SG,

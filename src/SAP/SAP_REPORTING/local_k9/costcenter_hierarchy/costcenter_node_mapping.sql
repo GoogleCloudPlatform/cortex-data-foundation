@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 CREATE OR REPLACE PROCEDURE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CostCenterMapping`() --noqa:LT01
+OPTIONS (description = "This procedure creates 'cost_centers' table having each cost center mapped to its ancestor nodes within the structure.")
 BEGIN
   --This procedure generates table having cost center mapped to cost center hierarchy nodes.
   DECLARE max_iterations INT64 DEFAULT NULL;

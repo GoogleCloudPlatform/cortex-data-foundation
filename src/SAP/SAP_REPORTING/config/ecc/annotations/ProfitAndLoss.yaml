@@ -1,7 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProfitAndLoss"
-description: "Profit And Loss is a financial statement which summarizes costs, expenses and revenues incurred for a specific
-time period at the granularity of Client(System), Company Code, Fiscal Year, Fiscal Period, ChartOfAccount, General Ledger Hierarchy,
-Business Area, Node, Node ID and Language Key (Coming from system Settings)"
+description: "Profit And Loss is a financial statement which summarizes costs, expenses and revenues incurred for a specific time period at the granularity of Client(System), company code, fiscal year, fiscal period, chart of accounts, general ledger hierarchy name, business area, profit center, cost center, node, and language key (Coming from system Settings)"
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -27,9 +25,9 @@ fields:
   - name: "LedgerInGeneralLedgerAccounting"
     description: "Ledger In General Ledger Accounting, PK"
   - name: "ProfitCenter"
-    description: "Profit Center"
+    description: "Profit Center, PK"
   - name: "CostCenter"
-    description: "Cost Center"
+    description: "Cost Center, PK"
   - name: "GLNode"
     description: "G/L Node Id (includes both hierarchy node and glaccounts), PK"
   - name: "LanguageKey_SPRAS"

@@ -485,12 +485,12 @@ SELECT
   -- currency_conversion.conv_date AS Conversion_date,
   -- IF(
   --   LIKP.VBTYP IN ('H', 'K', 'N', 'O', 'T', '6'),
-  --   LIKP.NETWR * currency_conversion.UKURS * -1,
-  --   LIKP.NETWR * currency_conversion.UKURS
+  --   COALESCE(LIKP.NETWR * currency_decimal.CURRFIX, LIKP.NETWR) * currency_conversion.UKURS * -1,
+  --   COALESCE(LIKP.NETWR * currency_decimal.CURRFIX, LIKP.NETWR) * currency_conversion.UKURS
   -- ) AS NetValueOfTheSalesOrderInTargetCurrency_NETWR,
-  -- LIPS.WAVWR * currency_conversion.UKURS AS CostInTargetCurrency_WAVWR,
-  -- LIPS.NETWR * currency_conversion.UKURS AS NetValueInTargetCurrency_NETWR,
-  -- LIPS.LFIMG * LIPS.NETPR * currency_conversion.UKURS AS DeliveredNetValueInTargetCurrency,
+  -- COALESCE(LIPS.WAVWR * currency_decimal.CURRFIX, LIPS.WAVWR) * currency_conversion.UKURS AS CostInTargetCurrency_WAVWR,
+  -- COALESCE(LIPS.NETWR * currency_decimal.CURRFIX, LIPS.NETWR) * currency_conversion.UKURS AS NetValueInTargetCurrency_NETWR,
+  -- LIPS.LFIMG * COALESCE(LIPS.NETPR * currency_decimal.CURRFIX, LIPS.NETPR) * currency_conversion.UKURS AS DeliveredNetValueInTargetCurrency,
   IF(
     LIKP.VBTYP IN ('H', 'K', 'N', 'O', 'T', '6'),
     COALESCE(LIKP.NETWR * currency_decimal.CURRFIX * -1, LIKP.NETWR * -1),

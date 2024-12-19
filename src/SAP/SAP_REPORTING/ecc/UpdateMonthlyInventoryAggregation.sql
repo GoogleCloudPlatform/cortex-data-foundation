@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## PREVIEW
-
 # Partially update (refresh) the monthly inventory aggregation intermediate table.
 #
 # @param month_start_date_cut_off Records dated on or after this date will be refreshed.
@@ -21,6 +19,7 @@ CREATE OR REPLACE PROCEDURE
 `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.UpdateMonthlyInventoryAggregation` (
   month_start_date_cut_off DATE
 )
+OPTIONS (description = "This procedure updates the 'monthly_inventory_aggregation' table.")
 BEGIN
   CREATE TABLE IF NOT EXISTS `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.monthly_inventory_aggregation`
   (

@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DivisionsMD"
-description: "Divisions Master Data"
+description: "This view shows the master data related to the Divisions of products in the system. The granularity is Client(system), language key and division."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,10 +7,10 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "Division_SPART"
-    description: "Division"
+    description: "Division, PK"
   - name: "LanguageKey_SPRAS"
-    description: "Language Key"
+    description: "Language Key, PK"
   - name: "DivisionName_VTEXT"
-    description: "Name"
+    description: "Division Name"

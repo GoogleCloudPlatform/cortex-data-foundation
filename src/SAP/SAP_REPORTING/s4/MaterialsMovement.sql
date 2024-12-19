@@ -56,7 +56,7 @@ SELECT
   -- currency_conversion.UKURS AS ExchangeRate_UKURS,
   -- currency_conversion.TCURR AS TargetCurrency_TCURR,
   -- currency_conversion.conv_date AS Conversion_date,
-  -- matdoc.DMBTR * currency_conversion.UKURS AS AmountInTargetCurrency_DMBTR,
+  -- COALESCE(matdoc.DMBTR * currency_decimal.CURRFIX, matdoc.DMBTR) * currency_conversion.UKURS AS AmountInTargetCurrency_DMBTR,
   -- matdoc.KEY1 AS Split_GUID_Part1_KEY1,
   -- matdoc.KEY2 AS Split_GUID_Part2_KEY2,
   -- matdoc.KEY3 AS Split_GUID_Part3_KEY3,

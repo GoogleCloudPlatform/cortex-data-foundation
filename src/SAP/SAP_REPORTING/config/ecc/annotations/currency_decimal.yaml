@@ -1,4 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal"
+description: "This table gives information about the decimal factors needed for certain specific currencies, for example JPY, which is required for displaying the amounts correctly. The granularity of this table is at currency key."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -6,6 +7,6 @@ catalog_tags:
         value: "Utility"
 fields:
   - name: "CURRKEY"
-    description: "CURRKEY"
+    description: "Currency Key, PK"
   - name: "CURRFIX"
-    description: "CURRFIX"
+    description: "Number of Decimal Places"

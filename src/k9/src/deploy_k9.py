@@ -72,6 +72,8 @@ def _should_skip_k9(k9_manifest: dict,
             skip_this = skip_this or not config["deploySAP"]
         elif dep == "sfdc":
             skip_this = skip_this or not config["deploySFDC"]
+        elif dep == "oracleebs":
+            skip_this = skip_this or not config["deployOracleEBS"]
         elif dep == "marketing":
             skip_this = skip_this or not config["deployMarketing"]
         elif dep == "googleads":

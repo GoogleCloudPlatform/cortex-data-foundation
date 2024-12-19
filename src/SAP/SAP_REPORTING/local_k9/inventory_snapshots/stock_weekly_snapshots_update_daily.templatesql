@@ -17,7 +17,6 @@
 ## can be scheduled with Cloud Composer with the provided templates or ported
 ## into the scheduling tool of choice. These DAGs will be executed from a different
 ## directory structure in future releases.
-## PREVIEW
 
 CALL `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.UpdateWeeklyInventoryAggregation`(
   DATE_TRUNC(CURRENT_DATE(), WEEK));

@@ -83,6 +83,7 @@ def validate_resources(
     Returns:
         bool: True if all buckets and datasets are valid.
     """
+    failed = False
     storage_client = storage.Client()
     bq_client = cortex_bq_client.CortexBQClient()
 
@@ -108,7 +109,7 @@ def validate_resources(
                             bucket.name,
                             bucket_object.location,
                             bucket.in_location)
-                    return False
+                    failed = True
             logging.info("✅ Storage bucket `%s` exists. It's location is `%s`.",
                          bucket.name, bucket_object.location)
             if bucket.must_be_writable:
@@ -139,7 +140,7 @@ def validate_resources(
                 logging.error("🛑 Error when checking on "
                               "storage bucket `%s`. 🛑", bucket.name,
                               exc_info=True)
-            return False
+            failed = True
     for dataset in datasets:
         existence = bq_helper.dataset_exists_in_location(bq_client,
                                                         dataset.full_name,
@@ -148,13 +149,13 @@ def validate_resources(
             logging.error("🛑 Dataset `%s` is not "
                               "in location `%s`. 🛑",
                               dataset.full_name, dataset.location)
-            return False
+            failed = True
         elif (dataset.must_exists and
                     existence == bq_helper.DatasetExistence.NOT_EXISTS):
             logging.error("🛑 Dataset `%s` doesn't exist "
                           "or not accessible. 🛑",
                           dataset.full_name)
-            return False
+            failed = True
         if existence != bq_helper.DatasetExistence.NOT_EXISTS:
             logging.info("✅ Dataset `%s` exists in location `%s`.",
                          dataset.full_name, dataset.location)
@@ -187,6 +188,6 @@ def validate_resources(
             except (BadRequest, Unauthorized, Forbidden, ServerError):
                 logging.error("🛑 Couldn't write to dataset `%s`. 🛑",
                               dataset.full_name)
-                return False
+                failed = True
 
-    return True
+    return not failed

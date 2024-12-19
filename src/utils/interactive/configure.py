@@ -13,7 +13,6 @@
 # limitations under the License.
 """Data Foundation Deployment UI"""
 
-
 import logging
 import os
 import subprocess
@@ -27,8 +26,7 @@ from prompt_toolkit.formatted_text import HTML
 
 import google.auth
 
-from completers import (GCPProjectCompleter,
-                        RegionsCompleter,
+from completers import (GCPProjectCompleter, RegionsCompleter,
                         StorageBucketCompleter)
 from prompt import (get_value, yes_no, print_formatted, print_formatted_json)
 from datasets import (prompt_for_datasets, check_datasets_locations,
@@ -37,12 +35,10 @@ from name_checker import is_bucket_name_valid
 from constants import DF_TITLE
 
 
-def configure(in_cloud_shell: bool,
-              default_config: typing.Dict[str, typing.Any],
-              existing_config: typing.Dict[str, typing.Any],
-              default_project: str) -> typing.Optional[
-                                            typing.Dict[str,
-                                                typing.Any]]:
+def configure(
+        in_cloud_shell: bool, default_config: typing.Dict[str, typing.Any],
+        existing_config: typing.Dict[str, typing.Any],
+        default_project: str) -> typing.Optional[typing.Dict[str, typing.Any]]:
     """UI driver for Data Foundation configurator.
 
     Args:
@@ -64,22 +60,23 @@ def configure(in_cloud_shell: bool,
     # are specified in config.json,
     # we assume it's initialized, and use existing config.
     if (existing_config.get("projectIdSource", "") != "" and
-        existing_config.get("projectIdTarget", "") != "" and
-         existing_config.get("location", "") != "" and
-          existing_config.get("targetBucket", "") != ""):
+            existing_config.get("projectIdTarget", "") != "" and
+            existing_config.get("location", "") != "" and
+            existing_config.get("targetBucket", "") != ""):
         if yes_no(
-            f"{DF_TITLE} Configuration",
-            HTML("There is an existing Data Foundation configuration "
-            "in <b>config/config.json:</b>\n"
-            f"   Source Project: <b>{existing_config['projectIdSource']}</b>\n"
-            f"   Target Project: <b>{existing_config['projectIdTarget']}</b>\n"
-            f"   Location: <b>{existing_config['location']}</b>"
-            "\n\nWould you like to load it?"),
-            full_screen=True
-            ):
+                f"{DF_TITLE} Configuration",
+                HTML(
+                    "There is an existing Data Foundation configuration "
+                    "in <b>config/config.json:</b>\n"
+                    "   Source Project: <b>"
+                    f"{existing_config['projectIdSource']}</b>\n"
+                    "   Target Project: <b>"
+                    f"{existing_config['projectIdTarget']}</b>\n"
+                    f"   Location: <b>{existing_config['location']}</b>"
+                    "\n\nWould you like to load it?"),
+                full_screen=True):
             print_formatted(
-                "\n\n🦄 Using existing configuration in config.json:",
-                bold=True)
+                "\n\n🦄 Using existing configuration in config.json:", bold=True)
             print_formatted_json(existing_config)
             config = existing_config
             went_with_existing = True
@@ -113,57 +110,46 @@ def configure(in_cloud_shell: bool,
     if config.get("deployOracleEBS"):
         defaults.append("deployOracleEBS")
     if (config.get("deployMarketing") and
-        config["marketing"].get("deployGoogleAds")):
+            config["marketing"].get("deployGoogleAds")):
         defaults.append("deployGoogleAds")
     if (config.get("deployMarketing") and
-        config["marketing"].get("deployCM360")):
+            config["marketing"].get("deployCM360")):
         defaults.append("deployCM360")
     if (config.get("deployMarketing") and
-        config["marketing"].get("deployTikTok")):
+            config["marketing"].get("deployTikTok")):
         defaults.append("deployTikTok")
     if (config.get("deployMarketing") and
-        config["marketing"].get("deployLiveRamp")):
+            config["marketing"].get("deployLiveRamp")):
         defaults.append("deployLiveRamp")
     if (config.get("deployMarketing") and
-        config["marketing"].get("deployMeta")):
+            config["marketing"].get("deployMeta")):
         defaults.append("deployMeta")
     if (config.get("deployMarketing") and
-        config["marketing"].get("deploySFMC")):
+            config["marketing"].get("deploySFMC")):
         defaults.append("deploySFMC")
     if (config.get("deployMarketing") and
-        config["marketing"].get("deployDV360")):
+            config["marketing"].get("deployDV360")):
         defaults.append("deployDV360")
-    if (config.get("deployMarketing") and
-        config["marketing"].get("deployGA4")):
+    if (config.get("deployMarketing") and config["marketing"].get("deployGA4")):
         defaults.append("deployGA4")
 
     while True:
         dialog = checkboxlist_dialog(
             title=HTML(DF_TITLE),
-            text=HTML(
-                f"Welcome to {DF_TITLE}.\n\n"
-                "Please select the workloads for deployment."),
+            text=HTML(f"Welcome to {DF_TITLE}.\n\n"
+                      "Please select the workloads for deployment."),
             values=[
                 ("deploySAP", "SAP"),
-                ("deploySFDC",
-                 "Salesforce.com (SFDC)"),
+                ("deploySFDC", "Salesforce.com (SFDC)"),
                 ("deployOracleEBS", "Oracle EBS"),
-                ("deployGoogleAds",
-                 "Marketing with Google Ads"),
-                ("deployCM360",
-                 "Marketing with Campaign Manager 360 (CM360)"),
-                ("deployTikTok",
-                 "Marketing with TikTok"),
-                ("deployLiveRamp",
-                 "Marketing with LiveRamp"),
-                ("deployMeta",
-                 "Marketing with Meta"),
-                ("deploySFMC",
-                 "Marketing with SFMC"),
-                ("deployDV360",
-                 "Marketing with Youtube via DV360"),
-                ("deployGA4",
-                 "Marketing with GA4"),
+                ("deployGoogleAds", "Marketing with Google Ads"),
+                ("deployCM360", "Marketing with Campaign Manager 360 (CM360)"),
+                ("deployTikTok", "Marketing with TikTok"),
+                ("deployLiveRamp", "Marketing with LiveRamp"),
+                ("deployMeta", "Marketing with Meta"),
+                ("deploySFMC", "Marketing with SFMC"),
+                ("deployDV360", "Marketing with Youtube via DV360"),
+                ("deployGA4", "Marketing with GA4"),
             ],
             default_values=defaults,
             style=Style.from_dict({
@@ -197,15 +183,13 @@ def configure(in_cloud_shell: bool,
         config["marketing"]["deployDV360"] = "deployDV360" in results
         config["marketing"]["deployGA4"] = "deployGA4" in results
 
-        if (not config["deploySAP"] and not config["deploySFDC"]
-            and not config["deployMarketing"]
-            and not config["deployOracleEBS"]):
-            if yes_no(
-                    f"{DF_TITLE} Configuration",
-                    "Please select one or more Data Foundation workloads.",
-                    yes_text="Try again",
-                    no_text="Cancel"
-            ):
+        if (not config["deploySAP"] and not config["deploySFDC"] and
+                not config["deployMarketing"] and
+                not config["deployOracleEBS"]):
+            if yes_no(f"{DF_TITLE} Configuration",
+                      "Please select one or more Data Foundation workloads.",
+                      yes_text="Try again",
+                      no_text="Cancel"):
                 continue
             else:
                 print_formatted("Please check the documentation for "
@@ -215,53 +199,50 @@ def configure(in_cloud_shell: bool,
         break
 
     auto_names = True
-    dialog = radiolist_dialog(HTML(f"{DF_TITLE} Configuration"),
-                     HTML("How would you like to configure Data Foundation "
-                     "(e.g. BigQuery datasets, Cloud Storage buckets, APIs)\n"
-                     "and configure permissions for deployment?\n\n"
-                     "Auto-configuration will create all necessary resources "
-                     "and configure permissions.\n"
-                     "\n<b><u><ansibrightred>This creates a demo deployment "
-                     "with test data, not valid for production "
-                     "environments.</ansibrightred></u></b>"),
-                     values=[
-                ("test",
-                 HTML(
-                    ("<b>Use pre-configured BigQuery datasets and Storage "
-                     "buckets</b> "
-                    "to deploy demo environment with test data and "
-                    "auto-configuration."
-                        if went_with_existing else
-                    "<b>Use default BigQuery datasets and Storage bucket</b> "
-                    "to deploy demo environment with test data and "
-                    "auto-configuration."))),
-                ("testChooseDatasets",
-                 HTML(
-                    "<b>Let me choose BigQuery datasets and "
-                    "Storage buckets</b> to deploy demo with test data, "
-                    " auto-configuration.")),
-                ("deployManual",
-                 HTML(
-                    "<b>Manual configuration and deployment</b>. "
-                    "Let me configure and deploy everything manually "
-                    "(Coming soon).")),
-            ],
-            style=Style.from_dict({
-                "radio-selected": "bg:lightgrey",
-                "radio-checked": "bold",
-            }),
-            default="test")
+    dialog = radiolist_dialog(
+        HTML(f"{DF_TITLE} Configuration"),
+        HTML("How would you like to configure Data Foundation "
+             "(e.g. BigQuery datasets, Cloud Storage buckets, APIs)\n"
+             "and configure permissions for deployment?\n\n"
+             "Auto-configuration will create all necessary resources "
+             "and configure permissions.\n"
+             "\n<b><u><ansibrightred>This creates a demo deployment "
+             "with test data, not valid for production "
+             "environments.</ansibrightred></u></b>"),
+        values=[
+            ("test",
+             HTML(("<b>Use pre-configured BigQuery datasets and Storage "
+                   "buckets</b> "
+                   "to deploy demo environment with test data and "
+                   "auto-configuration." if went_with_existing else
+                   "<b>Use default BigQuery datasets and Storage bucket</b> "
+                   "to deploy demo environment with test data and "
+                   "auto-configuration."))),
+            ("testChooseDatasets",
+             HTML("<b>Let me choose BigQuery datasets and "
+                  "Storage buckets</b> to deploy demo with test data, "
+                  " auto-configuration.")),
+            ("deployManual",
+             HTML("<b>Manual configuration and deployment</b>. "
+                  "Let me configure and deploy everything manually "
+                  "(Coming soon).")),
+        ],
+        style=Style.from_dict({
+            "radio-selected": "bg:lightgrey",
+            "radio-checked": "bold",
+        }),
+        default="test")
     dialog.cursor = to_cursor_shape_config(CursorShape.BLINKING_UNDERLINE)
     choice = dialog.run()
     if not choice or choice == "deployManual":
-        print_formatted(
-            "The guided deployment option is coming soon. "
-            "Please check Data Foundation documentation: \n"
-            "https://github.com/GoogleCloudPlatform/"
-            "cortex-data-foundation/blob/main/README.md 🦄")
+        print_formatted("The guided deployment option is coming soon. "
+                        "Please check Data Foundation documentation: \n"
+                        "https://github.com/GoogleCloudPlatform/"
+                        "cortex-data-foundation/blob/main/README.md 🦄")
         if in_cloud_shell:
             subprocess.run("cloudshell edit config/config.json",
-                           shell=True, check=False)
+                           shell=True,
+                           check=False)
             # TODO (vladkol): launch guided deployment tutorial when ready
             #subprocess.run("cloudshell launch-tutorial docs/guide.md",
             #               shell=True, check=False)
@@ -316,14 +297,13 @@ def configure(in_cloud_shell: bool,
     regions_completer = RegionsCompleter()
     print("\r", end="")
 
-
     bq_location = get_value(
-            session,
-            "BigQuery Location",
-            regions_completer,
-            default_value=bq_location.lower(),
-            description="Specify GCP Location for BigQuery Datasets.",
-        )
+        session,
+        "BigQuery Location",
+        regions_completer,
+        default_value=bq_location.lower(),
+        description="Specify GCP Location for BigQuery Datasets.",
+    )
     bq_location = bq_location.lower()
     config["location"] = bq_location
 
@@ -342,21 +322,21 @@ def configure(in_cloud_shell: bool,
             if len(datasets_wrong_locations) > 0:
                 ds_list_str = "\n".join(
                     [f"   - {ds}" for ds in datasets_wrong_locations])
-                if not yes_no(DF_TITLE,
-                          HTML("These datasets already exist in a location "
-                               f"different than `{bq_location}`:\n"
-                               f"{ds_list_str}"
-                               "\n\n<b>Please choose different datasets.</b>"
-                               ),
-                          full_screen=True,
-                          yes_text="OK",
-                          no_text="CANCEL"):
+                if not yes_no(
+                        DF_TITLE,
+                        HTML("These datasets already exist in a location "
+                             f"different than `{bq_location}`:\n"
+                             f"{ds_list_str}"
+                             "\n\n<b>Please choose different datasets.</b>"),
+                        full_screen=True,
+                        yes_text="OK",
+                        no_text="CANCEL"):
                     config = None
                     break
                 config = clear_dataset_names(config)
-            config = prompt_for_datasets(session, config) # type: ignore
+            config = prompt_for_datasets(session, config)  # type: ignore
             datasets_wrong_locations = check_datasets_locations(
-                                            config) # type: ignore
+                config)  # type: ignore
             if len(datasets_wrong_locations) == 0:
                 break
         if not config:
@@ -375,12 +355,10 @@ def configure(in_cloud_shell: bool,
                                     description="Specify Target Storage Bucket",
                                     allow_arbitrary=True)
             if not is_bucket_name_valid(bucket_name):
-                if yes_no(
-                    "Cortex Data Foundation Configuration",
-                    f"{bucket_name} is not a valid bucket name.",
-                    yes_text="Try again",
-                    no_text="Cancel"
-                ):
+                if yes_no("Cortex Data Foundation Configuration",
+                          f"{bucket_name} is not a valid bucket name.",
+                          yes_text="Try again",
+                          no_text="Cancel"):
                     bucket_name = ""
                     continue
                 else:
@@ -402,31 +380,30 @@ def configure(in_cloud_shell: bool,
         config["marketing"]["dataflowRegion"] = dataflow_region
         if not auto_names:
             dataflow_completer = RegionsCompleter(False, bq_location)
-            config["marketing"]["dataflowRegion"] = get_value(session,
-                                        "Dataflow Region",
-                                        dataflow_completer,
-                                        dataflow_region,
-                                        description="Dataflow Compute Region")
+            config["marketing"]["dataflowRegion"] = get_value(
+                session,
+                "Dataflow Region",
+                dataflow_completer,
+                dataflow_region,
+                description="Dataflow Compute Region")
         if config["marketing"].get("deployCM360"):
             cm360 = config["marketing"]["CM360"]
             if cm360.get("dataTransferBucket", "") == "":
-                bucket_name = f"cortex-{source_project}-{bq_location}"
+                bucket_name = f"cortex-{source_project}-cm360-{bq_location}"
             while not auto_names:
                 bucket_completer = StorageBucketCompleter(source_project)
                 bucket_name = get_value(session,
-                                "CM360 Data Transfer Bucket",
-                                bucket_completer,
-                                bucket_name,
-                                description="Specify "
-                                "CM360 Data Transfer Bucket",
-                                allow_arbitrary=True)
+                                        "CM360 Data Transfer Bucket",
+                                        bucket_completer,
+                                        bucket_name,
+                                        description="Specify "
+                                        "CM360 Data Transfer Bucket",
+                                        allow_arbitrary=True)
                 if not is_bucket_name_valid(bucket_name):
-                    if yes_no(
-                        "Cortex Data Foundation Configuration",
-                        f"{bucket_name} is not a valid bucket name.",
-                        yes_text="Try again",
-                        no_text="Cancel"
-                    ):
+                    if yes_no("Cortex Data Foundation Configuration",
+                              f"{bucket_name} is not a valid bucket name.",
+                              yes_text="Try again",
+                              no_text="Cancel"):
                         bucket_name = ""
                         continue
                     else:
@@ -437,23 +414,21 @@ def configure(in_cloud_shell: bool,
         if config["marketing"].get("deploySFMC"):
             cm360 = config["marketing"]["SFMC"]
             if cm360.get("fileTransferBucket", "") == "":
-                bucket_name = f"cortex-{source_project}-{bq_location}"
+                bucket_name = f"cortex-{source_project}-sfmc-{bq_location}"
             while not auto_names:
                 bucket_completer = StorageBucketCompleter(source_project)
                 bucket_name = get_value(session,
-                                "SFMC File Transfer Bucket",
-                                bucket_completer,
-                                bucket_name,
-                                description="Specify "
-                                "SFMC File Transfer Bucket",
-                                allow_arbitrary=True)
+                                        "SFMC File Transfer Bucket",
+                                        bucket_completer,
+                                        bucket_name,
+                                        description="Specify "
+                                        "SFMC File Transfer Bucket",
+                                        allow_arbitrary=True)
                 if not is_bucket_name_valid(bucket_name):
-                    if yes_no(
-                        "Cortex Data Foundation Configuration",
-                        f"{bucket_name} is not a valid bucket name.",
-                        yes_text="Try again",
-                        no_text="Cancel"
-                    ):
+                    if yes_no("Cortex Data Foundation Configuration",
+                              f"{bucket_name} is not a valid bucket name.",
+                              yes_text="Try again",
+                              no_text="Cancel"):
                         bucket_name = ""
                         continue
                     else:
@@ -461,5 +436,53 @@ def configure(in_cloud_shell: bool,
                 else:
                     break
             config["marketing"]["SFMC"]["fileTransferBucket"] = bucket_name
+    if config["deployOracleEBS"]:
+        oracle_ebs = config.get("OracleEBS")
+        ids = oracle_ebs.get("itemCategorySetIds", [])
+        if not auto_names:
+            ids = get_value(session,
+                            "Oracle EBS item category set ids",
+                            None,
+                            str(ids)[1:-1],
+                            description="Specify Oracle EBS"
+                            "item category set ids, separate"
+                            "by comma",
+                            allow_arbitrary=True)
+        oracle_ebs["itemCategorySetIds"] = [int(x) for x in ids.split(",")]
+
+        conversion_type = oracle_ebs.get("currencyConversionType")
+        if not auto_names:
+            conversion_type = get_value(session,
+                                        "Oracle EBS currency conversion type",
+                                        None,
+                                        conversion_type,
+                                        description="Specify Oracle EBS"
+                                        "currency conversion type",
+                                        allow_arbitrary=True)
+        oracle_ebs["currencyConversionType"] = conversion_type
+
+        targets = oracle_ebs.get("currencyConversionTargets", [])
+        if not auto_names:
+            targets = get_value(session,
+                                "Oracle EBS currency conversion targets",
+                                None,
+                                ",".join(targets),
+                                description="Specify Oracle EBS"
+                                "currency conversion targets, separate"
+                                "by comma",
+                                allow_arbitrary=True)
+        oracle_ebs["currencyConversionTargets"] = [
+            x.strip() for x in targets.split(",")
+        ]
+
+        languages = oracle_ebs.get("languages", [])
+        if not auto_names:
+            languages = get_value(session,
+                                  "Oracle EBS languages",
+                                  None,
+                                  ",".join(languages),
+                                  description="Oracle EBS languages",
+                                  allow_arbitrary=True)
+        oracle_ebs["languages"] = [x.strip() for x in languages.split(",")]
 
     return config

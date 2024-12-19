@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DeliveryBlockingReasonsMD"
-description: "Deliveries: Blocking reasons texts"
+description: "This view provides the master data of reasons (descriptions) for various delivery blocks. The granularity is Client(System), Language key and delivery block."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,10 +7,10 @@ catalog_tags:
         value: "Master Data"
 fields:
   - name: "Client_MANDT"
-    description: "Client (Mandant)"
+    description: "Client (Mandant), PK"
   - name: "LanguageKey_SPRAS"
-    description: "Language Key"
+    description: "Language Key, PK"
   - name: "DefaultDeliveryBlock_LIFSP"
-    description: "Default Delivery Block"
+    description: "Default Delivery Block, PK"
   - name: "DeliveryBlockReason_VTEXT"
-    description: "Delivery Block Reason"
+    description: "Delivery Block Description"

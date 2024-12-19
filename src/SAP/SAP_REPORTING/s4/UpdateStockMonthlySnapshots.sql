@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## PREVIEW
-
 # Update (refresh) stock monthly snapshots table for records between provided dates (inclusive).
 #
 # `monthly_inventory_aggregation` table must be up to date before calling this function.
@@ -25,6 +23,7 @@ CREATE OR REPLACE PROCEDURE
   start_date DATE,
   end_date DATE
 )
+OPTIONS (description = "This procedure updates the 'stock_monthly_snapshots' table by passing the parameters 'start_date' and 'end_date'.")
 BEGIN
   CREATE TEMP TABLE LastMonthSnapshot AS
   SELECT

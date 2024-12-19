@@ -14,7 +14,8 @@ PARTITION BY conv_date;
 CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.gdatu_to_date`(gdatu STRING) AS
 (
   (SELECT PARSE_DATE('%Y%m%d', CAST(99999999 - CAST(gdatu AS INT) AS STRING)))
-);
+)
+OPTIONS (description = "The function converts gdatu(Date as of which the exchange rate is effective) to calendar date.");
 
 INSERT INTO `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_conversion`
 WITH

@@ -54,12 +54,3 @@ bq_dependent_objects:
         partition_type: "time",
         time_grain: "day"
       }
-  - sql_file: src/GoogleAds/src/reporting/ddls/CampaignDailyAggByUserCountry.sql
-    type: table
-    table_setting:
-      load_frequency: "@daily"
-      partition_details: {
-        column: "report_date",
-        partition_type: "time",
-        time_grain: "day"
-      }

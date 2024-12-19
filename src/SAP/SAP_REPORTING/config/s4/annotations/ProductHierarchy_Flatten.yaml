@@ -1,5 +1,5 @@
 name: "{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProductHierarchy_Flatten"
-description: "Product Hierarchy Flattener"
+description: "This view shows flattened product hierarchy at level 3."
 catalog_tags:
   - display_name: "line_of_business"
     fields:
@@ -7,8 +7,8 @@ catalog_tags:
         value: "Utility"
 fields:
   - name: "prodh1"
-    description: "prodh1"
+    description: "Product Hierarchy at level 1"
   - name: "prodh2"
-    description: "prodh2"
+    description: "Product Hierarchy at level 2"
   - name: "prodh3"
-    description: "prodh3"
+    description: "Product Hierarchy at level 3"

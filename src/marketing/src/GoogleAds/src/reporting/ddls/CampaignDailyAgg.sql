@@ -12,10 +12,32 @@
 # -- See the License for the specific language governing permissions and
 # -- limitations under the License.
 
--- ## EXPERIMENTAL
+/* CampaignStats and CampaignStatsByUserCountry metrics with daily granularity. */
 
-/* CampaignStats metrics with daily granularity. */
-
+WITH
+  StatsByUserCountry AS (
+    SELECT
+      CampaignStatsByUserCountry.segments.date,
+      CampaignStatsByUserCountry.campaign.id,
+      ARRAY_AGG(
+        STRUCT(
+          GeoTargetConstant.country_code,
+          CampaignStatsByUserCountry.user_location_view.targeting_location AS is_location_targeted,
+          CampaignStatsByUserCountry.metrics.impressions,
+          CampaignStatsByUserCountry.metrics.clicks,
+          CampaignStatsByUserCountry.metrics.cost_micros / 1000000 AS cost
+        )
+      ) AS user_country_stats
+    FROM
+      `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.CampaignStatsByUserCountry`
+        AS CampaignStatsByUserCountry
+    INNER JOIN
+      `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.GeoTargetConstant`
+        AS GeoTargetConstant
+      ON CampaignStatsByUserCountry.user_location_view.country_criterion_id = GeoTargetConstant.id
+    GROUP BY
+      segments.date, campaign.id
+  )
 SELECT
   CampaignStats.segments.date AS report_date,
   CampaignStats.campaign.id AS campaign_id,
@@ -34,12 +56,17 @@ SELECT
   Customers.has_partners_badge AS customer_has_partners_badge,
   Customers.manager AS customer_manager,
   Customers.optimization_score AS customer_optimization_score,
+  CampaignStats.metrics.impressions,
   CampaignStats.metrics.clicks,
   CampaignStats.metrics.cost_micros / 1000000 AS cost,
-  CampaignStats.metrics.impressions
+  StatsByUserCountry.user_country_stats
 FROM
   `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.CampaignStats`
     AS CampaignStats
+LEFT JOIN
+  StatsByUserCountry
+  ON CampaignStats.campaign.id = StatsByUserCountry.id
+    AND CampaignStats.segments.date = StatsByUserCountry.date
 INNER JOIN
   `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.Campaigns`
     AS Campaigns
