@@ -46,7 +46,7 @@ http_timeout = config.getint("meta", "http_timeout_sec", fallback=60)
 next_request_delay_sec = config.getfloat("meta",
                                          "next_request_delay_sec",
                                          fallback=1.0)
-api_version = config.get("meta", "api_version", fallback="v19.0")
+api_version = config.get("meta", "api_version", fallback="v21.0")
 
 max_load_lookback_days = config.get("meta",
                                     "max_load_lookback_days",
