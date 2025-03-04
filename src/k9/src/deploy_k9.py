@@ -20,7 +20,7 @@ import logging
 from pathlib import Path
 import sys
 import typing
-import yaml
+import json
 
 from google.cloud import bigquery
 
@@ -30,9 +30,7 @@ from common.py_libs import cortex_bq_client
 from common.py_libs import k9_deployer
 
 _DEFAULT_CONFIG = "config/config.json"  # data foundation config
-_K9_SETTINGS = "config/k9_settings.yaml"  # relative to k9
 _K9_MANIFEST = "manifest.yaml"
-
 
 def _create_dataset(full_dataset_name: str, location: str,
                     bq_client: bigquery.Client,
@@ -44,15 +42,17 @@ def _create_dataset(full_dataset_name: str, location: str,
     ds = bq_client.create_dataset(ds, exists_ok=True, timeout=30)
 
     if label_dataset:
-        bq_helper.label_dataset(bq_client=bq_client,dataset=ds)
+        bq_helper.label_dataset(bq_client=bq_client, dataset=ds)
 
-def _load_k9s_settings(settings_file: str) -> dict:
-    with open(settings_file, encoding="utf-8") as settings_fp:
-        settings = yaml.safe_load(settings_fp)
-        if "k9s" not in settings:
-            logging.warning("No k9s listed to deploy.")
+# Loading k9 settings from config file
+def _load_k9s_settings(config_file):
+    logging.info("Loading K9 settings from the configuration file.")
+    with open(config_file, "r", encoding="utf-8") as f:
+        config = json.load(f)
+        if "k9" not in config:
+            logging.warning("No K9 configuration found.")
             return None
-        return settings["k9s"]
+        return config["k9"]
 
 def _should_skip_k9(k9_manifest: dict,
                     config: dict[str, typing.Any],
@@ -117,11 +117,6 @@ def _should_skip_k9(k9_manifest: dict,
 
     return skip_this
 
-def _remove_first_item(d: dict) -> None:
-    """Removes the first item from a dict."""
-    k = next(iter(d))
-    d.pop(k)
-
 def main(args: typing.Sequence[str]) -> int:
     """Main function.
 
@@ -159,7 +154,6 @@ def main(args: typing.Sequence[str]) -> int:
                  params.stage)
 
     k9_root_path = Path(__file__).parent.absolute()
-    settings_file = k9_root_path.parent.joinpath(_K9_SETTINGS)
     manifest_file = k9_root_path.joinpath(_K9_MANIFEST)
     config_file = str(Path(params.config_file).absolute())
     logs_bucket = params.logs_bucket
@@ -167,13 +161,14 @@ def main(args: typing.Sequence[str]) -> int:
 
     config = configs.load_config_file(config_file)
     manifest = k9_deployer.load_k9s_manifest(manifest_file)
-    k9s_settings = _load_k9s_settings(settings_file)
+    k9_settings = _load_k9s_settings(config_file)
 
     source_project = config["projectIdSource"]
     target_project = config["projectIdTarget"]
     location = config["location"].lower()
     processing_dataset = config["k9"]["datasets"]["processing"]
     reporting_dataset = config["k9"]["datasets"]["reporting"]
+    vertexai_dataset = config["VertexAI"]["processingDataset"]
 
     # Check if telemetry is allowed, default to True
     allow_telemetry = config.get("allowTelemetry", True)
@@ -182,38 +177,29 @@ def main(args: typing.Sequence[str]) -> int:
                                                 location=location)
     _create_dataset(f"{source_project}.{processing_dataset}", location,
                     bq_client, label_dataset=allow_telemetry)
-
     _create_dataset(f"{target_project}.{reporting_dataset}", location,
+                    bq_client, label_dataset=allow_telemetry)
+    _create_dataset(f"{source_project}.{vertexai_dataset}",
+                    config["VertexAI"]["region"],
                     bq_client, label_dataset=allow_telemetry)
 
     # Validate all K9 config before deploying.
     k9s_to_deploy = []
-    for k9_setting in k9s_settings:
-        k9_id = k9_deployer.get_k9_id(k9_setting)
-        if k9_id not in manifest:
-            logging.error("%s is not a valid k9 id.", k9_id)
-            return 1
-        k9_definition = manifest[k9_id]
 
-        if not _should_skip_k9(k9_definition, config, stage):
-            # Some of the K9s may not have their own settings file,
-            # but use the k9 settings file instead.
-            # Example with a customizable Weather:
-            #    - weather:
-            #        first_day_of_week: Monday
-            # In such cases yaml library parses weather node into a dictionary,
-            # with weather to be the first key and None as it's value:
-            # { "weather": None, "first_day_of_week": "Monday" }
-            #
-            # To account for that, we remove the first item and pass the rest
-            # over as settings.
-            if isinstance(k9_setting, dict):
-                _remove_first_item(k9_setting)
-            # Otherwise, there are no additional settings for this k9.
-            else:
-                k9_setting = None
+    for config_key, config_value in k9_settings.items():
+        k9_id = None
+        if config_key.startswith("deploy") and config_value:
 
-            k9s_to_deploy.append([k9_definition, k9_setting])
+            k9_id = config_key.replace("deploy", "")
+            if k9_id not in manifest:
+                logging.error("%s is not a valid k9 id.", k9_id)
+                return 1
+            k9_definition = manifest[k9_id]
+
+            if not _should_skip_k9(k9_definition, config, stage):
+
+                k9_setting = k9_settings.get(k9_id)
+                k9s_to_deploy.append([k9_definition, k9_setting])
 
     # Actual deployment
     for (k9_definition, k9_setting) in k9s_to_deploy:

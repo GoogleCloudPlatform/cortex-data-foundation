@@ -31,6 +31,7 @@ steps:
       cat "${_CONFIG_FILE}"
 
       python3 src/common/init_deployment_config.py --config-file ${_CONFIG_FILE} \
+            --sub-validator "src/k9/src" \
             --sub-validator "src/SAP/SAP_REPORTING" \
             --sub-validator "src/SFDC/src" \
             --sub-validator "src/marketing/src" \

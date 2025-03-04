@@ -1,0 +1,117 @@
+#-- Copyright 2025 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--   https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+
+#-- Post-processes data for Vertex AI batch text generation job.
+#--
+#-- Post-processes results of Vertex AI Batch prediction job for Gemini:
+#-- https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/batch-prediction-gemini.
+#-- @param is_full_refresh (BOOL) - True if it's a full re-match run.
+#-- @param batch_output_table (STRING) - Batch job output table to use as input.
+
+DECLARE PROD_HIERARCHY_TYPE STRING DEFAULT '{{ k9_cross_media_product_hierarchy_type }}';
+DECLARE current_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
+
+CREATE TEMP TABLE temp_xmedia_output
+(
+  response JSON
+);
+
+EXECUTE IMMEDIATE -- noqa:
+  CONCAT(
+    'INSERT INTO temp_xmedia_output (response) (SELECT response FROM `', @batch_output_table, '`)'
+  );
+
+BEGIN TRANSACTION;
+
+UPDATE `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_product_mapping`
+SET valid_to_timestamp = current_ts
+WHERE
+  @is_full_refresh IS TRUE
+  AND prod_hierarchy_type = PROD_HIERARCHY_TYPE
+  AND valid_to_timestamp IS NULL;
+
+INSERT INTO `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_product_mapping`
+(
+  source_system,
+  campaign_id,
+  campaign_text,
+  prod_hierarchy_id,
+  prod_hierarchy_type,
+  not_matched_reason,
+  valid_from_timestamp,
+  valid_to_timestamp
+)
+(
+  WITH
+    responses AS (
+      SELECT PARSE_JSON(JSON_VALUE(response, '$.candidates[0].content.parts[0].text')) AS response
+      FROM temp_xmedia_output
+    ),
+
+    all_matches_array AS (
+      SELECT ARRAY_CONCAT_AGG(JSON_QUERY_ARRAY(response, '$.matches')) AS match_array FROM responses
+    ),
+
+    all_matches AS (
+      SELECT match FROM all_matches_array, UNNEST(match_array) AS match
+    ),
+
+    extracted_matches AS (
+      SELECT
+        JSON_VALUE(match, '$.campaign_id') AS campaign_id,
+        JSON_VALUE(match, '$.category_id') AS category_id,
+        JSON_VALUE(match, '$.reason') AS reason
+      FROM all_matches
+    ),
+
+    clean_matches AS (
+      SELECT
+        SPLIT(campaign_id, '::')[0] AS source_system,
+        SPLIT(campaign_id, '::')[1] AS campaign_id,
+        category_id,
+        reason
+      FROM extracted_matches
+    )
+
+    SELECT
+      ct.source_system,
+      ct.campaign_id,
+      ct.campaign_text AS campaign_text,
+      clean_matches.category_id AS prod_hierarchy_id,
+      PROD_HIERARCHY_TYPE AS prod_hierarchy_type, -- noqa: RF02
+      IF(
+        ct.campaign_id IS NULL, '[MISSING]',
+        IF(
+          clean_matches.category_id = '', clean_matches.reason,
+          IF(ph.Id IS NULL, '[WRONG_PROD]', '')
+        )
+      ) AS not_matched_reason,
+      current_ts AS valid_from_timestamp,
+      CAST(NULL AS TIMESTAMP) AS valid_to_timestamp
+    FROM clean_matches
+    LEFT JOIN `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts` AS ct
+      ON
+        clean_matches.source_system = ct.source_system
+        AND clean_matches.campaign_id = ct.campaign_id
+        AND ct.valid_to_timestamp IS NULL
+    LEFT JOIN `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy` AS ph ON
+      clean_matches.category_id = ph.Id
+      AND ph.HierarchyType = PROD_HIERARCHY_TYPE -- noqa: RF02
+      AND ph.Level <= {{ k9_cross_media_max_product_hierarchy_match_level }}
+      AND ph.ValidToTimestamp IS NULL
+);
+
+COMMIT TRANSACTION;
+
+DROP TABLE temp_xmedia_output;

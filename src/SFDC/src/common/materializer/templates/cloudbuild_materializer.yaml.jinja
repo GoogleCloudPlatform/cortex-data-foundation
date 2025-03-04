@@ -44,6 +44,7 @@ steps:
           --target_dataset_type='{{ target_dataset_type }}' \
           --target_dataset='{{ target_dataset_name }}' \
           --jinja_data_file='generated_materializer_build_files/{{ module_name }}/bq_sql_jinja_data.json' \
+          --location='{{ bq_location }}' \
           {%- if allow_telemetry %}
           --allow_telemetry \
           {%- endif %}

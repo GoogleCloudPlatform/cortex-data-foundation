@@ -41,6 +41,7 @@ RAW_PROJECT = _PROJECT_CONFIG["projectIdSource"]
 RAW_DATASET = _SOURCE_CONFIG["datasets"]["raw"]
 SCHEMA_DIR = Path(_CURRENT_DIR.parent, "config", "table_schema")
 
+PROJECT_LOCATION = _PROJECT_CONFIG["location"]
 PROJECT_REGION = _PROJECT_CONFIG["marketing"]["dataflowRegion"]
 FILE_TRANSFER_BUCKET = _SOURCE_CONFIG["fileTransferBucket"]
 

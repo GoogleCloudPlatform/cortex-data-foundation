@@ -61,6 +61,7 @@ _RAW_DAG_ID = "SFDC_${project_id}_${raw_dataset}_extract_to_raw_${base_table}"
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
 _BQ_LABELS = ast.literal_eval("${runtime_labels_dict}" or "{}")
+_BQ_LOCATION = "${location}"
 
 # pylint: disable=unused-argument
 @provide_session
@@ -122,7 +123,8 @@ with DAG(dag_id=_IDENTIFIER,
                 "query": _CDC_SQL_PATH,
                 "useLegacySql": False
             },
-            "labels": _BQ_LABELS
+            "labels": _BQ_LABELS,
+            "location": _BQ_LOCATION
         }
     )
 

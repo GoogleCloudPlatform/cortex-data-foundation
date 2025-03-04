@@ -26,6 +26,7 @@ from airflow.operators.empty import EmptyOperator
 _PROJECT_ID = "${cdc_project_id}"
 _DATASET_ID = "${cdc_dataset}"
 _TABLE_NAME = "${table_name}"
+_BQ_LOCATION = "${bq_location}"
 
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
@@ -77,7 +78,8 @@ _BQ_OPTIONS = {
     "max_retry_delay": timedelta(seconds=max_retry_delay_sec),
     "retry_delay": timedelta(seconds=retry_delay_sec),
     "retries": execution_retry_count,
-    "gcp_conn_id": "sfmc_cdc_bq"
+    "gcp_conn_id": "sfmc_cdc_bq",
+    "location": _BQ_LOCATION
 }
 
 with DAG(**_DAG_OPTIONS) as dag:

@@ -63,18 +63,16 @@ def configure(
             existing_config.get("projectIdTarget", "") != "" and
             existing_config.get("location", "") != "" and
             existing_config.get("targetBucket", "") != ""):
-        if yes_no(
-                f"{DF_TITLE} Configuration",
-                HTML(
-                    "There is an existing Data Foundation configuration "
-                    "in <b>config/config.json:</b>\n"
-                    "   Source Project: <b>"
-                    f"{existing_config['projectIdSource']}</b>\n"
-                    "   Target Project: <b>"
-                    f"{existing_config['projectIdTarget']}</b>\n"
-                    f"   Location: <b>{existing_config['location']}</b>"
-                    "\n\nWould you like to load it?"),
-                full_screen=True):
+        if yes_no(f"{DF_TITLE} Configuration",
+                  HTML("There is an existing Data Foundation configuration "
+                       "in <b>config/config.json:</b>\n"
+                       "   Source Project: <b>"
+                       f"{existing_config['projectIdSource']}</b>\n"
+                       "   Target Project: <b>"
+                       f"{existing_config['projectIdTarget']}</b>\n"
+                       f"   Location: <b>{existing_config['location']}</b>"
+                       "\n\nWould you like to load it?"),
+                  full_screen=True):
             print_formatted(
                 "\n\n🦄 Using existing configuration in config.json:", bold=True)
             print_formatted_json(existing_config)
@@ -182,6 +180,29 @@ def configure(
         config["marketing"]["deploySFMC"] = "deploySFMC" in results
         config["marketing"]["deployDV360"] = "deployDV360" in results
         config["marketing"]["deployGA4"] = "deployGA4" in results
+
+        # Set up k9
+        config["k9"] = config.get("k9") or {}
+        config["k9"]["deployDateDim"] = True
+        if config["deployOracleEBS"]:
+            config["k9"]["deployCountryDim"] = True
+
+        # Common dimensions and Cross Media
+        if config["deployMarketing"] and (config["marketing"]["deployGoogleAds"]
+                                          or
+                                          config["marketing"]["deployDV360"] or
+                                          config["marketing"]["deployMeta"] or
+                                          config["marketing"]["deployTikTok"]):
+            config["k9"]["deployCountryDim"] = True
+            config["k9"]["deployCurrencyConversion"] = True
+            config["k9"]["deployProductDim"] = True
+            config["k9"]["deployCrossMedia"] = True
+
+            # Load from SAP if enabled, otherwise use "Bring your own data"
+            ds_type = "SAP" if config["deploySAP"] else "BYOD"
+            config["k9"]["CurrencyConversion"]["dataSourceType"] = ds_type
+            config["k9"]["ProductDim"]["dataSourceType"] = ds_type
+            config["k9"]["CrossMedia"]["productHierarchyType"] = ds_type
 
         if (not config["deploySAP"] and not config["deploySFDC"] and
                 not config["deployMarketing"] and
@@ -311,6 +332,17 @@ def configure(
     if bucket_name == "":
         bucket_name = f"cortex-{source_project}-{bq_location}"
 
+    # Cross Media requires Vertex AI processing dataset to be in
+    # a region that's not multi-region.
+    if config["k9"].get("deployCrossMedia"):
+        ds = config["VertexAI"]["processingDataset"]
+        vertexai_region = bq_location.lower()
+        if vertexai_region == "us":
+            vertexai_region = "us-central1"
+        elif vertexai_region == "eu":
+            vertexai_region = "europe-west4"
+        config["VertexAI"]["region"] = vertexai_region
+
     datasets_wrong_locations = []
     if auto_names:
         datasets_wrong_locations = check_datasets_locations(config)
@@ -378,6 +410,7 @@ def configure(
         elif dataflow_region == "eu":
             dataflow_region = "europe-west4"
         config["marketing"]["dataflowRegion"] = dataflow_region
+
         if not auto_names:
             dataflow_completer = RegionsCompleter(False, bq_location)
             config["marketing"]["dataflowRegion"] = get_value(
@@ -388,8 +421,9 @@ def configure(
                 description="Dataflow Compute Region")
         if config["marketing"].get("deployCM360"):
             cm360 = config["marketing"]["CM360"]
-            if cm360.get("dataTransferBucket", "") == "":
-                bucket_name = f"cortex-{source_project}-cm360-{bq_location}"
+            bucket_name = cm360.get(
+                "dataTransferBucket"
+            ) or f"cortex-{source_project}-cm360-{bq_location}"
             while not auto_names:
                 bucket_completer = StorageBucketCompleter(source_project)
                 bucket_name = get_value(session,
@@ -413,8 +447,9 @@ def configure(
             config["marketing"]["CM360"]["dataTransferBucket"] = bucket_name
         if config["marketing"].get("deploySFMC"):
             cm360 = config["marketing"]["SFMC"]
-            if cm360.get("fileTransferBucket", "") == "":
-                bucket_name = f"cortex-{source_project}-sfmc-{bq_location}"
+            bucket_name = cm360.get(
+                "fileTransferBucket"
+            ) or f"cortex-{source_project}-sfmc-{bq_location}"
             while not auto_names:
                 bucket_completer = StorageBucketCompleter(source_project)
                 bucket_name = get_value(session,
@@ -448,7 +483,7 @@ def configure(
                             "item category set ids, separate"
                             "by comma",
                             allow_arbitrary=True)
-        oracle_ebs["itemCategorySetIds"] = [int(x) for x in ids.split(",")]
+            oracle_ebs["itemCategorySetIds"] = [int(x) for x in ids.split(",")]
 
         conversion_type = oracle_ebs.get("currencyConversionType")
         if not auto_names:
@@ -459,7 +494,7 @@ def configure(
                                         description="Specify Oracle EBS"
                                         "currency conversion type",
                                         allow_arbitrary=True)
-        oracle_ebs["currencyConversionType"] = conversion_type
+            oracle_ebs["currencyConversionType"] = conversion_type
 
         targets = oracle_ebs.get("currencyConversionTargets", [])
         if not auto_names:
@@ -471,9 +506,9 @@ def configure(
                                 "currency conversion targets, separate"
                                 "by comma",
                                 allow_arbitrary=True)
-        oracle_ebs["currencyConversionTargets"] = [
-            x.strip() for x in targets.split(",")
-        ]
+            oracle_ebs["currencyConversionTargets"] = [
+                x.strip() for x in targets.split(",")
+            ]
 
         languages = oracle_ebs.get("languages", [])
         if not auto_names:
@@ -483,6 +518,6 @@ def configure(
                                   ",".join(languages),
                                   description="Oracle EBS languages",
                                   allow_arbitrary=True)
-        oracle_ebs["languages"] = [x.strip() for x in languages.split(",")]
+            oracle_ebs["languages"] = [x.strip() for x in languages.split(",")]
 
     return config

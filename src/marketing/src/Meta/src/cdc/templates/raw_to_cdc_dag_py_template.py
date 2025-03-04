@@ -32,6 +32,7 @@ _PROJECT_ID = "${project_id}"
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
 _BQ_LABELS = ast.literal_eval("${runtime_labels_dict}" or "{}")
+_BQ_LOCATION = "${bq_location}"
 
 _IDENTIFIER = (f"meta_{_PROJECT_ID}_{_DATASET_ID}_raw_to_cdc_{_TABLE_NAME}")
 _START_DATE = datetime.fromisoformat("${start_date}")
@@ -71,7 +72,8 @@ _BQ_OPTIONS = {
             "query": _SQL_PATH,
             "useLegacySql": False,
         },
-        "labels": _BQ_LABELS
+        "labels": _BQ_LABELS,
+        "location": _BQ_LOCATION
     },
     "retries": execution_retry_count,
     "retry_delay": retry_delay_sec,

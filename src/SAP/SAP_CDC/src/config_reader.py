@@ -84,7 +84,8 @@ def process_table(table_config: dict, source_dataset: str, target_dataset: str,
         logging.info("✅ == Processed %s ==", raw_table)
     except Exception as e:
         raise SystemExit(
-            "⛔️ Error while generating sql and dags. Please check the logs. ⛔️"
+            "⛔️ Error while generating sql and dags. Please check the logs. "
+            f"Error = {e} ⛔️"
         ) from e
 
 

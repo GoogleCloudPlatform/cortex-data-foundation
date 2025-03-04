@@ -1,0 +1,138 @@
+#-- Copyright 2025 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--   https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+
+{% if deploy_sap %}
+
+/*
+* This script loads product hierarchy from SAP's hierarchy into Cortex Product Dimension table.
+*
+* This script adheres to SCD2, where, on each update:
+* - If a record is deleted, ValidToTimestamp is set to current timestamp for the existing record.
+* - If a record is added,  a new record is added with ValidToTimestamp set to NULL.
+* - If a record is updated, the old record's ValidToTimestamp is set to the current timestamp, and
+*   a new record with ValidToTimestamp set to NULL is added.
+*
+* This script generates / maintains SAP hierarchies with the following field names:
+* - HierarchyType for SAP Hierarchies is "SAP" by default and can be customized.
+* - Id for SAP Hiearchies is "{MANDT}-{PRODH}".
+*
+* Note that only the hierarchies that belongs to the active MANDT specified in "SAP.mandt" field
+* will be loaded.
+*/
+
+-- ## CORTEX-CUSTOMER: Update if you want your SAP Hierarchies to have a different HierarchyType.
+DECLARE SAP_HIERARCHY_TYPE STRING DEFAULT 'SAP';
+
+-- Create temporary SAP hierarchy table with new and updated records only.
+CREATE TEMP TABLE HierarchyChanges AS
+WITH RECURSIVE
+  Hierarchies AS (
+    (
+      SELECT
+        Client_MANDT,
+        Hierarchy_PRODH,
+        CAST(Level_STUFE AS INT64) AS Level,
+        Description_VTEXT,
+        ARRAY(SELECT Description_VTEXT) AS FullHierTexts,
+        CAST(NULL AS STRING) AS ParentHierarchy_PRODH,
+        1 AS CurrentMaxLevel
+      FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProductHierarchiesMD`
+      WHERE
+        Language_SPRAS = '{{ k9_product_dim_text_language }}'
+        AND Level_STUFE = '1'
+        AND Client_MANDT = '{{ mandt }}'
+    )
+    UNION ALL
+    (
+      SELECT
+        NextLevel.Client_MANDT,
+        NextLevel.Hierarchy_PRODH,
+        CAST(NextLevel.Level_STUFE AS INT64) AS Level,
+        NextLevel.Description_VTEXT,
+        ARRAY_CONCAT(
+          Hierarchies.FullHierTexts,
+          ARRAY(SELECT NextLevel.Description_VTEXT)) AS FullHierTexts, --noqa:LT02
+        Hierarchies.Hierarchy_PRODH AS ParentHierarchy_PRODH,
+        Hierarchies.CurrentMaxLevel + 1 AS CurrentMaxLevel
+      FROM Hierarchies
+      INNER JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.ProductHierarchiesMD` AS NextLevel
+        ON Hierarchies.Client_MANDT = NextLevel.Client_MANDT
+          AND STARTS_WITH(NextLevel.Hierarchy_PRODH, Hierarchies.Hierarchy_PRODH)
+      WHERE
+        NextLevel.Language_SPRAS = '{{ k9_product_dim_text_language }}'
+        AND NextLevel.Client_MANDT = '{{ mandt }}'
+        AND CAST(NextLevel.Level_STUFE AS INT64) = Hierarchies.CurrentMaxLevel + 1
+        AND Hierarchies.Level = Hierarchies.CurrentMaxLevel
+    )
+  ),
+  NewHierarchies AS (
+    SELECT
+      CONCAT(Client_MANDT, '-', Hierarchy_PRODH) AS Id,
+      Description_VTEXT AS Name,
+      Level,
+      CONCAT(Client_MANDT, '-', ParentHierarchy_PRODH) AS ParentId,
+      FullHierTexts,
+      FARM_FINGERPRINT(
+        CONCAT(
+          Description_VTEXT,
+          Level,
+          ParentHierarchy_PRODH,
+          -- Convert FullHierTexts to JSON String to escape characters and
+          -- achieve unique representation.
+          TO_JSON_STRING(FullHierTexts))) AS finger_print --noqa:LT02
+    FROM
+      Hierarchies
+  )
+SELECT
+  NewHierarchies.* EXCEPT (finger_print),
+  NewHierarchies.finger_print != CurrentHierarchies.finger_print AS RecordChanged --noqa:LT02
+FROM
+  NewHierarchies
+LEFT JOIN
+  ( -- Only look at current SAP hierarchies.
+    SELECT
+      *,
+      FARM_FINGERPRINT(CONCAT(Name, Level, ParentId, TO_JSON_STRING(FullHierTexts))) AS finger_print
+    FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy`
+    WHERE HierarchyType = SAP_HIERARCHY_TYPE AND ValidToTimestamp IS NULL
+  ) AS CurrentHierarchies
+  USING (Id)
+;
+
+-- Perform update adhering to SCD2.
+MERGE `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy` AS PH
+USING (
+  SELECT Id, Name, Level, ParentId, FullHierTexts, RecordChanged, Id AS JoinId
+  FROM HierarchyChanges
+  UNION ALL
+  -- Duplicate all updated records with NULL join key.
+  -- This forces the MERGE statement to perform insertion on these records.
+  SELECT Id, Name, Level, ParentId, FullHierTexts, NULL AS RecordChanged, NULL AS JoinId
+  FROM HierarchyChanges
+  WHERE RecordChanged
+) AS HC
+  ON PH.Id = HC.JoinId
+    AND PH.HierarchyType = SAP_HIERARCHY_TYPE -- Work with SAP Hierarchies only.
+    AND PH.ValidToTimestamp IS NULL
+WHEN NOT MATCHED BY TARGET THEN -- New & Updated records
+  INSERT (HierarchyType, Id, ValidFromTimestamp, Name, Level, ParentId, FullHierTexts, ValidToTimestamp)
+  VALUES (SAP_HIERARCHY_TYPE, Id, CURRENT_TIMESTAMP(), Name, Level, ParentId, FullHierTexts, NULL)
+WHEN NOT MATCHED BY SOURCE THEN -- Deleted records
+  UPDATE SET ValidToTimestamp = CURRENT_TIMESTAMP()
+WHEN MATCHED AND HC.RecordChanged THEN -- Updated records (excluding unchanged ones)
+  UPDATE SET ValidToTimestamp = CURRENT_TIMESTAMP()
+;
+{% else %}
+# This module will only be generated if SAP is deployed.
+{% endif %}

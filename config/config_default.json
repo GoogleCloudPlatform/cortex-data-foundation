@@ -12,9 +12,44 @@
     "testDataProject": "kittycorn-public",
     "k9": {
         "datasets": {
-            "processing": "CORTEX_K9_PROCESSING",
-            "reporting": "CORTEX_K9_REPORTING"
+            "processing": "K9_PROCESSING",
+            "reporting": "K9_REPORTING"
+        },
+        "deployDateDim": false,
+        "deployHolidayCalendar": false,
+        "deployCountryDim": false,
+        "deploySustainability": false,
+        "deployProductDim": false,
+        "deployCurrencyConversion": false,
+        "deployCrossMedia": false,
+        "deployCATGAP": false,
+        "deployWeather": false,
+        "deployTrends": false,
+        "ProductDim": {
+            "dataSourceType": "",
+            "textLanguage": "E"
+        },
+        "CurrencyConversion": {
+            "dataSourceType": "",
+            "rateType": "M"
+        },
+        "CrossMedia": {
+            "productHierarchyType": "",
+            "maxProductHierarchyMatchLevel": 9,
+            "targetCurrencies": ["USD"],
+            "additionalPrompt": "",
+            "lookbackWindowDays": 7
         }
+    },
+    "VertexAI": {
+        "region": "us-central1",
+        "processingDataset": "CORTEX_VERTEX_AI_PROCESSING"
+    },
+    "DataMesh": {
+        "deployDescriptions": true,
+        "deployLakes": false,
+        "deployCatalog": false,
+        "deployACLs": false
     },
     "SAP": {
         "deployCDC": true,
@@ -116,17 +151,26 @@
         "GA4": {
             "datasets": {
                 "cdc": [
-                    {"property_id": 123, "name": "CORTEX_GA4_CDC"}
+                    {
+                        "property_id": 123,
+                        "name": "CORTEX_GA4_CDC"
+                    }
                 ],
                 "reporting": "CORTEX_GA4_REPORTING"
             }
         }
     },
     "OracleEBS": {
-        "itemCategorySetIds": [1100000425],
+        "itemCategorySetIds": [
+            1100000425
+        ],
         "currencyConversionType": "Corporate",
-        "currencyConversionTargets": ["USD"],
-        "languages": ["US"],
+        "currencyConversionTargets": [
+            "USD"
+        ],
+        "languages": [
+            "US"
+        ],
         "datasets": {
             "cdc": "CORTEX_ORACLE_EBS_CDC",
             "reporting": "CORTEX_ORACLE_EBS_REPORTING"

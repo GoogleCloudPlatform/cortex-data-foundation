@@ -16,7 +16,36 @@
         "datasets": {
             "processing": "K9_PROCESSING",
             "reporting": "K9_REPORTING"
+        },
+        "deployDateDim": true,
+        "deployHolidayCalendar": true,
+        "deployCountryDim": true,
+        "deploySustainability": true,
+        "deployProductDim": false,
+        "deployCurrencyConversion": false,
+        "deployCrossMedia": false,
+        "deployCATGAP": false,
+        "deployWeather": false,
+        "deployTrends": false,
+        "ProductDim": {
+            "dataSourceType": "",
+            "textLanguage": ""
+        },
+        "CurrencyConversion": {
+            "dataSourceType": "",
+            "rateType": ""
+        },
+        "CrossMedia": {
+            "productHierarchyType": "",
+            "maxProductHierarchyMatchLevel": 9,
+            "targetCurrencies": ["USD"],
+            "additionalPrompt": "",
+            "lookbackWindowDays": 7
         }
+    },
+    "VertexAI": {
+        "region": "us-central1",
+        "processingDataset": "CORTEX_VERTEX_AI_PROCESSING"
     },
     "DataMesh": {
         "deployDescriptions": true,
@@ -124,17 +153,26 @@
         "GA4": {
             "datasets": {
                 "cdc": [
-                    {"property_id": 0, "name": ""}
+                    {
+                        "property_id": 0,
+                        "name": ""
+                    }
                 ],
                 "reporting": "REPORTING_GA4"
             }
         }
     },
     "OracleEBS": {
-        "itemCategorySetIds": [1100000425],
+        "itemCategorySetIds": [
+            1100000425
+        ],
         "currencyConversionType": "Corporate",
-        "currencyConversionTargets": ["USD"],
-        "languages": ["US"],
+        "currencyConversionTargets": [
+            "USD"
+        ],
+        "languages": [
+            "US"
+        ],
         "datasets": {
             "cdc": "",
             "reporting": "REPORTING_OracleEBS"

@@ -60,7 +60,8 @@ def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
             if path.is_dir() or str(rel_path).startswith("reporting/"):
                 continue
             tgt_path = tmp_dir_path.joinpath(rel_path)
-            if tgt_path.suffix.lower() == ".templatesql":
+            skip_sql_execution = tgt_path.suffix.lower() == ".templatesql"
+            if skip_sql_execution:
                 tgt_file_name = rel_path.stem + ".sql"
                 logging.info("Renaming SQL template %s to %s without "
                              "executing.", rel_path.name, tgt_file_name)
@@ -74,13 +75,18 @@ def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
             output_text = str(input_template.render(jinja_dict))
             with open(str(tgt_path), mode="w", encoding="utf-8") as output:
                 output.write(output_text)
-            if tgt_path.suffix.lower() == ".sql":
+            if tgt_path.suffix.lower() == ".sql" and not skip_sql_execution:
                 logging.info("Executing %s", str(tgt_path.relative_to(tmp_dir)))
                 bq_helper.execute_sql_file(bq_client, str(tgt_path))
         # make sure every DAG folder has __init__.py
         if "__init__.py" not in [str(p.relative_to(k9_dir)) for p in k9_files]:
-            with open(f"{tmp_dir}/__init__.py", "w", encoding="utf-8"):
-                pass
+            with open(f"{tmp_dir}/__init__.py", "w", encoding="utf-8") as f:
+                f.writelines([
+                    "import os",
+                    "import sys",
+                    ("sys.path.append("
+                     "os.path.dirname(os.path.realpath(__file__)))")
+                ])
 
         if data_source == "k9":
             target_path =  f"gs://{target_bucket}/dags/{k9_id}"
@@ -140,7 +146,7 @@ def get_k9_id(k9: typing.Union[str, dict]) -> str:
     return list(k9.keys())[0] if isinstance(k9, dict) else k9
 
 def deploy_k9(k9_manifest: dict,
-              k9_root_path: str,
+              k9_root_path: Path,
               config_file: str,
               logs_bucket: str,
               data_source: str = "k9",

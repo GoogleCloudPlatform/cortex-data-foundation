@@ -62,7 +62,7 @@ _TEMPLATE_DIR = Path(_THIS_DIR, "templates")
 _GENERATED_DAG_DIR = Path(_CWD, "generated_materializer_dag_files")
 
 
-def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
+def _parse_args() -> tuple[str, str, str, str, str, bool, bool, bool, str]:
     """Parses, validates and returns arguments, sets up logging."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -112,6 +112,12 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
         action="store_true",
         help="Flag to indicate if telemetry is allowed."
     )
+    parser.add_argument(
+        "--location",
+        type=str,
+        required=True,
+        help="Location to pass to BigQueryInsertJob operators in DAGs."
+    )
 
     args = parser.parse_args()
 
@@ -125,6 +131,7 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
     bq_object_setting_str = args.bq_object_setting
     load_test_data = args.load_test_data
     allow_telemetry = args.allow_telemetry
+    location = args.location
 
     logging.info("Arguments:")
     logging.info("  module_name = %s", module_name)
@@ -135,6 +142,7 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
     logging.info("  load_test_data = %s", load_test_data)
     logging.info("  debug = %s", enable_debug)
     logging.info("  allow_telemetry = %s", allow_telemetry)
+    logging.info("  location = %s", location)
 
     if not Path(jinja_data_file).is_file():
         raise ValueError(
@@ -146,13 +154,13 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
         raise ValueError(f"🛑 Failed to read table settings. Error = {e}.")
 
     return (module_name, jinja_data_file, target_dataset_type, target_dataset,
-            bq_object_setting, load_test_data, allow_telemetry)
+            bq_object_setting, load_test_data, allow_telemetry, location)
 
 
 def _generate_dag_files(module_name: str, target_dataset_type: str,
                         target_dataset: str, table_name: str,
                         table_setting: dict, table_refresh_sql: str,
-                        allow_telemetry: bool) -> None:
+                        allow_telemetry: bool, location: str) -> None:
     """Generates necessary DAG files to refresh a given table.
 
     There are two files to be generated:
@@ -190,6 +198,7 @@ def _generate_dag_files(module_name: str, target_dataset_type: str,
         table_refresh_sql: SQL with logic to populate data in the table.
         allow_telemetry: Bool from Cortex config file to specify if
             telemetry is allowed.
+        location: Location to pass to BigQueryInsertJob operators in DAGs.
 
     """
     dag_name = "_".join(
@@ -227,7 +236,8 @@ def _generate_dag_files(module_name: str, target_dataset_type: str,
         "year": today.year,
         "month": today.month,
         "day": today.day,
-        "runtime_labels_dict": "", # A place holder for label dict string
+        "runtime_labels_dict": "", # A place holder for label dict string,
+        "bq_location": location
     }
 
     # Add bq_labels to py_subs dict if telemetry allowed
@@ -387,7 +397,8 @@ def main():
 
     # Parse and validate arguments.
     (module_name, jinja_data_file, target_dataset_type, target_dataset,
-     bq_object_setting, load_test_data, allow_telemetry) = _parse_args()
+     bq_object_setting, load_test_data,
+     allow_telemetry, location) = _parse_args()
 
     sql_file = bq_object_setting["sql_file"]
     if not Path(sql_file).is_file():
@@ -464,7 +475,7 @@ def main():
                 bq_client, object_name_full, rendered_sql)
             _generate_dag_files(module_name, target_dataset_type,
                                 target_dataset, object_name, table_setting,
-                                table_refresh_sql, allow_telemetry)
+                                table_refresh_sql, allow_telemetry, location)
 
             # If we create table, we also need to populate it with test data
             # if flag is set for that.

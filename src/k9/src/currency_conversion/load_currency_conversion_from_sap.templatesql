@@ -1,0 +1,53 @@
+#-- Copyright 2025 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--   https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+
+{% if deploy_sap %}
+
+/*
+* This script reloads currency conversion rates from Cortex SAP Reporting into Cortex Product
+* Dimension table.
+*
+* Existing SAP exchange rate data will be removed.
+*
+* Note that only the conversion rates that belongs to the active MANDT specified in "SAP.mandt"
+* field will be loaded.
+*/
+
+## CORTEX-CUSTOMER: Update if you want your SAP currency conversion rates to have a different
+## Source System name.
+DECLARE SAP_SYSTEM_NAME STRING DEFAULT 'SAP';
+
+BEGIN TRANSACTION;
+
+DELETE FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.currency_conversion`
+WHERE source_system = SAP_SYSTEM_NAME;
+
+INSERT INTO `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.currency_conversion`
+(conversion_date, source_system, rate_type, from_currency, to_currency, exchange_rate)
+SELECT
+  ConvDate AS conversion_date,
+  SAP_SYSTEM_NAME AS source_system,
+  ExchangeRateType_KURST AS rate_type,
+  FromCurrency_FCURR AS from_currency,
+  ToCurrency_TCURR AS to_currency,
+  ExchangeRate_UKURS AS exchange_rate
+FROM
+  `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CurrencyConversion`
+WHERE
+  Client_MANDT = '{{ mandt }}';
+
+COMMIT TRANSACTION;
+{% else %}
+# This module will only be generated if SAP is deployed.
+{% endif %}
