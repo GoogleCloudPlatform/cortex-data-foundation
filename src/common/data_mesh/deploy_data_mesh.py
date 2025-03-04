@@ -49,9 +49,9 @@ import yaml
 sys.path.append(str(pathlib.Path(__file__).parents[2]))
 
 # pylint: disable=wrong-import-position
-from common.data_mesh.src import config_spec
 from common.data_mesh.src import data_mesh_client
 from common.data_mesh.src import data_mesh_types as dmt
+from common.py_libs import config_spec
 from common.py_libs import configs
 from common.py_libs import cortex_exceptions as cortex_exc
 from common.py_libs import jinja

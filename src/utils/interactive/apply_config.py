@@ -387,6 +387,21 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
             create_bq_dataset_with_roles(source_project, location, ds,
                                          cloud_build_account,
                                          ["roles/bigquery.dataEditor"])
+
+        # If Cross Media is enabled, create VertexAI processing dataset.
+        # It cannot be in a multi-location.
+        if config["k9"].get("deployCrossMedia"):
+            ds = config["VertexAI"]["processingDataset"]
+            vertexai_region = location.lower()
+            if vertexai_region == "us":
+                vertexai_region = "us-central1"
+            elif vertexai_region == "eu":
+                vertexai_region = "europe-west4"
+
+            create_bq_dataset_with_roles(source_project, vertexai_region, ds,
+                                         cloud_build_account,
+                                         ["roles/bigquery.dataEditor"])
+
         if target_project != source_project:
             # This check is only for logging.
             logging.info("Creating datasets in %s.", target_project)

@@ -179,7 +179,11 @@ def _validate_config_resources(config: typing.Dict[str, typing.Any]) -> bool:
             location),
         resource_validation_helper.DatasetConstraints(
             f'{target}.{config["k9"]["datasets"]["reporting"]}', False, True,
-            location)
+            location),
+        # Vertex AI dataset must be in the same region as Vertex AI region
+        resource_validation_helper.DatasetConstraints(
+            f'{source}.{config["VertexAI"]["processingDataset"]}', False, True,
+            config["VertexAI"]["region"])
     ]
     return resource_validation_helper.validate_resources(buckets, datasets)
 
@@ -253,6 +257,44 @@ def validate_config(
                          "Defaulting to K9_REPORTING. ⚠️"))
         config["k9"]["datasets"]["reporting"] = "K9_REPORTING"
 
+    if "VertexAI" not in config:
+        config["VertexAI"] = {}
+    config["VertexAI"]["region"] = config["VertexAI"].get("region", "")
+    if not config["VertexAI"]["region"]:
+        bq_location = config["location"].lower()
+        if "-" in bq_location:  # single region
+            vertexai_region = bq_location
+        elif bq_location == "eu":
+            vertexai_region = "europe-west1"
+        else:
+            vertexai_region = "us-central1"
+        logging.warning(
+            "⚠️ No Vertex AI region specified. Using `%s`. ⚠️", vertexai_region)
+        config["VertexAI"]["region"] = vertexai_region
+    else:
+        vertexai_region = config["VertexAI"]["region"].lower()
+        bq_location = config["location"].lower()
+        if "-" in bq_location and vertexai_region != bq_location:
+            logging.error(("🛑 Vertex AI region must match BigQuery location. "
+                           "It should be in `%s` region. 🛑"), bq_location)
+            failed = True
+        elif bq_location == "eu" and not vertexai_region.startswith("europe-"):
+            logging.error(("🛑 Vertex AI region must match BigQuery location. "
+                           "It should be in one of `europe-` regions. 🛑"))
+            failed = True
+        elif bq_location == "us" and not vertexai_region.startswith("us-"):
+            logging.error(("🛑 Vertex AI region must match BigQuery location. "
+                           "It should be in one of `us-` regions. 🛑"))
+            failed = True
+    config["VertexAI"]["processingDataset"] = config["VertexAI"].get(
+        "processingDataset")
+    if not config["VertexAI"]["processingDataset"]:
+        vertex_pd_default = "CORTEX_VERTEX_AI_PROCESSING"
+        logging.warning(
+            "⚠️ No Vertex AI dataset specified. Using `%s`. ⚠️",
+            vertex_pd_default)
+        config["VertexAI"]["processingDataset"] = vertex_pd_default
+
     if config["deployDataMesh"] and "DataMesh" not in config:
         logging.error("🛑 Data Mesh is enabled but no options are specified. 🛑")
         failed = True
@@ -264,7 +306,7 @@ def validate_config(
     logging.info("Validating common configuration resources.")
     try:
         _validate_config_resources(config)
-    except Exception:  #pylint:disable=broad-except
+    except Exception:  # pylint:disable=broad-except
         logging.error("🛑 Resource validation failed. 🛑")
         failed = True
 
@@ -280,7 +322,7 @@ def validate_config(
         logging.info("Running config validator in `%s`.", validator_text)
         try:
             config = _validate_workload(config, validator)  # type: ignore
-        except Exception:  #pylint:disable=broad-except
+        except Exception:  # pylint:disable=broad-except
             logging.error("🛑 Validation in `%s` failed. 🛑", validator_text)
             # TODO: make exception(groups) chained
             failed = True

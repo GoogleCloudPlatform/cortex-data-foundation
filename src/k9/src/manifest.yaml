@@ -36,39 +36,54 @@ dawgs:
   #       setting file.
 
 
-  - id: trends
+  - id: Trends
     path: trends
     reporting_settings: reporting/trends_reporting.yaml
     test_data: trends
     stage: pre
-  - id: date_dimension
+  - id: DateDim
     path: date_dimension
     test_data: calendar_date_dim
     stage: pre
-  - id: holiday_calendar
+  - id: HolidayCalendar
     path: holiday_calendar
     reporting_settings: reporting/holidays_reporting.yaml
     test_data: holiday_calendar
     stage: pre
-  - id: country_dim
+  - id: CountryDim
     path: country_dim
     reporting_settings: reporting/country_dim_reporting.yaml
     stage: pre
-  - id: weather
+  - id: CurrencyConversion
+    path: currency_conversion
+    reporting_settings: reporting/currency_conversion_reporting.yaml
+    stage: pre
+  - id: ProductDim
+    path: product_dim
+    reporting_settings: reporting/product_dim_reporting.yaml
+    test_data_target: k9.datasets.reporting
+    test_data: ProductHierarchy
+    stage: pre
+  - id: Weather
     path: weather
     reporting_settings: reporting/weather_reporting.yaml
     test_data: postcode,weather_daily,weather_weekly
     stage: post
     workload_dependencies: SAP
-  - id: catgap
+  - id: CATGAP
     path: catgap
     entry_point: deploy_catgap.sh
     stage: post
     workload_dependencies: SAP
     build_params: True
-  - id: sustainability
+  - id: Sustainability
     path: sustainability
     reporting_settings: reporting/sustainability_reporting.yaml
     test_data: dun_bradstreet_esg
     stage: post
     workload_dependencies: SAP
+  - id: CrossMedia
+    path: cross_media
+    test_data: campaign_texts, campaign_product_mapping, CrossMediaCampaignDailyAgg
+    test_data_target: k9.datasets.reporting
+    stage: post

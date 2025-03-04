@@ -30,6 +30,7 @@ _DAG_SCHEDULE = "${load_frequency}"
 _PROJECT_ID = "${project_id}"
 _DATASET_ID = "${cdc_dataset}"
 _TABLE_NAME = "${table_name}"
+_BQ_LOCATION = "${bq_location}"
 
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
@@ -62,7 +63,8 @@ _BQ_OPTIONS = {
     },
     "gcp_conn_id": "cm360_cdc_bq",
     "retries": execution_retry_count,
-    "retry_delay": retry_delay_sec
+    "retry_delay": retry_delay_sec,
+    "location": _BQ_LOCATION
 }
 
 

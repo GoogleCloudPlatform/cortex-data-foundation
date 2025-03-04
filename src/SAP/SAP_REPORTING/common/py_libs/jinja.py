@@ -23,6 +23,7 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 
 from common.py_libs import configs
+from common.py_libs import constants
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,12 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
         "k9_datasets_processing": config_dict["k9"]["datasets"]["processing"],
         "k9_datasets_reporting": config_dict["k9"]["datasets"]["reporting"]
     }
+
+    jinja_data_file_dict.update({"deploy_sap": config_dict.get("deploySAP")})
+    jinja_data_file_dict.update({"deploy_sfdc": config_dict.get("deploySFDC")})
+    jinja_data_file_dict.update(
+        {"deploy_oracleebs": config_dict.get("deployOracleEBS")})
+
     # SFDC
     if config_dict.get("deploySFDC"):
         jinja_data_file_dict.update({
@@ -142,6 +149,25 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 config_dict["SAP"]["languages"]
         })
     if config_dict.get("deployMarketing"):
+
+        jinja_data_file_dict.update({
+            "deploy_googleads": config_dict["marketing"].get("deployGoogleAds")
+        })
+        jinja_data_file_dict.update(
+            {"deploy_cm360": config_dict["marketing"].get("deployCM360")})
+        jinja_data_file_dict.update(
+            {"deploy_tiktok": config_dict["marketing"].get("deployTikTok")})
+        jinja_data_file_dict.update(
+            {"deploy_liveramp": config_dict["marketing"].get("deployLiveRamp")})
+        jinja_data_file_dict.update(
+            {"deploy_meta": config_dict["marketing"].get("deployMeta")})
+        jinja_data_file_dict.update(
+            {"deploy_sfmc": config_dict["marketing"].get("deploySFMC")})
+        jinja_data_file_dict.update(
+            {"deploy_dv360": config_dict["marketing"].get("deployDV360")})
+        jinja_data_file_dict.update(
+            {"deploy_ga4": config_dict["marketing"].get("deployGA4")})
+
         # GoogleAds
         if config_dict["marketing"].get("deployGoogleAds"):
             jinja_data_file_dict.update({
@@ -232,6 +258,52 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 config_dict["OracleEBS"]["currencyConversionTargets"],
             "oracle_ebs_languages":
                 config_dict["OracleEBS"]["languages"],
+        })
+
+    # Currency Conversion
+    if config_dict["k9"].get("deployCurrencyConversion"):
+        jinja_data_file_dict.update({
+            "k9_currency_conversion_data_source_type":
+                config_dict["k9"]["CurrencyConversion"]["dataSourceType"],
+            "k9_currency_conversion_rate_type":
+                config_dict["k9"]["CurrencyConversion"]["rateType"],
+        })
+
+    # ProductDim
+    if config_dict["k9"].get("deployProductDim"):
+        jinja_data_file_dict.update({
+            "k9_product_dim_data_source_type":
+                config_dict["k9"]["ProductDim"]["dataSourceType"],
+            "k9_product_dim_text_language":
+                config_dict["k9"]["ProductDim"]["textLanguage"],
+        })
+
+    # CrossMedia
+    if config_dict["k9"].get("deployCrossMedia"):
+        cm_config = config_dict["k9"]["CrossMedia"]
+        jinja_data_file_dict.update({
+            "k9_cross_media_target_currencies":
+                cm_config["targetCurrencies"],
+            "k9_cross_media_lookback_window_days":
+                cm_config["lookbackWindowDays"],
+            "k9_cross_media_additional_prompt":
+                cm_config["additionalPrompt"],
+            "k9_cross_media_product_hierarchy_type":
+                cm_config["productHierarchyType"],
+            "k9_cross_media_max_product_hierarchy_match_level":
+                cm_config["maxProductHierarchyMatchLevel"],
+            "k9_cross_media_text_generation_model":
+                cm_config.get("textGenerationModel",
+                        constants.K9_CROSS_MEDIA_DEFAULT_TEXT_GENERATION_MODEL),
+        })
+
+    # Vertex AI
+    if config_dict["VertexAI"]:
+        jinja_data_file_dict.update({
+            "vertexai_region":
+                config_dict["VertexAI"]["region"],
+            "vertexai_datasets_processing":
+                config_dict["VertexAI"]["processingDataset"]
         })
 
     return jinja_data_file_dict

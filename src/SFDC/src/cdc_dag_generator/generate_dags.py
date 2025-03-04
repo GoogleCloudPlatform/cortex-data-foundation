@@ -59,7 +59,7 @@ _SQL_TEMPLATE_DIR = Path(_TEMPLATE_DIR, "sql")
 
 
 def process_table(bq_client, table_setting, project_id, raw_dataset,
-                  cdc_dataset, load_test_data):
+                  cdc_dataset, load_test_data, location):
     """For a given table config, creates required tables as well as
     dag and related files. """
 
@@ -148,6 +148,7 @@ def process_table(bq_client, table_setting, project_id, raw_dataset,
         "month": today.month,
         "day": today.day,
         "runtime_labels_dict": "", # A place holder for label dict
+        "location": location
     }
 
     # Add bq_labels to py_subs dict if telemetry is allowed
@@ -219,6 +220,7 @@ def main():
     raw_dataset = config_dict.get("SFDC").get("datasets").get("raw")
     cdc_dataset = config_dict.get("SFDC").get("datasets").get("cdc")
     load_test_data = config_dict.get("testData")
+    location = config_dict.get("location")
 
     logging.info(
         "\n---------------------------------------\n"
@@ -265,7 +267,7 @@ def main():
     table_settings = settings["raw_to_cdc_tables"]
     for table_setting in table_settings:
         process_table(bq_client, table_setting, project_id, raw_dataset,
-                      cdc_dataset, load_test_data)
+                      cdc_dataset, load_test_data, location)
 
     logging.info("Done generating CDC tables and DAGs.")
 

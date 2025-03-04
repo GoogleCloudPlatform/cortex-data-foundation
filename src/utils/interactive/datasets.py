@@ -33,6 +33,8 @@ from constants import DF_TITLE
 DATASETS = [
         ([True], "k9.datasets.processing", "K9 Processing", False),
         ([True], "k9.datasets.reporting", "K9 Reporting", True),
+        (["k9.deployCrossMedia"], "VertexAI.processingDataset",
+            "VertexAI Processing", False),
         (["deploySAP"], "SAP.datasets.raw", "SAP Raw", False),
         (["deploySAP"], "SAP.datasets.cdc", "SAP CDC Processed",
             False),
@@ -230,13 +232,16 @@ def check_datasets_locations(config: typing.Dict[str, typing.Any]) -> (
             config["projectIdTarget"]: Client(config["projectIdTarget"],
                                            location=config["location"])
         }
-    location = config["location"].lower()
     for dataset in DATASETS:
+        location = config["location"].lower()
         if not _is_dataset_needed(config, dataset):
             continue
         current_value = _get_json_value(config, dataset[1])
+        # Special cases
         if dataset[2] == "GA4 CDC":
             current_value = current_value[0].get("name")
+        elif dataset[2] == "VertexAI Processing":
+            location = config["VertexAI"]["region"]
         project = (config["projectIdTarget"]
                     if dataset[3] else config["projectIdSource"])
 

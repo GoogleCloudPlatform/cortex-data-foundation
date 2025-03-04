@@ -1,0 +1,273 @@
+#-- Copyright 2025 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--   https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+
+#-- EXPERIMENTAL
+
+CREATE TABLE IF NOT EXISTS `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CrossMediaCampaignDailyAgg`
+(
+  ReportDate DATE,
+  SourceSystem STRING,
+  CampaignId STRING,
+  CountryCode STRING,
+  TargetCurrency STRING,
+  CountryName STRING,
+  CampaignName STRING,
+  ProductHierarchyType STRING,
+  ProductHierarchyId STRING,
+  ProductHierarchyTexts ARRAY<STRING>,
+  SourceCurrency STRING,
+  TotalImpressions INT64,
+  TotalClicks INT64,
+  TotalCostInSourceCurrency FLOAT64,
+  TotalCostInTargetCurrency FLOAT64,
+  LastUpdateTS TIMESTAMP
+);
+BEGIN TRANSACTION;
+
+{% raw %}{% if initial_load %}{% endraw %}
+TRUNCATE TABLE `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CrossMediaCampaignDailyAgg`;
+{% raw %}{% else %}{% endraw %}
+DELETE FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CrossMediaCampaignDailyAgg`
+WHERE ReportDate >= DATE_SUB(CURRENT_DATE, INTERVAL {{ k9_cross_media_lookback_window_days }} DAY);
+{% raw %}{% endif %}{% endraw %}
+
+INSERT INTO `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CrossMediaCampaignDailyAgg`
+(
+  ReportDate, SourceSystem, CampaignId, CountryCode, TargetCurrency, CountryName, CampaignName,
+  ProductHierarchyType, ProductHierarchyId, ProductHierarchyTexts, SourceCurrency,
+  TotalImpressions, TotalClicks, TotalCostInSourceCurrency, TotalCostInTargetCurrency,
+  LastUpdateTS
+)
+{% if deploy_googleads %}
+SELECT
+  CDA.report_date AS ReportDate,
+  C.source_system AS SourceSystem,
+  C.campaign_id AS CampaignId,
+  UCS.country_code AS CountryCode,
+  TargetCurrency,
+  CD.CountryCode AS CountryCode,
+  CDA.campaign_name AS CampaignName,
+  C.prod_hierarchy_type AS ProductHierarchyType,
+  C.prod_hierarchy_id AS ProductHierarchyId,
+  PH.FullHierTexts AS ProductHierarchyTexts,
+  CDA.currency_code AS SourceCurrency,
+  UCS.impressions AS TotalImpressions,
+  UCS.clicks AS TotalClicks,
+  UCS.cost AS TotalCostInSourceCurrency,
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.GetConvertedAmount`(
+    CDA.currency_code, TargetCurrency, CC.ExchangeRate, UCS.cost)
+    AS TotalCostInTargetCurrency,
+  CURRENT_TIMESTAMP() AS LastUpdateTS
+FROM
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_product_mapping` AS C
+LEFT JOIN `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy` AS PH
+  ON
+    C.prod_hierarchy_type = PH.HierarchyType
+    AND C.prod_hierarchy_id = PH.Id
+    AND PH.ValidToTimestamp IS NULL
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.CampaignDailyAgg` AS CDA
+  ON
+    C.campaign_id = CAST(CDA.campaign_id AS STRING)
+    {% raw %}{% if not initial_load %}{% endraw %}
+    AND CDA.report_date >= DATE_SUB(CURRENT_DATE, INTERVAL {{ k9_cross_media_lookback_window_days }} DAY)
+    {% raw %}{% endif %}{% endraw %}
+CROSS JOIN
+  UNNEST(CDA.user_country_stats) AS UCS
+CROSS JOIN
+  UNNEST({{ k9_cross_media_target_currencies }}) AS TargetCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CurrencyConversion` AS CC
+  ON
+    CDA.currency_code = CC.FromCurrency
+    AND CDA.report_date = CC.ConversionDate
+    AND TargetCurrency = CC.ToCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CountryDim` AS CD
+  ON UCS.country_code = CD.CountryCode
+WHERE
+  C.source_system = 'GoogleAds'
+  AND C.valid_to_timestamp IS NULL
+{% endif %}
+
+{%- if deploy_dv360 -%}
+{% if deploy_googleads %}UNION ALL{% endif %}
+SELECT
+  LII.date AS ReportDate,
+  C.source_system AS SourceSystem,
+  C.campaign_id AS CampaignId,
+  LII.country_code AS CountryCode,
+  TargetCurrency,
+  CD.CountryCode AS CountryCode,
+  LII.line_item AS CampaignName,
+  C.prod_hierarchy_type AS ProductHierarchyType,
+  C.prod_hierarchy_id AS ProductHierarchyId,
+  PH.FullHierTexts AS ProductHierarchyTexts,
+  LII.advertiser_currency AS SourceCurrency,
+  LII.impressions AS TotalImpressions,
+  LII.clicks AS TotalClicks,
+  LII.revenue_advertiser_currency AS TotalCostInSourceCurrency,
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.GetConvertedAmount`(
+    LII.advertiser_currency, TargetCurrency, CC.ExchangeRate, LII.revenue_advertiser_currency)
+    AS TotalCostInTargetCurrency,
+  CURRENT_TIMESTAMP() AS LastUpdateTS
+FROM
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_product_mapping` AS C
+LEFT JOIN `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy` AS PH
+  ON
+    C.prod_hierarchy_type = PH.HierarchyType
+    AND C.prod_hierarchy_id = PH.Id
+    AND PH.ValidToTimestamp IS NULL
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ marketing_dv360_datasets_reporting }}.LineItemInsights` AS LII
+  ON
+    C.campaign_id = CAST(LII.line_item_id AS STRING)
+    {% raw %}{% if not initial_load %}{% endraw %}
+    AND LII.date >= DATE_SUB(CURRENT_DATE, INTERVAL {{ k9_cross_media_lookback_window_days }} DAY)
+    {% raw %}{% endif %}{% endraw %}
+CROSS JOIN
+  UNNEST({{ k9_cross_media_target_currencies }}) TargetCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CurrencyConversion` AS CC
+  ON
+    LII.advertiser_currency = CC.FromCurrency
+    AND LII.date = CC.ConversionDate
+    AND TargetCurrency = CC.ToCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CountryDim` AS CD
+  ON LII.country_code = CD.CountryCode
+WHERE
+  C.source_system = 'DV360'
+  AND C.valid_to_timestamp IS NULL
+{% endif %}
+
+{%- if deploy_meta -%}
+{% if deploy_googleads or deploy_dv360 %}UNION ALL{% endif %}
+SELECT
+  CDA.report_date AS ReportDate,
+  C.source_system AS SourceSystem,
+  C.campaign_id AS CampaignId,
+  CD.country AS CountryCode,
+  TargetCurrency,
+  CD2.CountryName AS CountryName,
+  CDA.campaign_name AS CampaignName,
+  C.prod_hierarchy_type AS ProductHierarchyType,
+  C.prod_hierarchy_id AS ProductHierarchyId,
+  PH.FullHierTexts AS ProductHierarchyTexts,
+  CDA.account_currency AS SourceCurrency,
+  CD.impressions AS TotalImpressions,
+  CD.clicks AS TotalClicks,
+  CD.spend AS TotalCostInSourceCurrency,
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.GetConvertedAmount`(
+    CDA.account_currency, TargetCurrency, CC.ExchangeRate, CD.spend)
+    AS TotalCostInTargetCurrency,
+  CURRENT_TIMESTAMP() AS LastUpdateTS
+FROM
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_product_mapping` AS C
+LEFT JOIN `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy` AS PH
+  ON
+    C.prod_hierarchy_type = PH.HierarchyType
+    AND C.prod_hierarchy_id = PH.Id
+    AND PH.ValidToTimestamp IS NULL
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ marketing_meta_datasets_reporting }}.CampaignInsightsDailyAgg` AS CDA
+  ON
+    C.campaign_id = CAST(CDA.campaign_id AS STRING)
+    {% raw %}{% if not initial_load %}{% endraw %}
+    AND CDA.report_date >= DATE_SUB(CURRENT_DATE, INTERVAL {{ k9_cross_media_lookback_window_days }} DAY)
+    {% raw %}{% endif %}{% endraw %}
+CROSS JOIN
+  UNNEST(CDA.country_details) AS CD
+CROSS JOIN
+  UNNEST({{ k9_cross_media_target_currencies }}) TargetCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CurrencyConversion` AS CC
+  ON
+    CDA.account_currency = CC.FromCurrency
+    AND CDA.report_date = CC.ConversionDate
+    AND TargetCurrency = CC.ToCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CountryDim` AS CD2
+  ON CD.country = CD2.CountryCode
+WHERE
+  C.source_system = 'Meta'
+  AND C.valid_to_timestamp IS NULL
+{% endif %}
+
+{%- if deploy_tiktok -%}
+{% if deploy_googleads or deploy_dv360 or deploy_meta %}UNION ALL{% endif %}
+SELECT
+  AGPDA.date AS ReportDate,
+  C.source_system AS SourceSystem,
+  C.campaign_id AS CampaignId,
+  AGPDA.country_code AS CountryCode,
+  TargetCurrency,
+  CD.CountryName,
+  AGPDA.campaign_name AS CampaignName,
+  C.prod_hierarchy_type AS ProductHierarchyType,
+  C.prod_hierarchy_id AS ProductHierarchyId,
+  PH.FullHierTexts AS ProductHierarchyTexts,
+  AGPDA.currency AS SourceCurrency,
+  AGPDA.TotalImpressions,
+  AGPDA.TotalClicks,
+  AGPDA.TotalCost AS TotalCostInSourceCurrency,
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.GetConvertedAmount`(
+    AGPDA.currency, TargetCurrency, CC.ExchangeRate, AGPDA.TotalCost)
+    AS TotalCostInTargetCurrency,
+  CURRENT_TIMESTAMP() AS LastUpdateTS
+FROM
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_product_mapping` AS C
+LEFT JOIN `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy` AS PH
+  ON
+    C.prod_hierarchy_type = PH.HierarchyType
+    AND C.prod_hierarchy_id = PH.Id
+    AND PH.ValidToTimestamp IS NULL
+LEFT JOIN (
+  SELECT
+    date,
+    CAST(campaign_id AS STRING) AS campaign_id,
+    campaign_name,
+    currency,
+    country_code,
+    SUM(total_impressions) AS TotalImpressions,
+    SUM(total_clicks) AS TotalClicks,
+    SUM(total_cost) AS TotalCost
+  FROM
+    `{{ project_id_tgt }}.{{ marketing_tiktok_datasets_reporting }}.AdGroupPerformanceDailyAgg`
+  {% raw %}{% if not initial_load %}{% endraw %}
+  WHERE
+    date >= DATE_SUB(CURRENT_DATE, INTERVAL {{ k9_cross_media_lookback_window_days }} DAY)
+  {% raw %}{% endif %}{% endraw %}
+  GROUP BY
+    date, campaign_id, campaign_name, currency, country_code
+) AS AGPDA
+  USING (campaign_id)
+CROSS JOIN
+  UNNEST({{ k9_cross_media_target_currencies }}) AS TargetCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CurrencyConversion` AS CC
+  ON
+    AGPDA.currency = CC.FromCurrency
+    AND AGPDA.date = CC.ConversionDate
+    AND TargetCurrency = CC.ToCurrency
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CountryDim` AS CD
+  ON AGPDA.country_code = CD.CountryCode
+WHERE
+  C.source_system = 'TikTok'
+  AND C.valid_to_timestamp IS NULL
+{% endif %}
+;
+
+COMMIT TRANSACTION;

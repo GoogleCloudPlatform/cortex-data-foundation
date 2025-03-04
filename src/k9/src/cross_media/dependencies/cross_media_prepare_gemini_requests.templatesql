@@ -1,0 +1,279 @@
+#-- Copyright 2025 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--   https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+
+#-- Prepares data for Vertex AI batch text generation job.
+#--
+#-- Prepares data according to Vertex AI Batch prediction for Gemini:
+#-- https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/batch-prediction-gemini.
+#-- The scripts creates a batch request row for every BATCH_SIZE (50) campaigns.
+#-- @param is_full_refresh (BOOL) - True if it's a full re-match run.
+#-- @param batch_input_table (STRING) - Full id of temporary batch job input table
+#-- (it will be copied to the actual job input table later).
+
+DECLARE PROD_HIERARCHY_TYPE STRING DEFAULT '{{ k9_cross_media_product_hierarchy_type }}';
+DECLARE BATCH_SIZE INT64 DEFAULT 50;
+DECLARE prompt_format STRING;
+DECLARE json_template STRING;
+DECLARE request JSON;
+
+CREATE TEMP TABLE temp_xmedia_input
+(
+  batch_campaigns STRING,
+  request JSON
+);
+
+SET prompt_format = '''**Instructions:**
+
+Match marketing campaigns to product categories within a provided hierarchy.
+Think as a product marketing manager.
+
+You match to a category first. Matching to a specific product is desired, but optional.
+If cannot find a perfect match, choose a less specific product category. If these is an exact product matching - choose that.
+Campaigns can be mapped at different levels of the hierarchy.
+Some campaigns are very broad, some are specific to a product.
+Generic campaigns are ok as long as they match to a product category. Matching to a more generic product category doesn't mean a lower confidence match as long as the match is good.
+
+%s
+
+**Data:**
+
+Product Hierarchy:
+
+```json
+%s
+```
+
+Campaigns:
+
+```json
+%s
+```
+''';
+
+SET json_template = '''
+{
+    "contents": [
+        {
+            "role": "user",
+            "parts": [
+                {
+                    "text": ""
+                }
+            ]
+        }
+    ],
+    "systemInstruction": {
+        "role": "user",
+        "parts": [
+            {
+                "text": ""
+            }
+        ]
+    },
+    "safetySettings": [
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_ONLY_HIGH"
+        }
+    ],
+    "generationConfig": {
+        "temperature": 0.0,
+        "topP": 0.0,
+        "topK": 1,
+        "maxOutputTokens": 8192,
+        "responseMimeType": "application/json",
+        "responseSchema": {
+            "type": "object",
+            "properties": {
+                "matches": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "campaign_id": {
+                                "type": "string",
+                                "description": "Campaign id."
+                            },
+                            "desc": {
+                                "type": "string",
+                                "description": "Generic product or product category description generated from the campaign text."
+                            },
+                            "category_id": {
+                                "type": "string",
+                                "description": "category_id of a product hierarchy node that covers what's described in `desc`. Must be one of the provided items, or empty string if there is no match."
+                            },
+                            "reason": {
+                                "type": "string",
+                                "description": "Detailed reason why match is not great, required if conf is not `high`."
+                            },
+                            "conf": {
+                                "type": "string",
+                                "enum": [
+                                    "no",
+                                    "multiple",
+                                    "low",
+                                    "high"
+                                ],
+                                "description": "Match confidence: `no` - no match, `low` - low confidence match, `high` - high confidence match."
+                            }
+                        },
+                        "required": [
+                            "campaign_id",
+                            "category_id",
+                            "desc",
+                            "conf"
+                        ]
+                    }
+                }
+            }
+        },
+        "seed": 1
+    }
+}
+''';
+
+SET request = PARSE_JSON(json_template);
+SET request = JSON_SET(request, '$.systemInstruction.parts[0].text', '''
+You are a professional in sales and digital marketing specializing in creating efficient and effective marketing campaigns.
+You possess excellent product knowledge and top-notch campaign targeting skills.
+''');
+
+INSERT INTO temp_xmedia_input (batch_campaigns, request) (
+
+########## PRODUCT DATA ##########
+  WITH
+    product_data AS (
+      SELECT Id AS category_id, FullHierTexts AS category_text_list
+      FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.ProductHierarchy`
+      WHERE
+        HierarchyType = PROD_HIERARCHY_TYPE
+        AND ValidToTimestamp IS NULL
+        AND Level <= {{ k9_cross_media_max_product_hierarchy_match_level }}
+    ),
+
+    product_data_full AS (
+      SELECT
+        category_id,
+        CONCAT('[', ARRAY_TO_STRING(
+          ARRAY(
+            SELECT TO_JSON_STRING(x)
+            FROM UNNEST(category_text_list) AS x
+          ),
+          ','
+        ), ']') AS category_text
+      FROM product_data
+    ),
+
+    product_data_text AS (
+      SELECT TO_JSON_STRING(STRUCT(category_id, category_text), TRUE) AS product_category
+      FROM product_data_full
+    ),
+    ####################
+
+    ########## CAMPAIGN DATA ##########
+    mapped_campaigns AS (
+      SELECT
+        source_system, campaign_id
+      FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_product_mapping`
+      WHERE
+        valid_to_timestamp IS NULL
+        AND prod_hierarchy_type = PROD_HIERARCHY_TYPE
+    ),
+    campaign_data AS (
+      SELECT
+        CONCAT(source_system, '::', campaign_id) AS campaign_id,
+        TO_JSON_STRING(STRUCT(
+          CONCAT(source_system, '::', campaign_id) AS campaign_id,
+          campaign_text AS campaign_text
+        ), TRUE) AS campaign_json
+      FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts` AS texts
+      WHERE
+        texts.valid_to_timestamp IS NULL
+        AND (
+          @is_full_refresh IS TRUE
+          OR (texts.source_system, texts.campaign_id) NOT IN (
+            SELECT (
+              source_system, campaign_id
+            ) FROM mapped_campaigns
+          )
+        )
+    ),
+    numbered_campaign_data AS (
+      SELECT
+        campaign_id,
+        campaign_json,
+        ROW_NUMBER() OVER () - 1 AS rn
+      FROM campaign_data
+    ),
+    batched_campaign_data AS (
+      SELECT
+        ARRAY_AGG(campaign_id) OVER (PARTITION BY CAST(TRUNC(rn / BATCH_SIZE) AS INT64)) AS batch_campaigns,
+        ARRAY_AGG(campaign_json) OVER (PARTITION BY CAST(TRUNC(rn / BATCH_SIZE) AS INT64)) AS batch
+      FROM numbered_campaign_data
+      QUALIFY ROW_NUMBER() OVER (PARTITION BY CAST(TRUNC(rn / BATCH_SIZE) AS INT64) ORDER BY rn) = 1
+    ),
+    batched_campaign_data_arrays AS (
+      SELECT batch_campaigns, batch
+      FROM batched_campaign_data
+    ),
+
+    batched_campaign_texts AS (
+      SELECT
+        batch_campaigns,
+        CONCAT('[\n', ARRAY_TO_STRING(
+          ARRAY(
+            SELECT x
+            FROM UNNEST(batch) AS x
+          ),
+          ',\n'
+        ), '\n]') AS campaign_batch
+      FROM batched_campaign_data_arrays
+    )
+  ####################
+
+  SELECT
+    ARRAY_TO_STRING(batch_campaigns, '||||') AS batch_campaigns,
+    JSON_SET(
+      request,
+      '$.contents[0].parts[0].text',
+      FORMAT(
+        prompt_format,
+        '{{ k9_cross_media_additional_prompt }}',
+        (SELECT CONCAT('[\n', STRING_AGG(product_category, ',\n'), '\n]') FROM product_data_text),
+        campaign_batch
+      )
+    ) AS request
+  FROM batched_campaign_texts
+);
+
+EXECUTE IMMEDIATE -- noqa:
+  CONCAT(
+    'INSERT INTO `',
+    @batch_input_table,
+    '` (batch_campaigns, request) (SELECT batch_campaigns, request FROM temp_xmedia_input)'
+  );
+
+DROP TABLE temp_xmedia_input;

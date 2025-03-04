@@ -19,7 +19,7 @@ import dataclasses
 import enum
 from typing import Any, List, Union
 
-from common.data_mesh.src import config_spec
+from common.py_libs import config_spec
 
 # TODO: Consider using protos/pulling directly from internal GCP types.
 # TODO: Should we default all fields to non-null?

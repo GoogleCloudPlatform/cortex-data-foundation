@@ -1,0 +1,151 @@
+#-- Copyright 2025 Google LLC
+#--
+#-- Licensed under the Apache License, Version 2.0 (the "License");
+#-- you may not use this file except in compliance with the License.
+#-- You may obtain a copy of the License at
+#--
+#--   https://www.apache.org/licenses/LICENSE-2.0
+#--
+#-- Unless required by applicable law or agreed to in writing, software
+#-- distributed under the License is distributed on an "AS IS" BASIS,
+#-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#-- See the License for the specific language governing permissions and
+#-- limitations under the License.
+
+DECLARE SESSION_TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
+
+CREATE TABLE IF NOT EXISTS `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts`
+(
+  source_system STRING,
+  campaign_id STRING,
+  valid_from_timestamp TIMESTAMP,
+  valid_to_timestamp TIMESTAMP,
+  campaign_text STRING
+);
+
+BEGIN TRANSACTION;
+
+-- On initial load, invalidate all existing campaign text entries.
+{% raw %}{% if initial_load %}{% endraw %}
+UPDATE `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts`
+SET valid_to_timestamp = SESSION_TIMESTAMP
+WHERE valid_to_timestamp IS NULL
+;
+{% raw %}{% endif %}{% endraw %}
+
+-- Create temporary table with new campaigns only.
+-- We assume that, from a functional perspective, campaign texts will not be updated post creation.
+-- ## CORTEX-CUSTOMER: Add other fields as you see relevant to the campaign text.
+CREATE TEMP TABLE NewRecords AS
+{% if deploy_googleads %}
+SELECT
+  'GoogleAds' AS source_system,
+  CAST(C.campaign_id AS STRING) AS campaign_id,
+  CONCAT(
+    STRING_AGG(DISTINCT C.name, ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(AG.name, ''), ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(AGA.ad.name, ''), ' ')
+  ) AS campaign_text
+FROM
+  `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.Campaigns` C
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.AdGroups` AG
+  USING (campaign_id)
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ marketing_googleads_datasets_reporting }}.AdGroupAds` AGA
+  USING (adgroup_id)
+WHERE
+  campaign_id NOT IN
+  (
+    SELECT CAST(campaign_id AS INT64)
+    FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts`
+    WHERE valid_to_timestamp IS NULL AND source_system = 'GoogleAds'
+  )
+GROUP BY
+  C.campaign_id
+{%- endif -%}
+{% if deploy_dv360 %}
+{% if deploy_googleads %}UNION ALL{% endif %}
+SELECT
+  'DV360' AS source_system,
+  CAST(line_item_id AS STRING) AS campaign_id,
+  CONCAT(
+    STRING_AGG(DISTINCT line_item, ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(trueview_ad_group, ''), ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(trueview_ad, ''), ' ')
+  ) AS campaign_text
+FROM
+  `{{ project_id_tgt }}.{{ marketing_dv360_datasets_reporting }}.AdInsights`
+WHERE
+  campaign_id NOT IN
+  (
+    SELECT CAST(campaign_id AS INT64)
+    FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts`
+    WHERE valid_to_timestamp IS NULL AND source_system = 'DV360'
+  )
+GROUP BY
+  line_item_id
+{%- endif -%}
+{% if deploy_meta %}
+{% if deploy_googleads or deploy_dv360 %}UNION ALL{% endif %}
+SELECT
+  'Meta' AS source_system,
+  CAST(campaign_id AS STRING) AS campaign_id,
+  CONCAT(
+    STRING_AGG(DISTINCT C.name, ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(ADSET.name, ''), ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(A.name, ''), ' ')
+  ) AS campaign_text
+FROM
+  `{{ project_id_tgt }}.{{ marketing_meta_datasets_reporting }}.Campaign` C
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ marketing_meta_datasets_reporting }}.Adset` ADSET
+  USING (campaign_id)
+LEFT JOIN
+  `{{ project_id_tgt }}.{{ marketing_meta_datasets_reporting }}.Ads` A
+  USING (campaign_id, adset_id)
+WHERE
+  campaign_id NOT IN
+  (
+    SELECT CAST(campaign_id AS INT64)
+    FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts`
+    WHERE valid_to_timestamp IS NULL AND source_system = 'Meta'
+  )
+GROUP BY
+  C.campaign_id
+{%- endif -%}
+{% if deploy_tiktok %}
+{% if deploy_googleads or deploy_dv360 or deploy_meta %}UNION ALL{% endif %}
+SELECT
+  'TikTok' AS source_system,
+  CAST(campaign_id AS STRING) AS campaign_id,
+  CONCAT(
+    STRING_AGG(DISTINCT campaign_name, ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(adgroup_name, ''), ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(ad_name, ''), ' '), ' ',
+    STRING_AGG(DISTINCT COALESCE(ad_text, ''), ' ')
+  ) AS campaign_text
+FROM
+  `{{ project_id_tgt }}.{{ marketing_tiktok_datasets_reporting }}.AdPerformance`
+WHERE
+  campaign_id NOT IN
+  (
+    SELECT campaign_id
+    FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts`
+    WHERE valid_to_timestamp IS NULL AND source_system = 'TikTok'
+  )
+GROUP BY
+  campaign_id
+{%- endif -%}
+;
+
+-- Perform update adhering to SCD2 table structure.
+INSERT INTO `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.campaign_texts`
+(source_system, campaign_id, valid_from_timestamp, valid_to_timestamp, campaign_text)
+SELECT
+  source_system, campaign_id, SESSION_TIMESTAMP, NULL, campaign_text
+FROM
+  NewRecords
+;
+
+COMMIT TRANSACTION;

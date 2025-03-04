@@ -1,0 +1,5 @@
+bq_dependent_objects:
+  - sql_file: src/k9/src/currency_conversion/reporting/currency_conversion.sql
+    type: script
+  - sql_file: src/k9/src/currency_conversion/reporting/CurrencyConversion.sql
+    type: view

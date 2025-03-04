@@ -38,6 +38,7 @@ from src.cdc.constants import OUTPUT_DIR_FOR_CDC
 from src.constants import CDC_DATASET
 from src.constants import CDC_PROJECT
 from src.constants import POPULATE_TEST_DATA
+from src.constants import PROJECT_LOCATION
 from src.constants import RAW_DATASET
 from src.constants import RAW_PROJECT
 from src.constants import SCHEMA_DIR
@@ -136,7 +137,8 @@ def main():
     _create_sql_output_dir_structure()
 
     dag_start_date = datetime.now(timezone.utc).date()
-    client = cortex_bq_client.CortexBQClient(project=CDC_PROJECT)
+    client = cortex_bq_client.CortexBQClient(project=CDC_PROJECT,
+                                             location=PROJECT_LOCATION)
 
     if not "raw_to_cdc_tables" in SETTINGS:
         logging.warning(
@@ -205,7 +207,8 @@ def main():
             "cdc_dataset": CDC_DATASET,
             "project_id": CDC_PROJECT,
             "start_date": dag_start_date,
-            "runtime_labels_dict": "" # A place holder for label dict string
+            "runtime_labels_dict": "", # A place holder for label dict string
+            "bq_location": PROJECT_LOCATION
         }
 
         # If telemetry opted in, convert CORTEX JOB LABEL dict to string

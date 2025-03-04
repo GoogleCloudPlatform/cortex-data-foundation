@@ -41,6 +41,19 @@ def validate(cfg: dict) -> Union[dict, None]:
 
     logging.info("Validating OracleEBS configuration.")
 
+    # Check k9 settings
+    k9 = cfg.get("k9")
+    if not k9:
+        logging.error("🛑 Missing 'k9' settings in the config file. 🛑")
+        failed = True
+    else:
+        if not k9.get("deployDateDim"):
+            logging.error("🛑 Must enable deployDateDim in k9 config. 🛑")
+            failed = True
+        if not k9.get("deployCountryDim"):
+            logging.error("🛑 Must enable deployCountryDim in k9 config. 🛑")
+            failed = True
+
     oracle_ebs = cfg.get("OracleEBS")
     if not oracle_ebs:
         logging.error("🛑 Missing 'OracleEBS' values in the config file. 🛑")

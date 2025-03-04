@@ -15,7 +15,10 @@
 """Constants for Cortex Data Foundation."""
 
 # Listed first due to dependencies
-CORTEX_VERSION = "6.0"
+CORTEX_VERSION = "6.1"
+
+# Version formatted with X_X due to BigQuery dataset naming requirements
+TEST_HARNESS_VERSION = "6_1"
 
 # Dict for dataset labels
 BQ_DATASET_LABEL = {"goog-packaged-solution" : "cortex-framework"}
@@ -30,5 +33,5 @@ CORTEX_JOB_LABEL = {"requestor": "cortex_runtime"}
 # Cortex BigQuery User agent
 CORTEX_USER_AGENT = f"cortex/{CORTEX_VERSION} (GPN:Google-Cloud-Cortex;)"
 
-# Version formatted with X_X due to BigQuery dataset naming requirements
-TEST_HARNESS_VERSION = "6_0"
+# Default Gemini model for Cross-Media
+K9_CROSS_MEDIA_DEFAULT_TEXT_GENERATION_MODEL = "gemini-2.0-flash-001"

@@ -39,6 +39,7 @@ from src.cdc.constants import DAG_TEMPLATE_PATH
 from src.constants import CDC_DATASET
 from src.constants import CDC_PROJECT
 from src.constants import POPULATE_TEST_DATA
+from src.constants import PROJECT_LOCATION
 from src.constants import RAW_DATASET
 from src.constants import RAW_PROJECT
 from src.constants import SCHEMA_BQ_DATATYPE_FIELD
@@ -150,7 +151,8 @@ def main():
             "load_frequency": load_frequency,
             "table_name": table_name,
             "start_date": dag_start_date,
-            "runtime_labels_dict": "" # A place holder for labels dict string
+            "runtime_labels_dict": "", # A place holder for labels dict string
+            "bq_location": PROJECT_LOCATION
         }
 
         # If telemetry opted in, convert CORTEX JOB LABEL dict to string

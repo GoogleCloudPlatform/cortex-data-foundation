@@ -1,0 +1,3 @@
+bq_independent_objects:
+  - sql_file: src/k9/src/product_dim/reporting/ProductHierarchy.sql
+    type: script

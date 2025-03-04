@@ -205,7 +205,8 @@ def _create_build_files(global_settings: dict, bq_obj_settings: dict,
             "config_file": global_settings["config_file"],
             "build_files_list": build_files_list,
             "private_worker_pool": private_worker_pool,
-            "allow_telemetry": config_dict.get("allowTelemetry", True)
+            "allow_telemetry": config_dict.get("allowTelemetry", True),
+            "bq_location": config_dict["location"]
         })
 
         build_file_num = f"{build_file_counter:03d}"

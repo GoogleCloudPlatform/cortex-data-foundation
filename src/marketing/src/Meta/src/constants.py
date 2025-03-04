@@ -42,6 +42,7 @@ _SOURCE_CONFIG = _PROJECT_CONFIG["marketing"]["Meta"]
 
 POPULATE_TEST_DATA = _PROJECT_CONFIG["testData"]
 PROJECT_REGION = _PROJECT_CONFIG["marketing"]["dataflowRegion"]
+PROJECT_LOCATION = _PROJECT_CONFIG["location"]
 RAW_PROJECT = _PROJECT_CONFIG["projectIdSource"]
 RAW_DATASET = _SOURCE_CONFIG["datasets"]["raw"]
 
