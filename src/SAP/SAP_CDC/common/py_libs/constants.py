@@ -15,10 +15,10 @@
 """Constants for Cortex Data Foundation."""
 
 # Listed first due to dependencies
-CORTEX_VERSION = "6.1"
+CORTEX_VERSION = "6.2"
 
 # Version formatted with X_X due to BigQuery dataset naming requirements
-TEST_HARNESS_VERSION = "6_1"
+TEST_HARNESS_VERSION = "6_2"
 
 # Dict for dataset labels
 BQ_DATASET_LABEL = {"goog-packaged-solution" : "cortex-framework"}
