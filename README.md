@@ -30,6 +30,7 @@ of them.
 *   [LiveRamp](https://cloud.google.com/cortex/docs/marketing-liveramp)
 *   [YouTube (with DV360)](https://cloud.google.com/cortex/docs/marketing-dv360)
 *   [Google Analytics 4](https://cloud.google.com/cortex/docs/marketing-google-analytics)
+*   [Cross Media & Product Connected Insights](https://cloud.google.com/cortex/docs/marketing-cross-media)
 
 **Operational**:
 
@@ -68,6 +69,7 @@ You can customize your Cortex Framework deployment with the following optional s
 *   [Configure external datasets for K9](https://cloud.google.com//cortex/docs/optional-step-external-datasets)
 *   [Enable Turbo Mode](https://cloud.google.com/cortex/docs/optional-step-turbo-mode)
 *   [Telemetry](https://cloud.google.com/cortex/docs/optional-step-telemetry)
+*   [Configure Common Dimensions](https://cloud.google.com/cortex/docs/optional-step-common-dimensions)
 
 ## Looker Blocks and Dashboards
 
@@ -85,6 +87,7 @@ The following are the Looker Blocks and Dashboards available in Cortex Framework
         *   [Looker Block for Salesforce Marketing Cloud](https://cloud.google.com/cortex/docs/looker-block-salesforce-marketing)
         *   [Looker Block for Meta](https://cloud.google.com/cortex/docs/looker-block-meta)
         *   [Looker Block for YouTube (with DV360)](https://cloud.google.com/cortex/docs/looker-block-youtube)
+        *   [Looker Block for Cross Media & Product Connected Insights](https://cloud.google.com/cortex/docs/looker-block-cross-media)
 * Looker Studio Dashboards
     *   **Sustainability**
         *   [Looker Studio Dashboard for Dun & Bradstreet](https://cloud.google.com/cortex/docs/looker-dashboard-dun-and-bradstreet)
