@@ -1,0 +1,11 @@
+refresh_${table_name} = BigQueryInsertJobOperator(
+    task_id="refresh_${table_name}",
+    configuration={
+        "query": {
+            "query": "${query_file}",
+            "useLegacySql": False,
+        },
+        "labels": _BQ_LABELS,
+        "location": _BQ_LOCATION
+    },
+    gcp_conn_id=_GCP_CONN_ID)

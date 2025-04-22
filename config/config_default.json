@@ -4,6 +4,8 @@
     "deploySFDC": true,
     "deployMarketing": true,
     "deployOracleEBS": true,
+    "deployDataMesh": true,
+    "enableTaskDependencies": false,
     "turboMode": true,
     "projectIdSource": "",
     "projectIdTarget": "",
@@ -22,7 +24,7 @@
         "deployProductDim": false,
         "deployCurrencyConversion": false,
         "deployCrossMedia": false,
-        "deployCATGAP": false,
+        "deployMeridian": false,
         "deployWeather": false,
         "deployTrends": false,
         "ProductDim": {
@@ -36,9 +38,34 @@
         "CrossMedia": {
             "productHierarchyType": "",
             "maxProductHierarchyMatchLevel": 9,
-            "targetCurrencies": ["USD"],
+            "targetCurrencies": [
+                "USD"
+            ],
             "additionalPrompt": "",
             "lookbackWindowDays": 7
+        },
+        "Meridian":{
+            "salesDataSourceType": "",
+            "salesDatasetID":"",
+            "deploymentType": "",
+            "defaultNotebookFile":"meridian_cortex_marketing.ipynb",
+            "defaultConfigFile":"cortex_meridian_config.json",
+            "gcsBucketNameSuffix": "cortex-meridian",
+            "workflow": {
+                "template": "create_notebook_execution_run.yaml",
+                "name": "cortex-meridian-execute-notebook",
+                "region": "us-central1"
+            },
+            "runnerServiceAccount": "cortex-meridian-colab-runner",
+            "colabEnterprise": {
+                "region": "us-central1",
+                "runtimeTemplateName": "cortex-meridian-template",
+                "runtimeMachine_type": "n1-highmem-32",
+                "runtimeAcceleratorCoreCount": 1,
+                "runtimeAcceleratorType": "NVIDIA_TESLA_T4",
+                "executionName": "cortex-meridian-execution",
+                "notebookRunLogsFolder": "notebook-run-logs"
+            }
         }
     },
     "VertexAI": {
@@ -65,7 +92,6 @@
         "datasets": {
             "cdc": "CORTEX_SAP_CDC",
             "raw": "CORTEX_SAP_RAW",
-            "ml": "CORTEX_SAP_ML_MODELS",
             "reporting": "CORTEX_SAP_REPORTING"
         }
     },
@@ -160,6 +186,7 @@
             }
         }
     },
+    "meridian": {},
     "OracleEBS": {
         "itemCategorySetIds": [
             1100000425

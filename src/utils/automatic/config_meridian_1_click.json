@@ -1,0 +1,206 @@
+{
+    "testData": true,
+    "deploySAP": false,
+    "deploySFDC": false,
+    "deployMarketing": true,
+    "deployOracleEBS": true,
+    "deployDataMesh": false,
+    "deploySAPMLModels": false,
+    "enableTaskDependencies": false,
+    "turboMode": true,
+    "projectIdSource": "{{PROJECT_ID_SOURCE}}",
+    "projectIdTarget": "{{PROJECT_ID_TARGET}}",
+    "targetBucket": "{{TARGET_BUCKET}}",
+    "location": "US",
+    "testDataProject": "kittycorn-public",
+    "k9": {
+        "datasets": {
+            "processing": "K9_PROCESSING",
+            "reporting": "K9_REPORTING"
+        },
+        "deployDateDim": true,
+        "deployHolidayCalendar": true,
+        "deployCountryDim": true,
+        "deploySustainability": false,
+        "deployProductDim": true,
+        "deployCurrencyConversion": true,
+        "deployCrossMedia": true,
+        "deployMeridian": true,
+        "deployWeather": false,
+        "deployTrends": false,
+        "ProductDim": {
+            "dataSourceType": "BYOD",
+            "textLanguage": "E"
+        },
+        "CurrencyConversion": {
+            "dataSourceType": "BYOD",
+            "rateType": "M"
+        },
+        "CrossMedia": {
+            "productHierarchyType": "BYOD",
+            "maxProductHierarchyMatchLevel": 9,
+            "targetCurrencies": [
+                "USD"
+            ],
+            "additionalPrompt": "",
+            "lookbackWindowDays": 7
+        },
+        "Meridian":{
+            "salesDataSourceType": "OracleEBS",
+            "salesDatasetID":"CORTEX_ORACLE_EBS_REPORTING_DEMO",
+            "deploymentType": "incremental",
+            "defaultNotebookFile":"meridian_cortex_marketing.ipynb",
+            "defaultConfigFile":"cortex_meridian_config.json",
+            "gcsBucketNameSuffix": "cortex-meridian",
+            "workflow": {
+                "template": "create_notebook_execution_run.yaml",
+                "name": "cortex-meridian-execute-notebook",
+                "region": "us-central1"
+            },
+            "runnerServiceAccount": "cortex-meridian-colab-runner",
+            "colabEnterprise": {
+                "region": "us-central1",
+                "runtimeTemplateName": "cortex-meridian-template",
+                "runtimeMachine_type": "n1-highmem-32",
+                "runtimeAcceleratorCoreCount": 1,
+                "runtimeAcceleratorType": "NVIDIA_TESLA_T4",
+                "executionName": "cortex-meridian-execution",
+                "notebookRunLogsFolder": "notebook-run-logs"
+            }
+        }
+    },
+    "VertexAI": {
+        "region": "us-central1",
+        "processingDataset": "CORTEX_VERTEX_AI_PROCESSING"
+    },
+    "DataMesh": {
+        "deployDescriptions": false,
+        "deployLakes": false,
+        "deployCatalog": false,
+        "deployACLs": false
+    },
+    "SAP": {
+        "deployCDC": false,
+        "SQLFlavor": "ecc",
+        "mandt": "100",
+        "languages": [
+            "E",
+            "S"
+        ],
+        "currencies": [
+            "USD"
+        ],
+        "datasets": {
+            "cdc": "CORTEX_SAP_CDC",
+            "raw": "CORTEX_SAP_RAW",
+            "reporting": "CORTEX_SAP_REPORTING"
+        }
+    },
+    "SFDC": {
+        "deployCDC": false,
+        "createMappingViews": true,
+        "createPlaceholders": true,
+        "currencies": [
+            "USD"
+        ],
+        "datasets": {
+            "cdc": "CORTEX_SFDC_CDC",
+            "raw": "CORTEX_SFDC_RAW",
+            "reporting": "CORTEX_SFDC_REPORTING"
+        }
+    },
+    "marketing": {
+        "deployGoogleAds": true,
+        "deployCM360": false,
+        "deployTikTok": true,
+        "deployLiveRamp": false,
+        "deployMeta": true,
+        "deploySFMC": false,
+        "deployDV360": true,
+        "deployGA4": false,
+        "dataflowRegion": "us-central1",
+        "GoogleAds": {
+            "deployCDC": true,
+            "lookbackDays": 180,
+            "datasets": {
+                "cdc": "CORTEX_GADS_CDC",
+                "raw": "CORTEX_GADS_RAW",
+                "reporting": "CORTEX_GADS_REPORTING"
+            }
+        },
+        "CM360": {
+            "deployCDC": false,
+            "dataTransferBucket": "",
+            "datasets": {
+                "cdc": "CORTEX_CM360_CDC",
+                "raw": "CORTEX_CM360_RAW",
+                "reporting": "CORTEX_CM360_REPORTING"
+            }
+        },
+        "TikTok": {
+            "deployCDC": true,
+            "datasets": {
+                "cdc": "CORTEX_TIKTOK_CDC",
+                "raw": "CORTEX_TIKTOK_RAW",
+                "reporting": "CORTEX_TIKTOK_REPORTING"
+            }
+        },
+        "LiveRamp": {
+            "datasets": {
+                "cdc": "CORTEX_LIVERAMP_CDC"
+            }
+        },
+        "Meta": {
+            "deployCDC": true,
+            "datasets": {
+                "cdc": "CORTEX_META_CDC",
+                "raw": "CORTEX_META_RAW",
+                "reporting": "CORTEX_META_REPORTING"
+            }
+        },
+        "SFMC": {
+            "deployCDC": false,
+            "fileTransferBucket": "",
+            "datasets": {
+                "cdc": "CORTEX_SFMC_CDC",
+                "raw": "CORTEX_SFMC_RAW",
+                "reporting": "CORTEX_SFMC_REPORTING"
+            }
+        },
+        "DV360": {
+            "deployCDC": true,
+            "datasets": {
+                "raw": "CORTEX_DV360_RAW",
+                "cdc": "CORTEX_DV360_CDC",
+                "reporting": "CORTEX_DV360_REPORTING"
+            }
+        },
+        "GA4": {
+            "datasets": {
+                "cdc": [
+                    {
+                        "property_id": 0,
+                        "name": "CORTEX_GA4_CDC"
+                    }
+                ],
+                "reporting": "REPORTING_GA4"
+            }
+        }
+    },
+    "OracleEBS": {
+        "itemCategorySetIds": [
+            1100000425
+        ],
+        "currencyConversionType": "Corporate",
+        "currencyConversionTargets": [
+            "USD"
+        ],
+        "languages": [
+            "US"
+        ],
+        "datasets": {
+            "cdc": "CORTEX_ORACLE_EBS_CDC",
+            "reporting": "CORTEX_ORACLE_EBS_REPORTING"
+        }
+    }
+}

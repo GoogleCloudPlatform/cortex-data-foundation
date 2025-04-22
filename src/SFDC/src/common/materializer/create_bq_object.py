@@ -26,31 +26,21 @@ input parameters.
 #pylint: disable=unused-import
 
 import argparse
-import datetime
 import json
 import logging
 from pathlib import Path
-import string
 import sys
-import textwrap
-import typing
 
-from google.cloud import bigquery
 from google.cloud.exceptions import BadRequest
-from google.cloud.exceptions import NotFound
 
+from common.materializer import generate_assets
 from common.py_libs import bq_helper
 from common.py_libs import bq_materializer
-from common.py_libs import constants
 from common.py_libs import cortex_bq_client
 from common.py_libs import jinja
-from common.py_libs.dag_generator import generate_file_from_template
 
 # NOTE: All paths here are relative to the root directory, unless specified
 # otherwise.
-
-# Directory this file is executed from.
-_CWD = Path.cwd()
 
 # Directory where this file resides.
 _THIS_DIR = Path(__file__).resolve().parent
@@ -58,11 +48,8 @@ _THIS_DIR = Path(__file__).resolve().parent
 # Directory containing various template files.
 _TEMPLATE_DIR = Path(_THIS_DIR, "templates")
 
-# Directories where generated dag files and related files are created.
-_GENERATED_DAG_DIR = Path(_CWD, "generated_materializer_dag_files")
 
-
-def _parse_args() -> tuple[str, str, str, str, str, bool, bool, bool, str]:
+def _parse_args() -> tuple[str, str, str, str, dict, bool, bool, str, bool]:
     """Parses, validates and returns arguments, sets up logging."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -106,18 +93,20 @@ def _parse_args() -> tuple[str, str, str, str, str, bool, bool, bool, str]:
         default=False,
         action="store_true",
         help="Flag to set log level to DEBUG. Default is WARNING")
-    parser.add_argument(
-        "--allow_telemetry",
-        default=False,
-        action="store_true",
-        help="Flag to indicate if telemetry is allowed."
-    )
+    parser.add_argument("--allow_telemetry",
+                        default=False,
+                        action="store_true",
+                        help="Flag to indicate if telemetry is allowed.")
     parser.add_argument(
         "--location",
         type=str,
         required=True,
-        help="Location to pass to BigQueryInsertJob operators in DAGs."
-    )
+        help="Location to pass to BigQueryInsertJob operators in DAGs.")
+    parser.add_argument(
+        "--skip_dag",
+        default=False,
+        action="store_true",
+        help="Flag to indicate if Composer DAG should not be generated.")
 
     args = parser.parse_args()
 
@@ -132,6 +121,7 @@ def _parse_args() -> tuple[str, str, str, str, str, bool, bool, bool, str]:
     load_test_data = args.load_test_data
     allow_telemetry = args.allow_telemetry
     location = args.location
+    skip_dag = args.skip_dag
 
     logging.info("Arguments:")
     logging.info("  module_name = %s", module_name)
@@ -143,6 +133,7 @@ def _parse_args() -> tuple[str, str, str, str, str, bool, bool, bool, str]:
     logging.info("  debug = %s", enable_debug)
     logging.info("  allow_telemetry = %s", allow_telemetry)
     logging.info("  location = %s", location)
+    logging.info("  skip_dag = %s", skip_dag)
 
     if not Path(jinja_data_file).is_file():
         raise ValueError(
@@ -154,251 +145,16 @@ def _parse_args() -> tuple[str, str, str, str, str, bool, bool, bool, str]:
         raise ValueError(f"🛑 Failed to read table settings. Error = {e}.")
 
     return (module_name, jinja_data_file, target_dataset_type, target_dataset,
-            bq_object_setting, load_test_data, allow_telemetry, location)
-
-
-def _generate_dag_files(module_name: str, target_dataset_type: str,
-                        target_dataset: str, table_name: str,
-                        table_setting: dict, table_refresh_sql: str,
-                        allow_telemetry: bool, location: str) -> None:
-    """Generates necessary DAG files to refresh a given table.
-
-    There are two files to be generated:
-    1. Python file - this is the main DAG file, and is generated using a
-       template.
-    2. BigQuery SQL file that the DAG needs to execute to refresh a table.
-
-    Naming schema:
-       Dag Name :
-         <project>_<dataset>_refresh_<table>
-       Dag Full Name (shown in Airflow UI):
-         <module>_<dataset_type>_<dag_name>
-       Output Directory:
-         <dag_dir>/<module>/<dataset_type>/<dag_name>.py
-       Python file:
-         <output_directory>/<dag_name>.py
-       SQL file:
-         <output_directory>/sql_scripts/<dag_name>.sql
-
-       e.g.
-          dag_dir/cm360/reporting/
-              project1_dataset1_refresh_clicks.py
-              project1_dataset1_refresh_impressions.py
-              sql_scripts/
-                  project1_dataset1_refresh_clicks.sql
-                  project1_dataset1_refresh_impressions.sql
-
-    Args:
-        module_name: Name of module (e.g. "cm360", "sap")
-        target_dataset_type: Type of dataset - e.g. "reporting" or "cdc".
-        target_dataset: Bigquery dataset including GCP project id.
-            e.g. "my_project.my_dataset".
-        table_name: Table name to refresh. (e.g. "CustomerMD")
-        table_setting: Table Settings as defined in the settings file.
-        table_refresh_sql: SQL with logic to populate data in the table.
-        allow_telemetry: Bool from Cortex config file to specify if
-            telemetry is allowed.
-        location: Location to pass to BigQueryInsertJob operators in DAGs.
-
-    """
-    dag_name = "_".join(
-        [target_dataset.replace(".", "_"), "refresh", table_name])
-    dag_full_name = "_".join(
-        [module_name.lower(), target_dataset_type, dag_name])
-
-    # Directory to store generated files - e.g. "dag_dir/cm360/reporting/"
-    output_dir = Path(_GENERATED_DAG_DIR, module_name.lower(),
-                      target_dataset_type)
-
-    # Generate sql file.
-    sql_file = Path("sql_scripts", dag_name).with_suffix(".sql")
-    output_sql_file = Path(output_dir, sql_file)
-    output_sql_file.parent.mkdir(exist_ok=True, parents=True)
-    with output_sql_file.open(mode="w+", encoding="utf-8") as sqlf:
-        sqlf.write(table_refresh_sql)
-    logging.info("Generated DAG SQL file : %s", output_sql_file)
-
-    # Generate python DAG file.
-    python_dag_template_file = Path(_TEMPLATE_DIR,
-                                    "airflow_dag_template_reporting.py")
-    output_py_file = Path(output_dir, dag_name).with_suffix(".py")
-
-    today = datetime.datetime.now()
-    load_frequency = table_setting["load_frequency"]
-    # TODO: Figure out a way to do lowercase in string template substitution
-    # directly.
-    py_subs = {
-        "dag_full_name": dag_full_name,
-        "lower_module_name": module_name.lower(),
-        "lower_tgt_dataset_type": target_dataset_type,
-        "query_file": str(sql_file),
-        "load_frequency": load_frequency,
-        "year": today.year,
-        "month": today.month,
-        "day": today.day,
-        "runtime_labels_dict": "", # A place holder for label dict string,
-        "bq_location": location
-    }
-
-    # Add bq_labels to py_subs dict if telemetry allowed
-    # Converts CORTEX_JOB_LABEL to str for substitution purposes
-    if allow_telemetry:
-        py_subs["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
-
-
-    if target_dataset_type == "reporting":
-        py_subs["tags"] = [module_name.lower(), "reporting"]
-
-    generate_file_from_template(python_dag_template_file, output_py_file,
-                                **py_subs)
-
-    logging.info("Generated dag python file: %s", output_py_file)
-
-
-def _create_view(bq_client: bigquery.Client, view_name: str,
-                 description: typing.Optional[str], core_sql: str) -> None:
-    """Creates BQ Reporting view."""
-    create_view_sql = ("CREATE OR REPLACE VIEW `" + view_name + "` " +
-                       f"OPTIONS(description=\"{description or ''}\") AS (\n" +
-                       textwrap.indent(core_sql, "    ") + "\n)")
-    create_view_job = bq_client.query(create_view_sql)
-    _ = create_view_job.result()
-    logging.info("Created view '%s'", view_name)
-
-
-def _create_table(bq_client: bigquery.Client, full_table_name: str,
-                  description: typing.Optional[str], sql_str: str,
-                  table_setting: dict) -> None:
-    """Creates empty BQ Reporting table."""
-
-    # Steps to create table:
-    # a. Use core_sql to create a "temporary" table, and use it to get schema.
-    # b. Add partition and cluster clauses.
-    # c. Create final table using above two.
-
-    # NOTE: The other option is to create the table directly using
-    # "CREATE TABLE" DDL, but applying partition and cluster clauses is
-    # more complex.
-
-    # Create a temp table using table create query to get schema.
-    # -------------------------------------------------------------
-    # NOTE: We can't create BQ temp table using `create_table` API call.
-    # Hence, creating a regular table as temp table.
-    temp_table_name = full_table_name + "_temp"
-    bq_client.delete_table(temp_table_name, not_found_ok=True)
-    logging.info("Creating temporary table '%s'", temp_table_name)
-    temp_table_sql = ("CREATE TABLE `" + temp_table_name + "` " +
-                      "OPTIONS(expiration_timestamp=TIMESTAMP_ADD(" +
-                      "CURRENT_TIMESTAMP(), INTERVAL 12 HOUR))" +
-                      " AS (\n   SELECT * FROM (\n" +
-                      textwrap.indent(sql_str, "        ") + "\n)\n" +
-                      "    WHERE FALSE\n)")
-    logging.debug("temporary table sql = '%s'", temp_table_sql)
-    create_temp_table_job = bq_client.query(temp_table_sql)
-    _ = create_temp_table_job.result()
-    logging.info("Temporary table created.")
-    table_schema = bq_client.get_table(temp_table_name).schema
-    logging.debug("Table schema = \n'%s'", table_schema)
-
-    # Create final actual table.
-    # -------------------------
-    logging.info("Creating actual table '%s'", full_table_name)
-    table = bigquery.Table(full_table_name, schema=table_schema)
-    # Add partition and cluster details.
-    partition_details = table_setting.get("partition_details")
-    if partition_details:
-        table = bq_materializer.add_partition_to_table_def(
-            table, partition_details)
-    cluster_details = table_setting.get("cluster_details")
-    if cluster_details:
-        table = bq_materializer.add_cluster_to_table_def(table, cluster_details)
-    # Add optional description
-    if description:
-        table.description = description
-
-    try:
-        _ = bq_client.create_table(table)
-        logging.info("Created table '%s'", full_table_name)
-    except Exception as e:
-        raise e
-    finally:
-        # Cleanup - remove temporary table
-        bq_client.delete_table(temp_table_name, not_found_ok=True)
-        try:
-            bq_client.get_table(temp_table_name)
-            logging.warning(
-                "⚠️ Couldn't delete temporary table `%s`."
-                "Please delete it manually. ⚠️", temp_table_name)
-        except NotFound:
-            logging.info("Deleted temp table = %s'", temp_table_name)
-
-
-def _generate_table_refresh_sql(bq_client: bigquery.Client,
-                                full_table_name: str, sql_str: str) -> str:
-    """Returns sql for refreshing a table with results from a sql query."""
-    table_schema = bq_client.get_table(full_table_name).schema
-    table_columns = [f"`{field.name}`" for field in table_schema]
-
-    # We want to make table refresh atomic in nature. Wrapping TRUNCATE and
-    # INSERT within a transaction achieves that purpose. Without this, it leads
-    # to suboptimal customers experience when some tables miss data (albeit
-    # momentarily) during the table refresh dag execution.
-
-    # TODO: Indent the string below for readability. Handle output using dedent.
-    table_refresh_sql_text = """
-BEGIN
-    BEGIN TRANSACTION;
-
-    TRUNCATE TABLE `${full_table_name}`;
-
-    INSERT INTO `${full_table_name}`
-    (
-        ${table_columns}
-    )
-    ${select_statement}
-    ;
-
-    COMMIT TRANSACTION;
-
-    EXCEPTION WHEN ERROR THEN
-      ROLLBACK TRANSACTION;
-      RAISE USING MESSAGE = @@error.message;
-
-END;
-    """
-
-    table_refresh_sql = string.Template(table_refresh_sql_text).substitute(
-        full_table_name=full_table_name,
-        table_columns=textwrap.indent(",\n".join(table_columns), " " * 8),
-        select_statement=textwrap.indent(sql_str, " " * 4))
-
-    logging.debug("Table Refresh SQL = \n%s", table_refresh_sql)
-
-    return table_refresh_sql
-
-
-def _validate_sql(bq_client: bigquery.Client, sql: str) -> None:
-    """Runs a given sql in BQ to verify if the syntax is correct."""
-    logging.info("Validating SQL file....")
-    job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
-    try:
-        _ = bq_client.query(query=sql, job_config=job_config)
-    except Exception as e:
-        raise SystemExit("🛑 ERROR: Failed to parse sql.\n"
-                         "----\n"
-                         f"SQL = \n{sql}"
-                         "\n----\n"
-                         f"Error = {e}")
-
-    logging.info("SQL file is valid.")
+            bq_object_setting, load_test_data, allow_telemetry, location,
+            skip_dag)
 
 
 def main():
 
     # Parse and validate arguments.
     (module_name, jinja_data_file, target_dataset_type, target_dataset,
-     bq_object_setting, load_test_data,
-     allow_telemetry, location) = _parse_args()
+     bq_object_setting, load_test_data, allow_telemetry, location,
+     skip_dag) = _parse_args()
 
     sql_file = bq_object_setting["sql_file"]
     if not Path(sql_file).is_file():
@@ -410,7 +166,7 @@ def main():
     rendered_sql = jinja.apply_jinja_params_to_file(sql_file, jinja_data_file)
     logging.debug("Rendered SQL: %s", rendered_sql)
     # Validate core sql.
-    _validate_sql(bq_client, rendered_sql)
+    generate_assets.validate_sql(bq_client, rendered_sql)
 
     object_type = bq_object_setting["type"]
     object_description = bq_object_setting.get("description")
@@ -440,8 +196,8 @@ def main():
         # Create view or table, based on object type.
         if object_type == "view":
             try:
-                _create_view(bq_client, object_name_full, object_description,
-                             rendered_sql)
+                generate_assets.create_view(bq_client, object_name_full,
+                                            object_description, rendered_sql)
             except BadRequest as e:
                 if hasattr(e, "query_job") and e.query_job:  # type: ignore
                     query = e.query_job.query  # type: ignore
@@ -456,8 +212,9 @@ def main():
             try:
                 table_setting = bq_object_setting["table_setting"]
                 bq_materializer.validate_table_setting(table_setting)
-                _create_table(bq_client, object_name_full, object_description,
-                              rendered_sql, table_setting)
+                generate_assets.create_table(bq_client, object_name_full,
+                                             object_description, rendered_sql,
+                                             table_setting)
             except BadRequest as e:
                 if hasattr(e, "query_job") and e.query_job:  # type: ignore
                     query = e.query_job.query  # type: ignore
@@ -470,12 +227,18 @@ def main():
                 raise SystemExit(
                     f"🛑 ERROR: Failed to create table. Error = {e}.")
 
-            # If we create table, we also need to generate DAG files as well.
-            table_refresh_sql = _generate_table_refresh_sql(
+            table_refresh_sql = generate_assets.generate_table_refresh_sql(
                 bq_client, object_name_full, rendered_sql)
-            _generate_dag_files(module_name, target_dataset_type,
-                                target_dataset, object_name, table_setting,
-                                table_refresh_sql, allow_telemetry, location)
+
+            # If we create table, we may also need to generate DAG files unless
+            # they are task dependent, which are generated by the parent
+            # processes `generate_build_files`.
+            if not skip_dag:
+                generate_assets.generate_dag_files(
+                    module_name, target_dataset_type, target_dataset,
+                    object_name, table_setting, table_refresh_sql,
+                    allow_telemetry, location, _TEMPLATE_DIR,
+                    generate_assets.GENERATED_DAG_DIR_NAME)
 
             # If we create table, we also need to populate it with test data
             # if flag is set for that.

@@ -29,7 +29,7 @@ USING (
       SELECT
         {%- for name, data_type in meta_field_type_mapping.items() %}
         {%- if data_type=='JSON' %}
-        PARSE_JSON({{ name }}) AS {{ name }}
+        PARSE_JSON({{ name }}, wide_number_mode => 'round' ) AS {{ name }}
         {%- elif data_type=='TIMESTAMP' and name != 'recordstamp' %}
         PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%z', TRIM({{ name }}, '\"')) AS {{ name }}
         {%- elif  data_type =='DATETIME' %}

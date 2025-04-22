@@ -180,6 +180,17 @@ WITH
         AccountingInvoices.Client_MANDT = FiscalDateDimension_KEYDATE.MANDT
         AND CompaniesMD.FiscalyearVariant_PERIV = FiscalDateDimension_KEYDATE.PERIV
         AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 1 DAY) = FiscalDateDimension_KEYDATE.DATE
+  ),
+  Vendors AS (
+    -- Vendors may contain multiple addresses that may produce multiple VendorsMD records
+    -- pick the name against latest entry
+    SELECT Client_MANDT, AccountNumberOfVendorOrCreditor_LIFNR, NAME1
+    FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorsMD`
+    WHERE
+      ValidToDate_DATE_TO = '9999-12-31'
+      -- ## CORTEX-CUSTOMER Modify the filter according to the configuration, for example, if NATION
+      -- has value 'I' for international, it could be used in the filter
+      AND COALESCE(VersionIdForInternationalAddresses_NATION, '') = ''
   )
 
 SELECT
@@ -187,7 +198,7 @@ SELECT
   AccountingInvoicesKPI.CompanyCode_BUKRS,
   AccountingInvoicesKPI.CompanyText_BUTXT,
   AccountingInvoicesKPI.AccountNumberOfVendorOrCreditor_LIFNR,
-  VendorsMD.NAME1,
+  Vendors.NAME1,
   AccountingInvoicesKPI.AmountInLocalCurrency_DMBTR,
   AccountingInvoicesKPI.AccountingDocumentNumber_BELNR,
   AccountingInvoicesKPI.NumberOfLineItemWithinAccountingDocument_BUZEI,
@@ -452,19 +463,14 @@ SELECT
   ) AS AmountOfReturnInTargetCurrency
 
 FROM AccountingInvoicesKPI
-LEFT OUTER JOIN ( --noqa: disable=ST05
-  /* Vendors may contain multiple addresses that may produce multiple VendorsMD records, pick the name agaist latest entry */
-  SELECT Client_MANDT, AccountNumberOfVendorOrCreditor_LIFNR, NAME1
-  FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorsMD`
-  WHERE ValidToDate_DATE_TO = '9999-12-31'
-) AS VendorsMD --noqa: enable = all
+LEFT OUTER JOIN Vendors
   ON
-    AccountingInvoicesKPI.Client_MANDT = VendorsMD.Client_MANDT
-    AND AccountingInvoicesKPI.AccountNumberOfVendorOrCreditor_LIFNR = VendorsMD.AccountNumberOfVendorOrCreditor_LIFNR
+    AccountingInvoicesKPI.Client_MANDT = Vendors.Client_MANDT
+    AND AccountingInvoicesKPI.AccountNumberOfVendorOrCreditor_LIFNR = Vendors.AccountNumberOfVendorOrCreditor_LIFNR
 LEFT OUTER JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorConfig` AS VendorConfig
   -- ## CORTEX-CUSTOMER Vendor Name in the config follows the format 'Z_VENDOR_{VendorId}'. Please change the logic if the name follows a different format.
-  ON VendorsMD.AccountNumberOfVendorOrCreditor_LIFNR = ARRAY_REVERSE(SPLIT(VendorConfig.NameOfVariantVariable_NAME, '_'))[SAFE_OFFSET(0)]
+  ON Vendors.AccountNumberOfVendorOrCreditor_LIFNR = ARRAY_REVERSE(SPLIT(VendorConfig.NameOfVariantVariable_NAME, '_'))[SAFE_OFFSET(0)]
 LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PurchaseDocumentsHistory` AS POOrderHistory
   ON AccountingInvoicesKPI.Client_MANDT = POOrderHistory.Client_MANDT
     AND AccountingInvoicesKPI.PurchasingDocumentNumber_EBELN = POOrderHistory.PurchasingDocumentNumber_EBELN

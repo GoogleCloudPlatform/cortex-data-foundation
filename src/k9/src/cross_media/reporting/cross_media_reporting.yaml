@@ -1,0 +1,9 @@
+# This settings file drives how the Meridian-specific input views are deployed.
+# This deployment happens as part of the cross media deployment step.
+
+# The following views will be deployed in parallel
+
+bq_independent_objects:
+
+  - sql_file: src/k9/src/cross_media/reporting/CrossMediaCampaignDailyAgg.sql
+    type: script

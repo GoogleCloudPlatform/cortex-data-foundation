@@ -185,7 +185,7 @@ SELECT
 
   -- Obsolete Inventory Value In Target Currency
   IF(
-    DATE_ADD(
+    SAFE.DATE_ADD(
       CurrentStock.DateOfManufacture_HSDAT,
       INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY
     ) < CURRENT_DATE,
@@ -208,7 +208,7 @@ SELECT
 
   -- ObsoleteStock
   IF(
-    DATE_ADD(
+    SAFE.DATE_ADD(
       CurrentStock.DateOfManufacture_HSDAT,
       INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY
     ) < CURRENT_DATE,
@@ -218,7 +218,7 @@ SELECT
 
   -- Obsolete Inventory Value In Source Currency
   IF(
-    DATE_ADD(
+    SAFE.DATE_ADD(
       CurrentStock.DateOfManufacture_HSDAT,
       INTERVAL CAST(MaterialsMD.TotalShelfLife_MHDHB AS INT64) DAY
     ) < CURRENT_DATE,

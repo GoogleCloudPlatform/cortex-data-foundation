@@ -145,6 +145,7 @@ def get_k9_id(k9: typing.Union[str, dict]) -> str:
     # If so, using the first key is the k9's id.
     return list(k9.keys())[0] if isinstance(k9, dict) else k9
 
+
 def deploy_k9(k9_manifest: dict,
               k9_root_path: Path,
               config_file: str,
@@ -199,7 +200,7 @@ def deploy_k9(k9_manifest: dict,
                                       f"{data_source}.datasets.{dataset_type}")
         components = target_type.split(".")
         project = (target_project
-                    if components[-1] == "reporting" else source_project)
+                   if components[-1] == "reporting" else source_project)
         # Starting with the whole config,
         # then iterating over dictionaries tree.
         ds_cfg = config
@@ -207,37 +208,29 @@ def deploy_k9(k9_manifest: dict,
             ds_cfg = ds_cfg[comp]
         target_dataset = ds_cfg
         test_data_dataset = test_harness.get_test_harness_dataset(
-            data_source,
-            dataset_type,
-            location,
-            test_harness_version)
+            data_source, dataset_type, location, test_harness_version)
         sources = [
             f"{config['testDataProject']}.{test_data_dataset}.{table}"
             for table in tables
         ]
-        targets = [
-            f"{project}.{target_dataset}.{table}" for table in tables
-        ]
+        targets = [f"{project}.{target_dataset}.{table}" for table in tables]
         bq_helper.load_tables(bq_client,
-                                sources,
-                                targets,
-                                location=location,
-                                skip_existing_tables=True)
+                              sources,
+                              targets,
+                              location=location,
+                              skip_existing_tables=True)
 
     k9_path = k9_root_path.joinpath(k9_manifest["path"])
     if "entry_point" in k9_manifest:
         # Call a custom entry point.
         entry_point = k9_path.joinpath(k9_manifest["entry_point"])
         ext = entry_point.suffix.lower()
-        exec_params = [str(entry_point),
-                       str(config_file),
-                       logs_bucket]
+        exec_params = [str(entry_point), str(config_file), logs_bucket]
         if "build_params" in k9_manifest:
-            exec_params = [str(entry_point),
-                           "--config-file",
-                           str(config_file),
-                           "--gcs-logs-bucket",
-                           logs_bucket]
+            exec_params = [
+                str(entry_point), "--config-file",
+                str(config_file), "--gcs-logs-bucket", logs_bucket
+            ]
             if region:
                 exec_params.extend(["--region", region])
             if worker_pool_name:
@@ -261,13 +254,16 @@ def deploy_k9(k9_manifest: dict,
         # Add placeholder for proper jinja substitution if telemetry opted out
         jinja_dict["runtime_labels_dict"] = ""
 
+        # Add BQ location to jina substution dict
+        jinja_dict["location"] = location
+
         if allow_telemetry:
             # Converts Cortex Job Label dict to string for jinja substitution
             jinja_dict["runtime_labels_dict"] = str(constants.CORTEX_JOB_LABEL)
 
         _simple_process_and_upload(k9_id, str(k9_path), jinja_dict,
-                                  target_bucket, bq_client, data_source,
-                                  dataset_type)
+                                   target_bucket, bq_client, data_source,
+                                   dataset_type)
 
     # The following applies only if Reporting is specified from K9 standpoint,
     # i.e. during K9 pre or K9 post deployments.
@@ -279,7 +275,7 @@ def deploy_k9(k9_manifest: dict,
             k9_manifest["reporting_settings"])
         logging.info("k9 `%s` has Reporting views.", k9_id)
         logging.info("Executing Materializer for `%s` with `%s`.", k9_id,
-                        reporting_settings_file)
+                     reporting_settings_file)
         exec_params = [
             "./src/common/materializer/deploy.sh", "--gcs_logs_bucket",
             logs_bucket, "--gcs_tgt_bucket", target_bucket, "--config_file",

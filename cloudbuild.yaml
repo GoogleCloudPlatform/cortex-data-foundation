@@ -133,36 +133,6 @@ steps:
       fi
 
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
-    id: 'sap-ml-models'
-    waitFor: ['sap-reporting']
-    script: |
-      #!/usr/bin/env bash
-      _DEPLOY_SAP_ML_MODELS=$(jq -r ."deploySAPMLModels" ${_CONFIG_FILE})
-      if [[ ${_DEPLOY_SAP_ML_MODELS} == "true" ]]
-      then
-        _DEPLOY_SAP_=$(jq -r ."deploySAP" ${_CONFIG_FILE})
-        _SQL_FLAVOUR_=$(jq -r ."SAP.SQLFlavor" ${_CONFIG_FILE})
-        _PJID_SRC_=$(jq -r ."projectIdSource" ${_CONFIG_FILE})
-        _PJID_TGT_=$(jq -r ."projectIdTarget" ${_CONFIG_FILE})
-        _LOCATION_=$(jq -r ."location" ${_CONFIG_FILE})
-        _MANDT_=$(jq -r ."SAP.mandt" ${_CONFIG_FILE})
-        _DS_MODELS_=$(jq -r ."SAP.datasets.ml" ${_CONFIG_FILE})
-        _DS_REPORTING_=$(jq -r ."SAP.datasets.reporting" ${_CONFIG_FILE})
-        _DS_RAW_=$(jq -r ."SAP.datasets.raw" ${_CONFIG_FILE})
-        _DS_CDC_=$(jq -r ."SAP.datasets.cdc" ${_CONFIG_FILE})
-
-        if [[ "${_DEPLOY_SAP_}" == "true" && "${_SQL_FLAVOUR_}" != "union" ]]; then
-          gcloud builds submit ./src/SAP/SAP_ML_MODELS \
-            --config=./src/SAP/SAP_ML_MODELS/cloudbuild.models.yaml \
-            --substitutions=_PJID_SRC="${_PJID_SRC_}",_PJID_TGT="${_PJID_TGT_}",_DS_RAW="${_DS_RAW_}",_DS_CDC="${_DS_CDC_}",_DS_REPORTING="${_DS_REPORTING_}",_DS_MODELS="${_DS_MODELS_}",_SQL_FLAVOUR="${_SQL_FLAVOUR_}",_LOCATION="${_LOCATION_}",_MANDT="${_MANDT_}",_GCS_BUCKET="${_GCS_BUCKET}",_WORKER_POOL_NAME="${_WORKER_POOL_NAME}",_CLOUD_BUILD_REGION="${_CLOUD_BUILD_REGION}",_BUILD_ACCOUNT="${_BUILD_ACCOUNT}" --region="${_CLOUD_BUILD_REGION}"
-        else
-          echo "==Skipping ML for SAP=="
-        fi
-      else
-        echo "==Skipping ML for SAP=="
-      fi
-
-  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: 'sfdc-deploy'
     waitFor: ['sfdc-test-harness', 'k9-pre']
     script: |

@@ -31,6 +31,7 @@ of them.
 *   [YouTube (with DV360)](https://cloud.google.com/cortex/docs/marketing-dv360)
 *   [Google Analytics 4](https://cloud.google.com/cortex/docs/marketing-google-analytics)
 *   [Cross Media & Product Connected Insights](https://cloud.google.com/cortex/docs/marketing-cross-media)
+*   [Cortex for Meridian](https://cloud.google.com/cortex/docs/meridian)
 
 **Operational**:
 
@@ -70,6 +71,7 @@ You can customize your Cortex Framework deployment with the following optional s
 *   [Enable Turbo Mode](https://cloud.google.com/cortex/docs/optional-step-turbo-mode)
 *   [Telemetry](https://cloud.google.com/cortex/docs/optional-step-telemetry)
 *   [Configure Common Dimensions](https://cloud.google.com/cortex/docs/optional-step-common-dimensions)
+*   [Task dependent DAGs](https://cloud.google.com/cortex/docs/optional-step-task-dependent-dags)
 
 ## Looker Blocks and Dashboards
 

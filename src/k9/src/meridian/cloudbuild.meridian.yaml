@@ -1,0 +1,108 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This build file create all the necessary infrastructure (BigQuery views,
+# GCS bucket, config files, report templates, notebook file, Workflow, 
+# Cloud Build and Colab Enterprise) for running Cortex for Merdian. 
+# Dependent on Cortex for Marketing with at least one marketing workload 
+# and CrossMedia having been deployed.
+
+---
+steps:
+  # Validate configs.
+  # init_deployment_config.py leaves the validated config.json file in workspace/config so it's available for other build steps
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "init_deploy_config"
+    script: |
+      #!/usr/bin/env bash
+      set -e
+
+      echo "Initial configuration ${_CONFIG_FILE}:"
+      cat "${_CONFIG_FILE}"
+
+      # Save absolute config file path to .env file
+      # that can be accessed by all Cloud Build steps since exported env
+      # variables do not persist between steps.
+
+      realpath "${_CONFIG_FILE}" > /workspace/config_file_full_path.env
+
+      python3 src/common/init_deployment_config.py \
+          --config-file ${_CONFIG_FILE} \
+          --sub-validator "src"
+
+      echo "Processed configuration:"
+      cat ${_CONFIG_FILE}
+      echo -e "\n--------------------------------"
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "create_meridian_gcs_bucket"
+    entrypoint: 'bash'
+    args: ['/workspace/deployment/create_meridian_gcs_bucket.sh']
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "upload_notebook_to_gcs"
+    entrypoint: 'bash'
+    args: ['/workspace/deployment/upload_notebook_to_gcs.sh']
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "upload_config_file_to_gcs"
+    entrypoint: 'bash'
+    args: ['/workspace/deployment/upload_config_file_to_gcs.sh']
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "upload_report_html_template_to_gcs"
+    entrypoint: 'bash'
+    args: ['/workspace/deployment/upload_report_html_template_to_gcs.sh']
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "create_colab_runtime_template"
+    entrypoint: 'bash'
+    args: ['/workspace/deployment/create_colab_runtime_template.sh']
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "create_workflow"
+    entrypoint: 'bash'
+    args: ['/workspace/deployment/create_workflow.sh']
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+
+  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
+    id: "upload_deployment_info_to_gcs"
+    entrypoint: 'bash'
+    args: ['/workspace/deployment/upload_deployment_info_to_gcs.sh']
+    env:
+      - _CONFIG_FILE=${_CONFIG_FILE}
+      - _DEPLOYMENT_INFO_FILE=${_DEPLOYMENT_INFO_FILE}
+
+logsBucket: "gs://${_GCS_BUCKET}"
+serviceAccount: "${_BUILD_ACCOUNT}"
+substitutions:
+  _CONFIG_FILE: "config/config.json"
+  _DEPLOYMENT_INFO_FILE: "deployment_info.json"
+options:
+  substitution_option: "ALLOW_LOOSE"
+  automapSubstitutions: true
+  pool:
+    name: "${_WORKER_POOL_NAME}"
+tags: ["cortex"]

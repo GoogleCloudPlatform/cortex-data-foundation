@@ -47,6 +47,7 @@ WITH
       PurchaseOrders.YearOfPurchasingDocumentDate_BEDAT,
       PurchaseOrders.MonthOfPurchasingDocumentDate_BEDAT,
       PurchaseOrders.WeekOfPurchasingDocumentDate_BEDAT,
+      PurchaseOrders.Language_SPRAS,
       COALESCE(
         (PurchaseOrders.UnderdeliveryToleranceLimit_UNTTO * PurchaseOrders.POQuantity_MENGE) / 100,
         0
@@ -111,6 +112,7 @@ WITH
       PurchaseOrderScheduleLine.YearOfPurchasingDocumentDate_BEDAT,
       PurchaseOrderScheduleLine.MonthOfPurchasingDocumentDate_BEDAT,
       PurchaseOrderScheduleLine.WeekOfPurchasingDocumentDate_BEDAT,
+      PurchaseOrderScheduleLine.Language_SPRAS,
       POOrderHistory.AmountInLocalCurrency_DMBTR,
       POOrderHistory.CurrencyKey_WAERS AS POOrderHistoryCurrencyKey_WAERS,
       -- Actual Reciept Date
@@ -343,6 +345,7 @@ WITH
       PurchaseOrdersGoodsReceipt.Client_MANDT,
       PurchaseOrdersGoodsReceipt.DocumentNumber_EBELN,
       PurchaseOrdersGoodsReceipt.Item_EBELP,
+      PurchaseOrdersGoodsReceipt.Language_SPRAS,
       MAX(PurchaseOrdersGoodsReceipt.PurchasingDocumentDate_BEDAT) AS PurchasingDocumentDate_BEDAT,
       AVG(PurchaseOrdersGoodsReceipt.NetOrderValueinPOCurrency_NETWR) AS NetOrderValueinPOCurrency_NETWR,
       ANY_VALUE(PurchaseOrdersGoodsReceipt.CurrencyKey_WAERS) AS CurrencyKey_WAERS,
@@ -380,7 +383,17 @@ WITH
     GROUP BY
       PurchaseOrdersGoodsReceipt.Client_MANDT,
       PurchaseOrdersGoodsReceipt.DocumentNumber_EBELN,
-      PurchaseOrdersGoodsReceipt.Item_EBELP
+      PurchaseOrdersGoodsReceipt.Item_EBELP,
+      PurchaseOrdersGoodsReceipt.Language_SPRAS
+  ),
+  Vendors AS (
+    SELECT *
+    FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorsMD`
+    WHERE
+      ValidToDate_DATE_TO = '9999-12-31'
+      -- ## CORTEX-CUSTOMER Modify the filter according to the configuration, for example, if NATION
+      -- has value 'I' for international, it could be used in the filter
+      AND COALESCE(VersionIdForInternationalAddresses_NATION, '') = ''
   )
 
 SELECT
@@ -552,11 +565,11 @@ LEFT JOIN
   ON
     PurchaseDocuments.Client_MANDT = PurchasingGroups.Client_MANDT
     AND PurchaseDocuments.PurchasingGroup_EKGRP = PurchasingGroups.PurchasingGroup_EKGRP
-LEFT JOIN
-  `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorsMD` AS Vendors
+LEFT JOIN Vendors
   ON
     PurchaseDocuments.Client_MANDT = Vendors.Client_MANDT
     AND PurchaseDocuments.VendorAccountNumber_LIFNR = Vendors.AccountNumberOfVendorOrCreditor_LIFNR
+    AND PurchaseDocuments.Language_SPRAS = Vendors.Language_LANGU
 LEFT JOIN
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.CompaniesMD` AS Companies
   ON

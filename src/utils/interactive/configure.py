@@ -203,6 +203,8 @@ def configure(
             config["k9"]["CurrencyConversion"]["dataSourceType"] = ds_type
             config["k9"]["ProductDim"]["dataSourceType"] = ds_type
             config["k9"]["CrossMedia"]["productHierarchyType"] = ds_type
+        else:
+            config["k9"]["deployCrossMedia"] = False
 
         if (not config["deploySAP"] and not config["deploySFDC"] and
                 not config["deployMarketing"] and

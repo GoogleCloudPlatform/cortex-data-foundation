@@ -13,6 +13,7 @@ southamerica-east1
 southamerica-west1
 us-east1
 northamerica-northeast2
+northamerica-south1
 asia-south2
 asia-east2
 asia-southeast2
@@ -26,6 +27,7 @@ asia-east1
 asia-northeast1
 europe-west1
 europe-north1
+europe-north2
 europe-west3
 europe-west2
 europe-southwest1
@@ -35,3 +37,7 @@ europe-west9
 europe-west12
 europe-central2
 europe-west6
+me-central1
+me-west1
+europe-west10
+africa-south1

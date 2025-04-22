@@ -120,7 +120,7 @@ def generate_runtime_view(raw_table_name, cdc_table_name):
 
 
 def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
-                           gen_test, allow_telemetry):
+                           gen_test, allow_telemetry, bq_location):
     """Generates file containing DAG code to refresh CDC table from RAW table.
 
     Args:
@@ -129,6 +129,8 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
         load_frequency: DAG run frequency.
         gen_test: If test data is needed.
         allow_telemetry: If telemetry allowed.
+        bq_location: BigQuery location for DAG execution.
+
 
     Raises:
         cortex_exc.KeyCEError: If primary keys not found in table DD03L.
@@ -149,6 +151,7 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
         'query_file': dag_sql_file_name,
         'load_frequency': load_frequency,
         'runtime_labels_dict': '', # A place holder for label key
+        'bq_location': bq_location
     }
      # Add bq_labels to substitutes dict if Telemetry allowed
      # Converts dict to string for substitution purposes

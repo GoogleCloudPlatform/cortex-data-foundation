@@ -19,6 +19,7 @@ in the given dataset based on settings file.
 #pylint: disable=unused-import
 
 import argparse
+from collections import defaultdict
 import json
 import logging
 from pathlib import Path
@@ -29,8 +30,12 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import yaml
 
+from common.materializer import dag_types
+from common.materializer import dependent_dags
+from common.materializer import generate_assets
 from common.py_libs import bq_helper
 from common.py_libs import bq_materializer
+from common.py_libs import constants
 from common.py_libs import cortex_bq_client
 from common.py_libs import configs
 from common.py_libs import jinja
@@ -39,39 +44,20 @@ from common.py_libs import k9_deployer
 # NOTE: All paths here are relative to the root directory, unless specified
 # otherwise.
 
-# Directory this file is executed from.
-_CWD = Path.cwd()
-
 # Directory where this file resides.
 _THIS_DIR = Path(__file__).resolve().parent
-
-# Directory where all generated files will be created.
-_GENERATED_FILES_PARENT_DIR = Path(_CWD, "generated_materializer_build_files")
 
 # Template containing a build step that will create one bq object from a file.
 _CLOUDBUILD_TEMPLATE_DIR = Path(_THIS_DIR, "templates")
 _CLOUDBUILD_TEMPLATE_FILE = "cloudbuild_materializer.yaml.jinja"
 
-#TODO: We should rename "Module" to "Data Source" for all variables
-# (following applicable case convention) to align with of external naming.
-
-# All supported Cortex modules
-_CORTEX_MODULES = [
-    "SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "DV360",
-    "GA4", "OracleEBS", "k9"
-]
-
-# All supported Marketing modules
-_MARKETING_MODULES = [
-    "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "GA4", "DV360"
-]
-
 # All supported target dataset types
 _CORTEX_DATASET_TYPES_LOWER = ["cdc", "reporting", "processing"]
 
 
-def _create_tgt_dataset(full_dataset_name: str, location: str,
-                        label_dataset:bool = False) -> None:
+def _create_tgt_dataset(full_dataset_name: str,
+                        location: str,
+                        label_dataset: bool = False) -> None:
     """Creates target (CDC/Reporting etc.) BQ target dataset if needed."""
     logging.info("Creating '%s' dataset if needed...", full_dataset_name)
     client = cortex_bq_client.CortexBQClient()
@@ -86,8 +72,7 @@ def _create_tgt_dataset(full_dataset_name: str, location: str,
 def _create_jinja_data_file(config_dict: dict, generated_files_dir) -> None:
     """Generates jinja data file that will be used to create BQ objects."""
 
-    jinja_file_name = "bq_sql_jinja_data" + ".json"
-    jinja_data_file = Path(generated_files_dir, jinja_file_name)
+    jinja_data_file = generated_files_dir / generate_assets.JINJA_DATA_FILE_NAME
 
     logging.info("Creating jinja data file '%s'...", jinja_data_file)
 
@@ -101,6 +86,7 @@ def _create_jinja_data_file(config_dict: dict, generated_files_dir) -> None:
 
 def _process_bq_object_settings(global_settings: dict,
                                 bq_objects_settings: list,
+                                task_dep_objs: dict[str, dag_types.BqObject],
                                 wait_for_prev_step: bool) -> list:
     """Creates a list containing build file settings from bq_object settings."""
     build_file_settings = []
@@ -114,6 +100,7 @@ def _process_bq_object_settings(global_settings: dict,
             build_file_settings.append({
                 "sql_file": sql_file,
                 "wait_for_prev_step": wait_for_prev_step,
+                "is_task_dep": sql_file in task_dep_objs,
                 # NOTE: Using json.dumps to handle double quotes in settings
                 "bq_object_setting": json.dumps(bq_object_setting)
             })
@@ -140,9 +127,8 @@ def _process_bq_object_settings(global_settings: dict,
 
 #TODO: Refactor so it takes only global settings and bq_obj_settings dicts,
 # not a full list of individual parameters.
-
-
 def _create_build_files(global_settings: dict, bq_obj_settings: dict,
+                        task_dep_objs: dict[str, dag_types.BqObject],
                         module_name: str, tgt_dataset_name: str,
                         tgt_dataset_type: str, generated_files_dir: Path,
                         private_worker_pool: bool, enable_debug: bool) -> None:
@@ -167,7 +153,7 @@ def _create_build_files(global_settings: dict, bq_obj_settings: dict,
         build_files_master_list.extend(
             _process_bq_object_settings(global_settings,
                                         independent_objects_settings,
-                                        wait_for_prev_step))
+                                        task_dep_objs, wait_for_prev_step))
 
     # Process dependent tables.
     if dependent_objects_settings:
@@ -175,7 +161,7 @@ def _create_build_files(global_settings: dict, bq_obj_settings: dict,
         build_files_master_list.extend(
             _process_bq_object_settings(global_settings,
                                         dependent_objects_settings,
-                                        wait_for_prev_step))
+                                        task_dep_objs, wait_for_prev_step))
 
     # Since cloud build limits 100 steps in one build file, let's split
     # our list such that each list contains at the most 95 entries, as we will
@@ -210,7 +196,8 @@ def _create_build_files(global_settings: dict, bq_obj_settings: dict,
         })
 
         build_file_num = f"{build_file_counter:03d}"
-        build_file_name = f"cloudbuild.materializer.{tgt_dataset_name}.{build_file_num}.yaml"  #pylint: disable=line-too-long
+        build_file_name = (
+            f"cloudbuild.materializer.{tgt_dataset_name}.{build_file_num}.yaml")
         build_file = Path(generated_files_dir, build_file_name)
 
         logging.debug("Creating build file : '%s'", build_file)
@@ -218,43 +205,6 @@ def _create_build_files(global_settings: dict, bq_obj_settings: dict,
 
         with open(build_file, "w", encoding="utf-8") as bf:
             bf.write(build_file_text)
-
-
-def _get_materializer_settings(materializer_settings_file: str) -> dict:
-    """Parses settings file and returns settings dict after validations."""
-    logging.info("Loading Materializer settings file '%s'...",
-                 materializer_settings_file)
-
-    with open(materializer_settings_file,
-              encoding="utf-8") as materializer_settings_fp:
-        materializer_settings = yaml.safe_load(materializer_settings_fp)
-
-    if materializer_settings is None:
-        raise ValueError(f"🛑 '{materializer_settings_file}' file is empty.")
-
-    logging.debug("Materializer settings for this module : \n%s",
-                  json.dumps(materializer_settings, indent=4))
-
-    # Validate bq object settings.
-    # Since this setting file contains two separate bq table setting sections,
-    # we validate both of them.
-    independent_tables_settings = materializer_settings.get(
-        "bq_independent_objects")
-    dependent_tables_settings = materializer_settings.get(
-        "bq_dependent_objects")
-
-    # At least one of the two sections needs to be present.
-    if (independent_tables_settings is None and
-            dependent_tables_settings is None):
-        raise ValueError(
-            "🛑 'bq_independent_objects' and 'bq_dependent_setting' both "
-            "can not be empty.")
-
-    for settings in [independent_tables_settings, dependent_tables_settings]:
-        if settings:
-            bq_materializer.validate_bq_materializer_settings(settings)
-
-    return materializer_settings
 
 
 def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
@@ -326,10 +276,10 @@ def _parse_args() -> tuple[str, str, str, str, dict, bool, bool]:
 
     # validate arguments.
     # Module Name
-    if module_name not in _CORTEX_MODULES:
+    if module_name not in constants.CORTEX_MODULES:
         raise ValueError(
             f"🛑 Invalid module name '{module_name}'. Supported modules are : "
-            f"'{_CORTEX_MODULES}' (case sensitive).")
+            f"'{constants.CORTEX_MODULES}' (case sensitive).")
 
     # Target Dataset Type
     lower_tgt_dataset_type = target_dataset_type.lower().replace(" ", "_")
@@ -388,11 +338,20 @@ def main():
     allow_telemetry = config_dict.get("allowTelemetry", True)
 
     # Load and validate Materializer settings
-    materializer_settings = _get_materializer_settings(
+    td_enabled_and_exists = False
+    td_settings = generate_assets.get_enabled_task_dep_settings_file(
+        Path(materializer_settings_file), config_dict)
+    if td_settings:
+        td_enabled_and_exists = True
+        materializer_settings_file = str(td_settings)
+        logging.info(
+            "Task dependencies are enabled and %s exists. Using "
+            "task dependent settings.", td_settings.name)
+    materializer_settings = generate_assets.get_materializer_settings(
         materializer_settings_file)
 
     # Create output directory.
-    generated_files_dir = Path(_GENERATED_FILES_PARENT_DIR, module_name)
+    generated_files_dir = generate_assets.GENERATED_BUILD_DIR_NAME / module_name
     if generated_files_dir.exists():
         logging.debug("Removing existing generated files directory '%s'....",
                       generated_files_dir)
@@ -403,7 +362,7 @@ def main():
 
     lower_tgt_dataset_type = tgt_dataset_type.lower().replace(" ", "_")
 
-    if module_name in _MARKETING_MODULES:
+    if module_name in constants.MARKETING_MODULES:
         # Marketing modules are nested under "marketing".
         tgt_dataset = config_dict["marketing"][module_name]["datasets"][
             lower_tgt_dataset_type]
@@ -423,14 +382,30 @@ def main():
         "k9_manifest": k9_manifest
     }
 
+    # Check for task dependent objects if enabled, which will not generate DAGs
+    # in _create_build_files. Instead they will generated dags through
+    # generate_dependent_dags.py called from deploy.sh.
+    task_dep_objs = {}
+    if td_enabled_and_exists:
+        try:
+            task_dep_objs = dependent_dags.get_task_deps(materializer_settings)
+        except Exception as e:
+            raise RuntimeError(
+                "The following materializer settings could not be parsed for "
+                "task dependencies. Please check that the reporting settings "
+                "file conforms to the type defined at "
+                "src/common/materializer/dag_types.ReportingObjects:\n"
+                f"{materializer_settings}") from e
+
     # Create build files.
-    _create_build_files(global_settings, materializer_settings, module_name,
-                        tgt_dataset_full_name, tgt_dataset_type,
+    _create_build_files(global_settings, materializer_settings, task_dep_objs,
+                        module_name, tgt_dataset_full_name, tgt_dataset_type,
                         generated_files_dir, private_worker_pool, enable_debug)
 
     # Create target dataset if not present.
-    _create_tgt_dataset(tgt_dataset_full_name, config_dict["location"],
-                        label_dataset = allow_telemetry)
+    _create_tgt_dataset(tgt_dataset_full_name,
+                        config_dict["location"],
+                        label_dataset=allow_telemetry)
 
     logging.info("Finished generating Cloud Build files for %s for %s.",
                  tgt_dataset_type, module_name)

@@ -296,6 +296,17 @@ def initialize_jinja_from_config(config_dict: dict) -> dict:
                 cm_config.get("textGenerationModel",
                         constants.K9_CROSS_MEDIA_DEFAULT_TEXT_GENERATION_MODEL),
         })
+    # Meridian
+    if config_dict["k9"].get("deployMeridian"):
+        cm_config = config_dict["k9"]["Meridian"]
+        jinja_data_file_dict.update({
+            "k9_meridian_sales_data_source_type":
+                cm_config["salesDataSourceType"]
+        })
+        jinja_data_file_dict.update({
+            "k9_meridian_sales_dataset_id":
+                cm_config["salesDatasetID"]
+        })
 
     # Vertex AI
     if config_dict["VertexAI"]:
