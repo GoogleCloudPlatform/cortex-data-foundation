@@ -116,7 +116,6 @@ def validate(cfg: dict) -> Union[dict, None]:
 
     cfg_sap_ds_reporting = datasets.get("reporting", "REPORTING")
     datasets["reporting"] = cfg_sap_ds_reporting
-    datasets["ml"] = datasets.get("ml", "ML_MODELS")
 
     cfg_sap_mandt = sap.get("mandt")
     cfg_sap_mandt_ecc = sap.get("mandtECC")

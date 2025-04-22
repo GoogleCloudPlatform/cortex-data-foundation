@@ -70,12 +70,6 @@ dawgs:
     test_data: postcode,weather_daily,weather_weekly
     stage: post
     workload_dependencies: SAP
-  - id: CATGAP
-    path: catgap
-    entry_point: deploy_catgap.sh
-    stage: post
-    workload_dependencies: SAP
-    build_params: True
   - id: Sustainability
     path: sustainability
     reporting_settings: reporting/sustainability_reporting.yaml
@@ -84,6 +78,13 @@ dawgs:
     workload_dependencies: SAP
   - id: CrossMedia
     path: cross_media
+    reporting_settings: reporting/cross_media_reporting.yaml
     test_data: campaign_texts, campaign_product_mapping, CrossMediaCampaignDailyAgg
     test_data_target: k9.datasets.reporting
+    stage: post
+  - id: Meridian
+    path: meridian
+    entry_point: deploy_meridian.sh
+    reporting_settings: reporting/meridian_reporting.yaml
+    build_params: True
     stage: post

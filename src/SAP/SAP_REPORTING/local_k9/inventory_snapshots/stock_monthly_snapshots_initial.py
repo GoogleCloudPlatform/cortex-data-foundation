@@ -30,6 +30,7 @@ from airflow.operators.empty import EmptyOperator
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
 _BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
+_BQ_LOCATION = "{{ location }}"
 
 default_args = {
     "owner": "airflow",
@@ -59,7 +60,8 @@ with DAG(dag_id="Stock_Monthly_Snapshots_Initial",
                 "query": "stock_monthly_snapshots_initial.sql",
                 "useLegacySql": False
             },
-            "labels": _BQ_LABELS
+            "labels": _BQ_LABELS,
+            "location": _BQ_LOCATION
         })
 
     stop_task = EmptyOperator(task_id="stop")

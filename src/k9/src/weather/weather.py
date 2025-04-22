@@ -29,6 +29,7 @@ from airflow.operators.empty import EmptyOperator
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
 _BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
+_BQ_LOCATION = "{{ location }}"
 
 default_args = {
     "retries": 1,
@@ -55,7 +56,8 @@ with DAG(
                 "query": "postcode.sql",
                 "useLegacySql": False
             },
-            "labels": _BQ_LABELS
+            "labels": _BQ_LABELS,
+            "location": _BQ_LOCATION
         })
 
     update_daily_weather_table = BigQueryInsertJobOperator(

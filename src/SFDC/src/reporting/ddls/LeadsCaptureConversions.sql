@@ -15,7 +15,7 @@
 
 WITH
   LeadsFirstResponseDates AS (
-    SELECT LeadId, MIN(CreatedDatestamp) AS LeadFirstResponeDatestamp
+    SELECT LeadId, MIN(CreatedDatestamp) AS LeadFirstResponseDatestamp
     FROM (
       SELECT WhoId AS LeadId, MIN(CreatedDatestamp) AS CreatedDatestamp
       FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.Events`
@@ -61,7 +61,7 @@ SELECT
   CurrencyConversion.SourceCurrency,
   CurrencyConversion.CurrencyExchangeRate,
   CurrencyConversion.CurrencyConversionDate,
-  LeadsFirstResponseDates.LeadFirstResponeDatestamp AS LeadFirstResponeDatestamp,
+  LeadsFirstResponseDates.LeadFirstResponseDatestamp AS LeadFirstResponseDatestamp,
   (Opportunities.Amount * CurrencyConversion.CurrencyExchangeRate) AS TotalSaleAmountInTargetCurrency,
   --## CORTEX-CUSTOMER Consider adding other dimensions from the CalendarDateDimension table as per your requirement
   Leads.LeadCreatedDate AS LeadCreatedDate,

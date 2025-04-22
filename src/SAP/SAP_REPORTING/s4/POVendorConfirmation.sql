@@ -30,9 +30,17 @@ SELECT
   vendor.NAME1, vendor.NAME2, docs.TermsPaymentKey_ZTERM, docs.DiscountDays1_ZBD1T
 FROM `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.ekes` AS EKES
 INNER JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.PurchaseDocuments` AS docs
-  ON EKES.MANDT = docs.Client_MANDT
+  ON
+    EKES.MANDT = docs.Client_MANDT
     AND EKES.EBELN = docs.DocumentNumber_EBELN
     AND docs.Item_EBELP = EKES.EBELP
 INNER JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.VendorsMD` AS vendor
-  ON vendor.Client_MANDT = docs.Client_MANDT
+  ON
+    vendor.Client_MANDT = docs.Client_MANDT
     AND vendor.AccountNumberOfVendorOrCreditor_LIFNR = docs.VendorAccountNumber_LIFNR
+    AND vendor.Language_LANGU = docs.Language_SPRAS
+    AND vendor.ValidFromDate_DATE_FROM <= EKES.ERDAT
+    AND vendor.ValidToDate_DATE_TO >= EKES.ERDAT
+    -- ## CORTEX-CUSTOMER Modify the filter according to the configuration, for example, if NATION
+    -- has value 'I' for international, it could be used in the filter
+    AND COALESCE(vendor.VersionIdForInternationalAddresses_NATION, '') = ''

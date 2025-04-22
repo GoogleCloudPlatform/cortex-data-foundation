@@ -154,6 +154,48 @@ def validate(config: dict) -> Union[dict, None]:
                 "Meta or TikTok to be deployed. 🛑")
             failed = True
 
+    # Meridian config validation
+    config["k9"]["deployMeridian"] = config["k9"].get("deployMeridian", False)
+
+    if config["k9"]["deployMeridian"]:
+        if "Meridian" not in config["k9"]:
+            logging.error(("🛑 Meridian is enabled, "
+                "but no options are specified. 🛑"))
+            failed = True
+        else:
+            meridian_config = config["k9"]["Meridian"]
+
+            if not meridian_config.get("deploymentType"):
+                logging.error(
+                    "🛑 Meridian deploymentType is missing. 🛑")
+                failed = True
+            elif (not meridian_config["salesDataSourceType"] == "BYOD" and
+                  not meridian_config["salesDatasetID"]):
+                logging.error(("🛑 A dataset for sales reporting must be"
+                               "specified for incremental deployment 🛑"))
+                failed = True
+            elif (meridian_config["deploymentType"] == "initial"
+                and not config["k9"]["deployCrossMedia"]):
+                logging.error(
+                    "🛑 Meridian requires Cross Media in a fresh deployment 🛑")
+                failed = True
+            elif (meridian_config["deploymentType"] == "initial" and
+                  meridian_config["salesDataSourceType"] == "SAP" and
+                  not config["deploySAP"]):
+                logging.error(
+                    ("🛑 When deploying a new data foundation with "
+                     "Meridian and sales data source is SAP, SAP deployment "
+                     "needs to be enabled. 🛑"))
+                failed = True
+            elif (meridian_config["deploymentType"] == "initial" and
+                  meridian_config["salesDataSourceType"] == "OracleEBS" and
+                  not config["deployOracleEBS"]):
+                logging.error(
+                    ("🛑 When deploying a new data foundation with "
+                     "Meridian and sales data source is OracleEBS, Oracle EBS "
+                     "deployment needs to be enabled. 🛑"))
+                failed = True
+
     if failed:
         logging.error("🛑 K9 configuration is invalid. 🛑")
         return None

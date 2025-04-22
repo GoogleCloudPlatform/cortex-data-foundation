@@ -40,9 +40,9 @@ SELECT
   LeadCreatedQuarter,
   LeadCreatedYear,
   COUNT(LeadId) AS NumOfLeads,
-  COUNT(DISTINCT(IF(IsLeadConverted IS TRUE, LeadId, NULL))) AS NumOfConvertedLeads,
-  SUM(DATETIME_DIFF(LeadFirstResponeDatestamp, LeadCreatedDatestamp, HOUR)) AS TotalLeadResponseTimeHours,
-  COUNTIF(LeadFirstResponeDatestamp IS NOT NULL) AS NumOfLeadsWithResponse
+  COUNT(DISTINCT IF(IsLeadConverted IS TRUE, LeadId, NULL)) AS NumOfConvertedLeads,
+  SUM(DATETIME_DIFF(LeadFirstResponseDatestamp, LeadCreatedDatestamp, HOUR)) AS TotalLeadResponseTimeHours,
+  COUNTIF(LeadFirstResponseDatestamp IS NOT NULL) AS NumOfLeadsWithResponse
 FROM
   `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.LeadsCaptureConversions`
 GROUP BY

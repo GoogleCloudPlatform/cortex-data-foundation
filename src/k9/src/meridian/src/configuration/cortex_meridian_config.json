@@ -1,0 +1,45 @@
+{
+    "cortex_bq_project_id": "{{CORTEX_BQ_K9_PROJECT_ID}}",
+    "cortex_meridian_marketing_data_set_id": "{{CORTEX_BQ_K9_DATASET_ID}}",
+    "cortex_meridian_marketing_view_name": "{{CORTEX_MERIDIAN_VIEW_NAME}}",
+    "column_mappings": {
+        "controls": [],
+        "geo": "geo",
+        "kpi": "{{KPI}}",
+        "media": [
+            "Tiktok_impression",
+            "Meta_impression",
+            "YouTube_impression",
+            "GoogleAds_impression"
+        ],
+        "media_spend": [
+            "Tiktok_spend",
+            "Meta_spend",
+            "YouTube_spend",
+            "GoogleAds_spend"
+        ],
+        "population": "population",
+        "revenue_per_kpi": "{{REVENUE_PER_KPI}}",
+        "time": "time"
+    },
+    "channel_names": [
+        "TikTok",
+        "Meta",
+        "YouTube",
+        "Google Ads"
+    ],
+    "data_processing": {
+        "kpi_type": "{{KPI_TYPE}}",
+        "roi_mu": {{ROI_MU}},
+        "roi_sigma": {{ROI_SIGMA}},
+        "sample": {
+            "prior": {{PRIOR}},
+            "posterior": {
+                "n_chains": {{N_CHAINS}}, 
+                "n_adapt": {{N_ADAPT}},
+                "n_burnin": {{N_BURNIN}},
+                "n_keep": {{N_KEEP}}
+            }
+        }
+    }
+}

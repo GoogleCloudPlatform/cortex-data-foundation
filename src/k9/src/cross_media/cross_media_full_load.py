@@ -38,6 +38,7 @@ from dependencies.cross_media_matching import run_cross_media_matching
 # If string is empty, assigns empty dict
 _BQ_LABELS = ast.literal_eval("{{ runtime_labels_dict }}" or "{}")
 _AIRFLOW_CONNECTION_ID = "k9_reporting"
+_BQ_LOCATION = "{{ location }}"
 
 default_args = {
     "depends_on_past": False,
@@ -54,7 +55,8 @@ def _get_bq_operator(dag_name: str) -> BigQueryInsertJobOperator:
                 "query": f"{dag_name}.sql",
                 "useLegacySql": False
             },
-            "labels": _BQ_LABELS
+            "labels": _BQ_LABELS,
+            "location": _BQ_LOCATION
         })
 
 def _map_campaigns_to_products():

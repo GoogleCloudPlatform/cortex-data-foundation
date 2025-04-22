@@ -154,8 +154,7 @@ def _validate_config_resources(config: typing.Dict[str, typing.Any]) -> bool:
         except (BadRequest, ServerError):
             logging.exception(
                 "🛑 Error when trying to create a BigQuery dataset "
-                "in project `%s`. 🛑",
-                project)
+                "in project `%s`. 🛑", project)
             return False
         finally:
             try:
@@ -229,6 +228,8 @@ def validate_config(
     config["deployOracleEBS"] = config.get("deployOracleEBS", False)
     config["deployDataMesh"] = config.get("deployDataMesh", False)
     config["testData"] = config.get("testData", False)
+    config["enableTaskDependencies"] = config.get("enableTaskDependencies",
+                                                  False)
     config["turboMode"] = config.get("turboMode", True)
 
     config["location"] = config.get("location")
@@ -268,8 +269,8 @@ def validate_config(
             vertexai_region = "europe-west1"
         else:
             vertexai_region = "us-central1"
-        logging.warning(
-            "⚠️ No Vertex AI region specified. Using `%s`. ⚠️", vertexai_region)
+        logging.warning("⚠️ No Vertex AI region specified. Using `%s`. ⚠️",
+                        vertexai_region)
         config["VertexAI"]["region"] = vertexai_region
     else:
         vertexai_region = config["VertexAI"]["region"].lower()
@@ -290,9 +291,8 @@ def validate_config(
         "processingDataset")
     if not config["VertexAI"]["processingDataset"]:
         vertex_pd_default = "CORTEX_VERTEX_AI_PROCESSING"
-        logging.warning(
-            "⚠️ No Vertex AI dataset specified. Using `%s`. ⚠️",
-            vertex_pd_default)
+        logging.warning("⚠️ No Vertex AI dataset specified. Using `%s`. ⚠️",
+                        vertex_pd_default)
         config["VertexAI"]["processingDataset"] = vertex_pd_default
 
     if config["deployDataMesh"] and "DataMesh" not in config:
@@ -302,6 +302,10 @@ def validate_config(
     logging.info("Fetching test harness version.")
     config["testHarnessVersion"] = config.get("testHarnessVersion",
                                               constants.TEST_HARNESS_VERSION)
+
+    logging.info("Fetching Cortex version.")
+    config["cortexVersion"] = config.get("cortexVersion",
+                                         constants.CORTEX_VERSION)
 
     logging.info("Validating common configuration resources.")
     try:

@@ -44,7 +44,7 @@ def _get_value_as_type(value: Any, field_type: Type[object]) -> Any:
     elif isinstance(value, field_type):
         return value
     elif is_enum:
-        return field_type[value]  # type: ignore
+        return field_type[value.upper()]  # type: ignore
     # Recursively expands nested types within field_type.
     else:
         return field_type.from_dict(value)  # type: ignore

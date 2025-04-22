@@ -1,0 +1,124 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This workflow will start a new Colab Enterprise notebook execution (via Cloud Build) 
+# with Cortex for Meridian. Additional steps can be added.
+# For example add loading/updating data from sources outside Cortex in the 
+# pre_notebook_execution step. 
+# For more information see: https://cloud.google.com/workflows/docs/reference/googleapis.
+
+main:
+  params: 
+  - input
+  steps:
+  - init:
+      assign:
+        - project_id: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+        - meridian_bucket_name: "{{MERIDIAN_BUCKET_NAME}}"
+        - meridian_config_file_gcs_path: "configuration/cortex_meridian_config.json"
+        - build_location_id: "global"
+        - back_up_config_file_suffix: ${sys.get_env("GOOGLE_CLOUD_WORKFLOW_EXECUTION_ID")}
+        - back_up_config_file_gcs_path: ${"configuration/cortex_meridian_config_workflow_backup_" + back_up_config_file_suffix + ".json"}
+  - checkInputForConfig:
+        switch:
+          - condition: >-
+              ${"cortex_bq_project_id" in input and
+              "cortex_meridian_marketing_data_set_id" in input and
+              "cortex_meridian_marketing_view_name" in input and
+              "column_mappings" in input and "channel_names" in input and
+              "data_processing" in input}
+            steps:
+              - logBackupConfigFileName:
+                    call: sys.log
+                    args:
+                        text: ${"Will create backup of config file as " + back_up_config_file_gcs_path}
+                        severity: INFO 
+              - backupConfigFile:
+                  call: googleapis.storage.v1.objects.copy
+                  args:
+                       sourceBucket: '${meridian_bucket_name}'
+                       sourceObject: ${text.url_encode(meridian_config_file_gcs_path)} 
+                       destinationBucket: '${meridian_bucket_name}'
+                       destinationObject: ${text.url_encode(back_up_config_file_gcs_path)}
+                  result: backup_result
+              - logBackupResult:
+                    call: sys.log
+                    args:
+                        text: ${"Backup config file result " + json.encode_to_string(backup_result)}
+                        severity: INFO
+              - updateGCSConfigFile:
+                  call: googleapis.storage.v1.objects.insert
+                  args:
+                    bucket: '${meridian_bucket_name}'
+                    uploadType: media
+                    name: '${meridian_config_file_gcs_path}'
+                    body: '${input}'
+  - pre_notebook_execution:
+      assign: 
+          - not_implemented: "Not implemented add custom data loading here if needed."
+  - create_notebook_execution_run:
+      call: googleapis.cloudbuild.v1.projects.builds.create
+      args:
+        projectId: ${project_id}
+        parent: ${"projects/" + project_id + "/locations/" + build_location_id}
+        body:
+          steps:
+              - name: 'gcr.io/cloud-builders/gcloud'
+                id: "create_notebook_execution_run"
+                script: |
+                  #!/usr/bin/env bash
+                  set -e
+
+                  echo "Creating notebook execution..."
+                  echo "Looking up runtime template name..."
+                  template_name=$(gcloud colab runtime-templates list --region="$_REGION" --project="$_PROJECT_ID" --filter="displayName:$_COLAB_RUNTIME_TEMPLATE_NAME" --format=json --format="value(name)")
+
+                  echo "Full template name: ${template_name}." 
+
+                  gcloud colab executions create \
+                    --display-name=$_COLAB_EXECUTION_JOB_NAME \
+                    --notebook-runtime-template=$template_name \
+                    --gcs-output-uri=$_FULL_OUTPUT_PATH \
+                    --gcs-notebook-uri=$_FULL_NOTEBOOK_PATH \
+                    --region=$_REGION \
+                    --project=$_PROJECT_ID \
+                    --service-account=$_COLAB_EXECUTION_SA \
+                    --quiet \
+                    --async
+
+                  if [ $? -eq 0 ]; then
+                      echo "✅ Notebook execution '$_COLAB_EXECUTION_JOB_NAME' created successfully. Details can be found in the GCP portal: https://console.cloud.google.com/vertex-ai/colab/execution-jobs."
+                      echo "========================================"
+                  else
+                      echo "❗ Error creating notebook execution."
+                      echo "========================================"
+                      exit 1
+                  fi
+
+                  echo -e "\nExecution run created - you can find it in the GCP portal Colab Enterprise Executions https://console.cloud.google.com/vertex-ai/colab/execution-jobs"
+                  echo -e "\n--------------------------------"
+          substitutions:
+              _REGION: "{{REGION}}"
+              _PROJECT_ID: "{{PROJECT_ID}}"
+              _COLAB_RUNTIME_TEMPLATE_NAME: "{{COLAB_RUNTIME_TEMPLATE_NAME}}"
+              _COLAB_EXECUTION_JOB_NAME: "{{COLAB_EXECUTION_JOB_NAME}}"
+              _FULL_NOTEBOOK_PATH: "{{FULL_NOTEBOOK_PATH}}"
+              _FULL_OUTPUT_PATH: "{{FULL_OUTPUT_PATH}}"
+              _COLAB_EXECUTION_SA: "{{COLAB_EXECUTION_SA}}"
+          options:
+              substitution_option: "ALLOW_LOOSE"
+              automapSubstitutions: true
+          tags: ["cortex", "meridian"]
+  - notebook_execution_run_started:
+      return: ["SUCCESS", "See the running job here: https://console.cloud.google.com/vertex-ai/colab/execution-jobs"]

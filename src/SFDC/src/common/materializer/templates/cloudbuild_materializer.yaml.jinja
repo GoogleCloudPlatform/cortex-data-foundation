@@ -39,6 +39,10 @@ steps:
       {%- if build_file.sql_file  %}
       echo "Executing {{ build_file.sql_file }}"
 
+      {%- if build_file.is_task_dep %}
+      echo "Object is task dependent, Composer DAG will be generated separately."
+      {%- endif %}
+
       python ${common_base_path}/common/materializer/create_bq_object.py \
           --module_name='{{ module_name }}' \
           --target_dataset_type='{{ target_dataset_type }}' \
@@ -53,6 +57,9 @@ steps:
           {%- endif %}
           {%- if enable_debug %}
           --debug \
+          {%- endif %}
+          {%- if build_file.is_task_dep %}
+          --skip_dag \
           {%- endif %}
           --bq_object_setting='{{ build_file.bq_object_setting }}'
 

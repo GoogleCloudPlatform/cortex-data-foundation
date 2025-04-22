@@ -49,7 +49,8 @@ with airflow.DAG(dag_id="CDC_BigQuery_${base_table}",
                 "query": "${query_file}",
                 "useLegacySql": False
             },
-            "labels": _BQ_LABELS
+            "labels": _BQ_LABELS,
+            "location": "${bq_location}"
         }
     )
     stop_task = EmptyOperator(task_id="stop")

@@ -15,10 +15,10 @@
 """Constants for Cortex Data Foundation."""
 
 # Listed first due to dependencies
-CORTEX_VERSION = "6.2"
+CORTEX_VERSION = "6.3"
 
 # Version formatted with X_X due to BigQuery dataset naming requirements
-TEST_HARNESS_VERSION = "6_2"
+TEST_HARNESS_VERSION = "6_3"
 
 # Dict for dataset labels
 BQ_DATASET_LABEL = {"goog-packaged-solution" : "cortex-framework"}
@@ -35,3 +35,16 @@ CORTEX_USER_AGENT = f"cortex/{CORTEX_VERSION} (GPN:Google-Cloud-Cortex;)"
 
 # Default Gemini model for Cross-Media
 K9_CROSS_MEDIA_DEFAULT_TEXT_GENERATION_MODEL = "gemini-2.0-flash-001"
+
+#TODO: We should rename "Module" to "Data Source" for all variables
+# (following applicable case convention) to align with of external naming.
+# All supported Cortex modules
+CORTEX_MODULES = [
+    "SAP", "SFDC", "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "DV360",
+    "GA4", "OracleEBS", "k9"
+]
+
+# All supported Marketing modules
+MARKETING_MODULES = [
+    "GoogleAds", "CM360", "TikTok", "Meta", "SFMC", "GA4", "DV360"
+]

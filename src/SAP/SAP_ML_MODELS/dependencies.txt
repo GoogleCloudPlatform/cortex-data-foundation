@@ -1,2 +1,0 @@
-Product_recommender_SAMPLE.sql
-Clustering_SAMPLE.sql

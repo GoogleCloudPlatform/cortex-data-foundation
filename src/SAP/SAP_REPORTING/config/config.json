@@ -34,7 +34,6 @@
         "datasets": {
             "cdc": "",
             "raw": "",
-            "ml": "ML_MODELS",
             "reporting": "REPORTING",
             "cdcECC": "",
             "rawECC": "",

@@ -50,7 +50,8 @@ _GENERATED_SQL_DIR = "generated_sql"
 
 
 def process_table(table_config: dict, source_dataset: str, target_dataset: str,
-                  gen_test: str, allow_telemetry: bool) -> None:
+                  gen_test: str, allow_telemetry: bool,
+                  bq_location: str) -> None:
     try:
 
         table_name = table_config.get("base_table")
@@ -79,7 +80,7 @@ def process_table(table_config: dict, source_dataset: str, target_dataset: str,
             logging.info("Generating required files for DAG with %s ",
                          cdc_table)
             generate_cdc_dag_files(raw_table, cdc_table, load_frequency,
-                                   gen_test, allow_telemetry)
+                                   gen_test, allow_telemetry, bq_location)
 
         logging.info("✅ == Processed %s ==", raw_table)
     except Exception as e:
@@ -146,6 +147,9 @@ def main():
         # File not accessible or found, setting allow_telemetry to false.
         allow_telemetry = False
 
+    # Get location from config
+    bq_location = cortex_config["location"]
+
     # Read settings from settings file.
     with open(_CONFIG_FILE, encoding="utf-8") as settings_file:
         t = jinja2.Template(settings_file.read(),
@@ -179,7 +183,7 @@ def main():
     for table_config in table_configs:
         threads.append(
             pool.submit(process_table, table_config, source_dataset,
-                        target_dataset, gen_test, allow_telemetry))
+                        target_dataset, gen_test, allow_telemetry, bq_location))
     if len(threads) > 0:
         logging.info("Waiting for all tasks to complete...")
         futures.wait(threads)

@@ -1,0 +1,898 @@
+# This settings file drives how the BQ objects (tables/views/functions) for
+# Reporting datasets are created.
+#
+# There are two sections:
+#
+#  1. "bq_independent_objects":
+#     All BiqQuery objects that can be created in independentally, without any
+#     other depedencies.
+#     NOTE: When "turbo_mode" is enabled, these BQ objects are created in
+#           parallel.
+#
+#  2. "bq_dependent_objects":
+#      All BiqQuery objects that need to be created in a specific order due to
+#      depedencies.
+#      NOTE: "turbo_mode" does not apply to this section - i.e. each object
+#             will be created one after another.
+#
+#  At least one of the two sections need to be present.
+
+# The following files will be deployed in parallel
+bq_independent_objects:
+
+  ## TODO: Reorder to group the tables with same load frequency to improve readability
+
+  - sql_file: NetDueDateCalc.sql
+    type: script
+
+  - sql_file: CurrencyConversion.sql
+    description: "Exchange Rate for Currency Conversion"
+    type: table
+    table_setting:
+      cluster_details: {columns: ["ToCurrency_TCURR"]}
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: fiscal_date_dim.sql
+    type: table
+    description: "Fiscal Date Dimension"
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: AddressesMD.sql
+    description: "Addresses Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: PlantsMD.sql
+    description: "PlantsMD Details"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: MaterialGroupsMD.sql
+    description: "Material Groups Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "MonthlyDimRefresh"
+      load_frequency: "@monthly"
+
+  - sql_file: GLAccountsMD.sql
+    description: "GL Accounts Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: VendorsMD.sql
+    description: "Vendor Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: LedgersMD.sql
+    description: "General Ledger Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: DistributionChannelsMD.sql
+    description: "Distribution Channel Details"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "MonthlyDimRefresh"
+      load_frequency: "@monthly"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: CompaniesMD.sql
+    description: "Company Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: ProductHierarchy_Flatten.sql
+    description: "Product Hierarchy Flattener"
+    type: view
+
+  - sql_file: TelephoneCodes_T005K.sql
+    description: "Telephone Codes (T005)"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: CostCentersMD.sql
+    description: "Cost Centers MD Details"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "MonthlyDimRefresh"
+      load_frequency: "@monthly"
+
+  - sql_file: SalesOrganizationsMD.sql
+    description: "Sales Organization"
+    type: table
+    table_setting:
+      load_frequency: "@yearly"
+      dag_setting:
+        name: "AnnualDimRefresh"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: StorageLocationsMD.sql
+    description: "StorageLocations Text"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: ValuationAreasMD.sql
+    description: "Valuation Area Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  # Run every 10 minutes
+  - sql_file: SalesOrders.sql
+    description: "Sales Orders Header and Items"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrdersAndDeliveries"
+      load_frequency: "*/10 * * * *"
+
+  - sql_file: Regions_T005S.sql
+    description: "Regions (T005S)"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: SDDocumentFlow.sql
+    description: "Sales Document Flow (Sales Doc, Delivery, Billing)"
+    type: view
+
+  - sql_file: UoMConversion.sql
+    description: "Function for Unit of measure conversion - VAL_OUT is the output"
+    type: script
+
+  - sql_file: UoMConversionUtil.sql
+    description: "View to convert UoM when conversion needs to be inline and table function canot be used. See UoMUsage_SAMPLE."
+    type: view
+
+  - sql_file: ProductHierarchiesMD.sql
+    description: "Product Hierarchies Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: CustomersMD.sql
+    description: "Customer Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: Languages_T002.sql
+    description: "Languages (T002)"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: DeliveryBlockingReasonsMD.sql
+    description: "Deliveries: Blocking reasons texts"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: BillingBlockingReasonsMD.sql
+    description: "Billing: Blocking reasons texts"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: MaterialsMD.sql
+    description: "Materials Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: MaterialTypesMD.sql
+    description: "Material Types and texts"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: BillOfMaterialsMD.sql
+    description: "Bill of Materials Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: CurrenciesMD.sql
+    description: "Currencies Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: CurrencyConvUtil.sql
+    description: "Utility View for Currency Conversion (materialized recommended)"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: ProfitCentersMD.sql
+    description: "Profit Centers Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: ProductionOrders.sql
+    description: "Production Order Headers and Items"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: CountriesMD.sql
+    description: "Countries Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: UoMMD.sql
+    description: "Unit Of Measure master data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: PurchaseDocuments_Flow.sql
+    description: "Purchase Documents Header, Items, & Account Assignment. Primary key of this table is [Client_MANDT, DocumentNumber_EBELN, Item_EBELP, & AccountAssignment_ZEKKN]"
+    type: view
+
+  - sql_file: DivisionsMD.sql
+    description: "Divisions Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: PurchaseDocumentTypesMD.sql
+    description: "Purchase Document Types Text"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: MaterialMovementTypesMD.sql
+    description: "Material Movement Types"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: ReasonForMovementTypesMD.sql
+    description: "ReasonForMovementTypesMD"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: SpecialStocksMD.sql
+    description: "Special Stocks Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: PurchasingOrganizationsMD.sql
+    description: "Purchasing Organizations Text"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: BatchesMD.sql
+    description: "BatchesMD"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: MaterialPlantsMD.sql
+    description: "MaterialPlantsMD"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: PurchasingGroupsMD.sql
+    description: "Purchasing Groups Text"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "AnnualDimRefresh"
+      load_frequency: "@yearly"
+
+  - sql_file: PricingConditions.sql
+    description: "Pricing Conditions"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: SalesOrderStatus.sql
+    description: "Sales Order Status"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrdersAndDeliveries"
+      load_frequency: "*/10 * * * *"
+
+  - sql_file: POSchedule.sql
+    description: "Purchase Order Schedule"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: POScheduleLine.sql
+    description: "Purchase Order Schedule Line"
+    type: view
+
+  - sql_file: MaterialsBatchMD.sql
+    description: "Materials Batch Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: StockInHand.sql
+    description: "Stock In Hand"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: OneTouchOrder.sql
+    description: "One Touch Order Reporting"
+    type: view
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: FSVTextsMD.sql
+    description: "Text for FSV Hierarchy Node"
+    type: view
+
+  - sql_file: UniversalLedgersMD.sql
+    description: "Text for Universal Ledgers"
+    type: view
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: CostCenterHierarchiesMD.sql
+    description: "Text for Cost Center Hierarchy"
+    type: view
+
+  - sql_file: ProfitCenterHierarchiesMD.sql
+    description: "Text for Profit Center Hierarchy"
+    type: view
+
+  - sql_file: SalesOrderHeaderStatus.sql
+    description: "Sales Order Header Status"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: SalesOrderPartnerFunction.sql
+    description: "Sales Order Partner Function"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+  - sql_file: SlowMovingThreshold.sql
+    description: "Slow Moving Threshold for Inventory"
+    type: table
+    table_setting:
+      load_frequency: "@once"
+
+  - sql_file: StockCharacteristicsConfig.sql
+    description: "Configurations for stock characteristics (blocked, restricted etc) and their associated movement types"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+      load_frequency: "@daily"
+
+bq_dependent_objects:
+
+  - sql_file: MaterialLedger.sql
+    description: "Material Ledger"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "InventoryByPlant"
+      load_frequency: "0 2 * * *"
+
+  - sql_file: MaterialsMovement.sql
+    description: "Material Movements"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "InventoryByPlant"
+      load_frequency: "0 2 * * *"
+
+  - sql_file: MaterialsValuation.sql
+    description: "Materials Valuation"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "InventoryByPlant"
+      load_frequency: "0 2 * * *"
+
+  - sql_file: BusinessPartnersMD.sql
+    description: "Business Partners and Addresses Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "DailyDimRefresh"
+        parents: ["AddressesMD.sql"]
+
+  - sql_file: PurchaseDocuments.sql
+    description: "Purchase Documents Header and Items"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: PurchaseDocumentsHistory.sql
+    description: "Purchase Documents - Order History"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: InvoiceDocuments_Flow.sql
+    description: "Incoming Invoice (Invoice Receipt) Header, Item, & Account Assignment."
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: Deliveries.sql
+    description: "Deliveries Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: SalesOrders_V2.sql
+    description: "Sales Orders Header and Items"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrdersAndDeliveries"
+      load_frequency: "*/10 * * * *"
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: SDStatus_Items.sql
+    description: "Sales Document Status (Sales Doc, Delivery, Billing)"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrdersAndDeliveries"
+      load_frequency: "*/10 * * * *"
+
+  - sql_file: DueDateForCashDiscount1.sql
+    type: script
+
+  - sql_file: DueDateForCashDiscount2.sql
+    type: script
+
+  - sql_file: AccountingDocuments.sql
+    description: "Accounting Documents Headers and Items"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: AccountingDocumentsReceivable.sql
+    description: "AR Accounting Documents Reporting"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["AccountingDocuments.sql"]
+    ## CORTEX-CUSTOMER: If using currency conversion, add TCURR field to clustering settings.
+
+  - sql_file: POVendorConfirmation.sql
+    description: "Purchase Order Confirmations from Vendor"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["PurchaseDocuments.sql"]
+
+  - sql_file: POOrderHistory.sql
+    description: "Purchase Documents - Order History"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["PurchaseDocuments.sql"]
+
+  - sql_file: DeliveriesStatus_PerSalesOrg.sql
+    description: "Delivery Status Per Sales Organization"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrdersAndDeliveries"
+        parents: ["SDStatus_Items.sql"]
+
+  - sql_file: SalesStatus_Items.sql
+    description: "Status of Sales Documents at Item level"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: POFulfillment.sql
+    description: "Deliveries completed and pending per Purchase Order Item"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["PurchaseDocuments.sql"]
+
+  - sql_file: SalesFulfillment_perOrder.sql
+    description: "Sales Orders Fulfillment per Order and Plant"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Billing"
+      load_frequency: "@hourly"
+
+  - sql_file: SalesFulfillment.sql
+    description: "Sales Orders Fulfillment"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: Billing.sql
+    description: "Billing Master Data"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Billing"
+      load_frequency: "@hourly"
+
+  - sql_file: Stock_NonValuated.sql
+    description: "Non-valuated stock levels per plant and Storage location"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: Stock_PerPlant.sql
+    description: "Stock information per plant"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: Stock_Unrestricted_vs_Sales.sql
+    description: "Non-valuated unrestricted stock levels versus sales orders and deliveries"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["Stock_NonValuated.sql"]
+
+  - sql_file: OrderToCash.sql
+    description: "Order to Cash Reporting"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["Deliveries.sql"]
+
+  - sql_file: SalesOrderScheduleLine.sql
+    description: "Sales Orders Schedule Line"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Billing"
+      load_frequency: "@hourly"
+
+  - sql_file: VendorConfig.sql
+    description: "Vendor Config"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+      load_frequency: "0 4 * * *"
+
+  - sql_file: SalesOrderPricing.sql
+    description: "Sales Orders Pricing"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Billing"
+      load_frequency: "@hourly"
+
+  - sql_file: AggregateMonthlyInventory.sql
+    type: script
+
+  - sql_file: UpdateMonthlyInventoryAggregation.sql
+    type: script
+
+  - sql_file: UpdateStockMonthlySnapshots.sql
+    type: script
+
+  - sql_file: AggregateWeeklyInventory.sql
+    type: script
+
+  - sql_file: UpdateWeeklyInventoryAggregation.sql
+    type: script
+
+  - sql_file: UpdateStockWeeklySnapshots.sql
+    type: script
+
+  - type: k9_dawg
+    k9_id: inventory_snapshots
+
+  - sql_file: StockWeeklySnapshots.sql
+    description: "Stock Weekly Snapshots"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "InventoryByPlant"
+      load_frequency: "0 2 * * *"
+      partition_details: {
+        column: "WeekEndDate",
+        partition_type: "time",
+        time_grain: "day"
+      }
+      cluster_details: {columns: ["Client_MANDT", "MaterialNumber_MATNR", "Plant_WERKS"]}
+
+  - sql_file: StockMonthlySnapshots.sql
+    description: "Stock Monthly Snapshots"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "InventoryKeyMetrics"
+      load_frequency: "0 2 * * */7"
+      partition_details: {
+        column: "MonthEndDate",
+        partition_type: "time",
+        time_grain: "month"
+      }
+      cluster_details: {columns: ["Client_MANDT", "MaterialNumber_MATNR", "Plant_WERKS"]}
+
+  - sql_file: InventoryByPlant.sql
+    type: table
+    table_setting:
+      dag_setting:
+        name: "InventoryByPlant"
+        parents: ["StockWeeklySnapshots.sql"]
+      cluster_details: { columns: ["CompanyCode_BUKRS", "FiscalYear", "TargetCurrency_TCURR"] }
+
+  - sql_file: InventoryKeyMetrics.sql
+    type: table
+    table_setting:
+      dag_setting:
+        name: "InventoryKeyMetrics"
+        parents: ["StockMonthlySnapshots.sql"]
+      cluster_details: { columns: ["CompanyCode_BUKRS", "FiscalYear", "TargetCurrency_TCURR"] }
+
+  - sql_file: AccountsPayable.sql
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: [
+          "AccountingDocuments.sql",
+          "InvoiceDocuments_Flow.sql",
+          "VendorConfig.sql",
+          "PurchaseDocumentsHistory.sql"
+        ]
+      partition_details:
+        {
+          column: "PostingDateInTheDocument_BUDAT",
+          partition_type: "time",
+          time_grain: "day",
+        }
+      cluster_details: {
+        columns: [
+          "CompanyCode_BUKRS",
+          "FiscalYear_GJAHR",
+          "DocFiscPeriod",
+          "TargetCurrency_TCURR"
+        ]
+      }
+
+  - sql_file: AccountsPayableTurnover.sql
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["AccountsPayable.sql"]
+      cluster_details: {columns: ["TargetCurrency_TCURR"]}
+
+  - sql_file: CashDiscountUtilization.sql
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["AccountsPayable.sql", "AccountingDocuments.sql"]
+      cluster_details: {columns: ["TargetCurrency_TCURR"]}
+
+  - sql_file: DaysPayableOutstanding.sql
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["AccountsPayable.sql"]
+      cluster_details: {columns: ["TargetCurrency_TCURR"]}
+
+  - sql_file: VendorPerformance.sql
+    type: table
+    table_setting:
+      dag_setting:
+        name: "OrderToCash"
+        parents: ["PurchaseDocuments.sql", "PurchaseDocumentsHistory.sql"]
+      partition_details:
+        {
+          column: "PostingDateInTheDocument_BUDAT",
+          partition_type: "time",
+          time_grain: "day",
+        }
+      cluster_details: { columns: ["Company_BUKRS", "FiscalYear", "TargetCurrency_TCURR"] }
+
+  - sql_file: financial_statement.sql
+    type: script
+
+  - type: k9_dawg
+    k9_id: financial_statement
+
+  - sql_file: FinancialStatement.sql
+    description: "Financial Statement"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Finance"
+      load_frequency: "0 2 * */1 *"
+      cluster_details: { columns: ["CompanyCode", "FiscalYear", "FiscalPeriod"] }
+
+  - sql_file: BalanceSheet.sql
+    description: "Balance Sheet"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Finance"
+        parents: ["FinancialStatement.sql"]
+      cluster_details: {
+        columns: [
+          "CompanyCode",
+          "FiscalYear",
+          "FiscalPeriod",
+          "TargetCurrency_TCURR"
+        ]
+      }
+
+  - sql_file: ProfitAndLoss.sql
+    description: "Profit And Loss"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Finance"
+        parents: ["FinancialStatement.sql"]
+      cluster_details: {
+        columns: [
+          "CompanyCode",
+          "FiscalYear",
+          "FiscalPeriod",
+          "TargetCurrency_TCURR"
+        ]
+      }
+
+  - sql_file: FSVHierarchyFlattened.sql
+    description: "FSV Flattened Hierarchy With Hierarchy Texts"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Finance"
+      load_frequency: "0 2 * */1 *"
+
+  - sql_file: CostCenterHierarchyFlattened.sql
+    description: "Cost Center Flattened Hierarchy With Hierarchy Texts"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Finance"
+      load_frequency: "0 2 * */1 *"
+
+  - sql_file: ProfitCenterHierarchyFlattened.sql
+    description: "Profit Center Flattened Hierarchy With Hierarchy Texts"
+    type: table
+    table_setting:
+      dag_setting:
+        name: "Finance"
+      load_frequency: "0 2 * */1 *"

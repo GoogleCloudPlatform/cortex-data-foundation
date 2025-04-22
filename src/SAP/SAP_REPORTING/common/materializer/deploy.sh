@@ -207,6 +207,25 @@ echo "Generated gcloud build files executed."
 
 set -e
 
+echo "Executing generate_dependent_dags.py"
+python3 "$THIS_DIR"/generate_dependent_dags.py \
+  --module_name "${MODULE_NAME}" \
+  --target_dataset_type "${TGT_DATASET_TYPE}" \
+  --config_file "${CONFIG_FILE}" \
+  --materializer_settings_file "${MATERIALIZER_SETTINGS_FILE}"
+
+echo "generate_dependent_dags.py completed successfully."
+
+# Copy generated files to GCS target bucket if task dependent dags were generated.
+if [[ $(find generated_materializer_dag_files/*/*/task_dep_dags -type f 2> /dev/null | wc -l) -gt 0 ]]
+then
+  echo "Copying DAG files to GCS bucket..."
+  echo "gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${GCS_TGT_BUCKET}/dags/"
+  gsutil -m cp -r 'generated_materializer_dag_files/*' "gs://${GCS_TGT_BUCKET}/dags/"
+else
+  echo "No task dependent DAG files to copy to GCS bucket!"
+fi
+
 if [ "${failure}" -eq "0" ]; then
   echo "Deployment of ${TGT_DATASET_TYPE} for ${MODULE_NAME} completed successful."
 else

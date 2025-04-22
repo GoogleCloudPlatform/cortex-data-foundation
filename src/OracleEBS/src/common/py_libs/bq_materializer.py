@@ -205,8 +205,14 @@ def validate_table_setting(table_setting):
     logger.debug("table_settings :\n %s", table_setting)
 
     load_frequency = table_setting.get("load_frequency")
-    if not load_frequency:
-        raise ValueError("Missing 'load_frequency' property.")
+    dag_setting = table_setting.get("dag_setting")
+    if not load_frequency and not dag_setting:
+        raise ValueError("Missing 'load_frequency' and 'dag_setting'"
+                         "properties. At least one must be set.")
+
+    if load_frequency and dag_setting and dag_setting.get("parents"):
+        raise ValueError("Both 'load_frequency' and 'dag_setting.parents' are "
+                         "set. Only one must be set.")
 
     # TODO: add cron validation
     # if load_frequency not in _LOAD_FREQUENCIES:
