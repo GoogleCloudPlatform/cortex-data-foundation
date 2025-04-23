@@ -183,22 +183,23 @@ CLOUD_BUILD_ROLES=('roles/aiplatform.colabEnterpriseAdmin'
     'roles/storage.objectUser' 'roles/workflows.editor' 'roles/bigquery.jobUser'
     'roles/bigquery.dataEditor' 'roles/iam.serviceAccountUser')
 
-# Get legacy cloud build service account email
-PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
-CLOUD_BUILD_SA_LEGACY="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+# Get cloud build service account email
+CLOUD_BUILD_SA=$(gcloud builds get-default-service-account --project="$PROJECT_ID" --format='value(serviceAccountEmail)' | sed 's|.*/||')
 
 for role in "${CLOUD_BUILD_ROLES[@]}"; do
-    fancy_sub_echo "Assigning role: $role to $CLOUD_BUILD_SA_LEGACY 🔑"
+    fancy_sub_echo "Assigning role: $role to $CLOUD_BUILD_SA 🔑"
     gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-        --member="serviceAccount:$CLOUD_BUILD_SA_LEGACY" \
+        --member="serviceAccount:$CLOUD_BUILD_SA" \
         --role="$role" \
         --condition=None \
         --no-user-output-enabled
     if [ $? -ne 0 ]; then
-        fancy_error_echo "Error assigning role '$role' to service account '$CLOUD_BUILD_SA_LEGACY'"
+        fancy_error_echo "Error assigning role '$role' to service account '$CLOUD_BUILD_SA'"
         exit 1
     fi
 done
+
+fancy_sub_echo "Done assigning roles to service account '$CLOUD_BUILD_SA'"
 
 MERIDIAN_RUNNER_ROLES=('roles/bigquery.dataViewer' 'roles/bigquery.jobUser'
     'roles/bigquery.readSessionUser' 'roles/cloudbuild.builds.editor'
