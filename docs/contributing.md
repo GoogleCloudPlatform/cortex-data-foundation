@@ -29,3 +29,7 @@ However, contributions will be reviewed pending on maintainer time and not all p
 
 This project follows [Google's Open Source Community
 Guidelines](https://opensource.google/conduct/).
+
+## Support
+For any questions or issues related to the Google Cloud Cortex Framework itself, 
+see the [Cortex Framework Support](https://cloud.google.com/cortex/docs/support) page.

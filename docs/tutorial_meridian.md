@@ -43,7 +43,7 @@ Click the **Next** button to move to the next step.
 
 <walkthrough-cloud-shell-icon></walkthrough-cloud-shell-icon>
 
-❗️IMPORTANT❗️The default configuration parameters and sample data for Meridian are intended for demo purposes only and should not be deployed for production use. Meridian configuration parameters should be chosen with great care as they will influence the behaviour of the model and results. Please consult Meridian documentation for guidance on how to setup the model configuration for your unique business needs and goals. See [Meridian modeling](https://developers.google.com/meridian/docs/basics/about-the-project). If needed consult with an official [Google Meridian partner](https://developers.google.com/meridian/partners) and/or your Google Ads representative.
+❗️**IMPORTANT**❗️The default configuration parameters and sample data for Meridian are intended for demo purposes only and should not be deployed for production use. Meridian configuration parameters should be chosen with great care as they will influence the behaviour of the model and results. Please consult Meridian documentation for guidance on how to setup the model configuration for your unique business needs and goals. See [Meridian modeling](https://developers.google.com/meridian/docs/basics/about-the-project). If needed consult with an official [Google Meridian partner](https://developers.google.com/meridian/partners) and/or your Google Ads representative. For any questions or issues related to the Google Cloud Cortex Framework itself, see the [Cortex Framework Support](https://cloud.google.com/cortex/docs/support) page.
 
 ```sh
 ./1_click_meridian.sh --project "<walkthrough-project-id/>"
@@ -59,7 +59,7 @@ When the script starts click the **Next** button.
 
 The deployment is now running please wait for the Cloud Build deployment to complete. This will take about 25-30 mins.
 
-If the Cloud Shell session times out while the Cloud Build runs the Notebook execution might not be started automatically. In this case you can start it manually in the Google Cloid portal or run this command:
+❗️**IMPORTANT**❗️If the Cloud Shell session times out while the [Cloud Build](https://console.cloud.google.com/cloud-build/builds) runs, the [Colab notebook execution](https://console.cloud.google.com/vertex-ai/colab/execution-jobs) might not be started automatically. In this case you can start it manually in the Google Cloud portal under [Workflows](https://console.cloud.google.com/workflows/workflow/us-central1/cortex-meridian-execute-notebook) or simply run this command:
 
 ```sh
 gcloud workflows execute cortex-meridian-execute-notebook --data="{}" --location=us-central1 --project="<walkthrough-project-id/>"
