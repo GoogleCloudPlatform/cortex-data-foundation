@@ -12,6 +12,9 @@ This repository contains the Entity Relationship (ERD) diagrams, scripts and fil
 to deploy the Cortex Framework. For more information and instructions, see our
 official [Cortex Framework documentation site](https://cloud.google.com/cortex/docs).
 
+For any questions or issues related to the Google Cloud Cortex Framework itself, 
+see the [Cortex Framework Support](https://cloud.google.com/cortex/docs/support) page.
+
 # Data sources and workloads
 
 Cortex Framework focuses on solving specific problems and offers pre built solutions

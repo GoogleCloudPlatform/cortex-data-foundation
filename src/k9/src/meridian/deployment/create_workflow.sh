@@ -79,22 +79,39 @@ else
     fi
 fi
 
+sleep 10 #To handle timings related to Workflows API enablement and Service Agents
+
+CREATE_WORKFLOW_COMMAND="gcloud workflows deploy $WORKFLOW_NAME \
+        --location=$WORKFLOW_REGION \
+        --source=$TEMP_WORKFLOW_DEFINITION_FILE \
+        --project=$PROJECT_ID \
+        --service-account=$WORKFLOW_SA"
+
+# Maximum number of retries
+MAX_RETRIES=3
+
+# Current retry count
+retry_count=0
+
 if [[ "$exists" == "false" ]]; then
-    echo "Creating workflow..."
+    while true; do
+        echo "Creating workflow..."
 
-    # Create workflow
-    gcloud workflows deploy "${WORKFLOW_NAME}" \
-        --location="${WORKFLOW_REGION}" \
-        --source="${TEMP_WORKFLOW_DEFINITION_FILE}" \
-        --project="$PROJECT_ID" \
-        --service-account="${WORKFLOW_SA}"
-
-    if [ $? -eq 0 ]; then
-        echo "✅ Workflow '$WORKFLOW_NAME' created successfully."
-        echo "========================================"
-    else
-        echo "❗ Error creating workflow '$WORKFLOW_NAME'."
-        echo "========================================"
-        exit 1
-    fi
+        if $CREATE_WORKFLOW_COMMAND; then
+            echo "✅ Workflow '$WORKFLOW_NAME' created successfully."
+            echo "========================================"
+            exit 0 # Exit with success if the command works
+        else
+            ((retry_count++))
+            if [[ "$retry_count" -lt "$MAX_RETRIES" ]]; then
+                echo "Command failed (attempt $retry_count of $MAX_RETRIES). Retrying in 5 seconds..."
+                sleep 5
+            else
+                echo "Command failed after $MAX_RETRIES attempts. Giving up."
+                echo "❗ Error creating workflow '$WORKFLOW_NAME'."
+                echo "========================================"
+                exit 1
+            fi
+        fi
+    done
 fi
