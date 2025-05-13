@@ -15,6 +15,8 @@
 # limitations under the License.
 
 log_bucket=$1
+build_account="$2"
+
 echo "Deploying CDC and extra data."
 
 if [[ "${log_bucket}" == "" ]]
@@ -27,4 +29,5 @@ else
     _GCS_BUCKET="${log_bucket}"
 fi
 
-gcloud builds submit --config=cloudbuild.cdc.yaml --substitutions=_GCS_BUCKET="${_GCS_BUCKET}" .
+gcloud builds submit --config=cloudbuild.cdc.yaml --substitutions=_GCS_BUCKET="${_GCS_BUCKET}",_BUILD_ACCOUNT="${build_account}" .
+

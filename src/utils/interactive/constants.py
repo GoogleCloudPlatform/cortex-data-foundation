@@ -25,7 +25,7 @@ CONFIG_MESSAGE = (
     "    BigQuery Datasets: <b>%s</b>\n"
     "    Storage Buckets: <b>%s</b>"
     "\n\n"
-    "Cloud Build Account of project <b>%s</b> "
+    "Cortex Cloud Build Service Account in project <b>%s</b> "
     "will be given the following role assignments:\n"
     "    <b>%s</b> in project(s) <b>%s</b>\n"
     "    <b>%s</b> for BigQuery datasets above\n"

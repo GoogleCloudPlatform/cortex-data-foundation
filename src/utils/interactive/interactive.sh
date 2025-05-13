@@ -20,6 +20,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+CLOUD_BUILD_SA_ID="cortex-deployer"
 
 pushd "${SCRIPT_DIR}" 1> /dev/null
 echo -n "Please wait while we are checking dependencies..."
@@ -30,8 +31,9 @@ popd 1> /dev/null
 
 export PYTHONPATH=$$PYTHONPATH:${SCRIPT_DIR}:.
 pushd "${SCRIPT_DIR}/../../.." 1> /dev/null # Data Foundation root
-python3 "${SCRIPT_DIR}/main.py" "${1}" "${2}" "${3}"
+python3 "${SCRIPT_DIR}/main.py" "${1}" "${2}" "${3}" "--buildaccount" "${CLOUD_BUILD_SA_ID}"
 source_project=$(cat "config/config.json" | python3 -c "import json,sys; print(str(json.load(sys.stdin)['projectIdSource']))" 2>/dev/null || echo "")
 gcloud config set project "${source_project}"
-./deploy.sh
+cloud_build_sa_email="${CLOUD_BUILD_SA_ID}@${source_project}.iam.gserviceaccount.com"
+./deploy.sh --build-account "${cloud_build_sa_email}"
 popd 1> /dev/null

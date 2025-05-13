@@ -111,55 +111,53 @@ done
 
 validate_args
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 export SOURCE_PROJECT=$(cat ${CONFIG_FILE} | python3 -c "import json,sys; print(str(json.load(sys.stdin)['projectIdSource']))" 2>/dev/null || echo "")
 export TARGET_BUCKET=$(cat ${CONFIG_FILE} | python3 -c "import json,sys; print(str(json.load(sys.stdin)['targetBucket']))" 2>/dev/null || echo "")
-if [[ "${SOURCE_PROJECT}" == "" ]]
-then
-    echo "ERROR: projectIdSource value in config.json is empty."
-    exit 1
+if [[ "${SOURCE_PROJECT}" == "" ]]; then
+  echo "ERROR: projectIdSource value in config.json is empty."
+  exit 1
 fi
-if [[ "${TARGET_BUCKET}" == "" ]]
-then
-    echo "ERROR: targetBucket value in config.json is empty."
-    exit 1
+if [[ "${TARGET_BUCKET}" == "" ]]; then
+  echo "ERROR: targetBucket value in config.json is empty."
+  exit 1
 fi
 
-    declare -a _WORKER_POOL_OPTIONS
-    declare -a _REGION_PARAMETER
+declare -a _WORKER_POOL_OPTIONS
+declare -a _REGION_PARAMETER
 
-    if [[ -n "${_WORKER_POOL_NAME}" ]]; then
-      _WORKER_POOL_OPTIONS+=(",_WORKER_POOL_NAME=\"${_WORKER_POOL_NAME}\"")
-    fi
+if [[ -n "${_WORKER_POOL_NAME}" ]]; then
+  _WORKER_POOL_OPTIONS+=(",_WORKER_POOL_NAME=\"${_WORKER_POOL_NAME}\"")
+fi
 
-    if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
-      _WORKER_POOL_OPTIONS+=(",_CLOUD_BUILD_REGION=\"${_CLOUD_BUILD_REGION}\"")
-      _REGION_PARAMETER=(--region "${_CLOUD_BUILD_REGION}")
-    fi
+if [[ -n "${_CLOUD_BUILD_REGION}" ]]; then
+  _WORKER_POOL_OPTIONS+=(",_CLOUD_BUILD_REGION=\"${_CLOUD_BUILD_REGION}\"")
+  _REGION_PARAMETER=(--region "${_CLOUD_BUILD_REGION}")
+fi
 
-    if [[ -n "${_BUILD_ACCOUNT}" ]]; then
-      _WORKER_POOL_OPTIONS+=(",_BUILD_ACCOUNT=\"${_BUILD_ACCOUNT}\"")
-    fi
-
+if [[ -n "${_BUILD_ACCOUNT}" ]]; then
+  _WORKER_POOL_OPTIONS+=(",_BUILD_ACCOUNT=\"${_BUILD_ACCOUNT}\"")
+fi
 
 echo "Deploying Meridian"
 
 cp -f "${CONFIG_FILE}" "${SCRIPT_DIR}/config/config.json"
 set +e
+
 gcloud builds submit --project="${SOURCE_PROJECT}" \
-    --config="${SCRIPT_DIR}/cloudbuild.meridian.yaml" \
-    --substitutions \
-    _TGT_BUCKET="${TARGET_BUCKET}",_GCS_BUCKET="${GCS_LOGS_BUCKET}" "${_WORKER_POOL_OPTIONS[@]}" \
-    "${_REGION_PARAMETER[@]}" \
-    "${SCRIPT_DIR}"
+  --config="${SCRIPT_DIR}/cloudbuild.meridian.yaml" \
+  --substitutions \
+  _TGT_BUCKET="${TARGET_BUCKET}",_GCS_BUCKET="${GCS_LOGS_BUCKET}",_BUILD_ACCOUNT="${_BUILD_ACCOUNT}" \
+  "${_REGION_PARAMETER[@]}" \
+  "${SCRIPT_DIR}"
+
 _err=$?
 rm -f "${SCRIPT_DIR}/config/config.json"
 
-if [ $_err -ne 0 ]
-then
-    echo "Meridian deployment failed."
-    exit 1
+if [ $_err -ne 0 ]; then
+  echo "Meridian deployment failed."
+  exit 1
 fi
 
 echo "Meridian has been deployed."

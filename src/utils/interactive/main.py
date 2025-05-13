@@ -50,6 +50,8 @@ def _initialize_console_logging(message_only: bool = True,
             "%(asctime)s | %(levelname)s | %(message)s"
         debug (bool, optional): True if logging level must be set to DEBUG.
             It will be set to INFO otherwise. Defaults to False.
+        min_level (int, optional): Minimum logging level. 
+            Defaults to logging.INFO.
     """
     h_info_and_below = logging.StreamHandler(sys.stdout)
     h_info_and_below.setLevel(logging.DEBUG)
@@ -83,6 +85,13 @@ def main(args: typing.Sequence[str]) -> int:
         help="Default Google Cloud Project.",
         type=str,
         required=False,
+        default=""
+    )
+    parser.add_argument(
+        "--buildaccount",
+        help="Cloud Build Service Account.",
+        type=str,
+        required=True,
         default=""
     )
 
@@ -195,7 +204,7 @@ def main(args: typing.Sequence[str]) -> int:
 
         # Applying resource configuration
         print_formatted(f"\n\n🦄 Applying {DF_TITLE} Configuration 🦄\n")
-        result = apply_all(config)
+        result = apply_all(config, options.buildaccount)
         if result:
             print_formatted("🦄 Done! 🦄\n", bold=True)
         return 0 if result else 1

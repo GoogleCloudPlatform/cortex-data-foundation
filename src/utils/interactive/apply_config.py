@@ -14,59 +14,78 @@
 """Resource Configuration execution routines"""
 
 import logging
+import time
 import typing
 
-from google.api_core import retry
-from google.api_core.exceptions import Conflict
-from google.api_core.exceptions import Forbidden
-from google.api_core.exceptions import Unauthorized
-from google import auth as gauth
-from google.auth.transport import requests
-from google.cloud import bigquery
-from google.cloud import storage
-from google.cloud.bigquery.enums import EntityTypes
 import googleapiclient.discovery
+from google.api_core.exceptions import (Conflict, Forbidden,
+                                        GoogleAPICallError, NotFound,
+                                        Unauthorized)
+from google.cloud import bigquery, iam_admin_v1, storage
+from google.cloud.bigquery.enums import EntityTypes
+from google.cloud.iam_admin_v1 import types
 from googleapiclient.errors import HttpError
 
 _RETRY_TIMEOUT_SEC = 60.0  # Timeout for API retries
 SOURCE_PROJECT_APIS = [
-    "cloudresourcemanager", "storage-component", "bigquery", "cloudbuild"
+    "cloudresourcemanager", "storage-component", "bigquery", "cloudbuild",
+    "datacatalog", "iam"
 ]
 TARGET_PROJECT_APIS = ["storage-component", "bigquery"]
 PROJECT_ROLES = [
     "roles/bigquery.user", "roles/cloudbuild.builds.builder",
-    "roles/iam.serviceAccountUser"
+    "roles/iam.serviceAccountUser", "roles/logging.logWriter"
 ]
 
 
-@retry.Retry(predicate=retry.if_exception_type(KeyError, HttpError),
-             timeout=_RETRY_TIMEOUT_SEC)
-def get_cloud_build_account(project_id: str) -> str:
+def create_cloud_build_account(cloud_build_sa_id: str, project_id: str) -> str:
     """
-    Retrieves GCP project Cloud Build account principal by project name/id.
-
-    Since this gets called soon after the Cloud Build API is enabled,
-    the @retry.Retry dectorator is called to ensure the API is available before
-    this function proceeds with retrieving the serivce account.
+    Create the Cloud Build SA in the project (check first whether it 
+    already exists)
 
     Args:
-        project_id (str): project id
-
+        cloud_build_sa_id (str): Cloud Build SA id
+        project_id (str): Project id
+        
     Returns:
-        str: Cloud Build account principal
+        str: Cloud Build account email
     """
+    iam_admin_client = iam_admin_v1.IAMClient()
+    get_request = types.GetServiceAccountRequest()
+    get_request.name = (f"projects/{project_id}/serviceAccounts/" +
+        f"{cloud_build_sa_id}@{project_id}.iam.gserviceaccount.com")
+    try:
+        service_account = iam_admin_client.get_service_account(
+            request=get_request)
+        logging.info("Service account found: '%s'", service_account.email)
+        return service_account.email
+    except NotFound:
+        logging.info("Service account '%s' not found in project '%s'."+
+                     " Creating...", cloud_build_sa_id, project_id)
+        create_request = types.CreateServiceAccountRequest()
 
-    # Get default Cloud Build account
-    cloudbuild_account_url = (
-        "https://cloudbuild.googleapis.com/v1/projects/"
-        f"{project_id}/locations/global/defaultServiceAccount")
+        create_request.account_id = cloud_build_sa_id
+        create_request.name = f"projects/{project_id}"
 
-    credentials, _ = gauth.default(quota_project_id=project_id)
-    session = requests.AuthorizedSession(credentials)
-    response_json = session.get(cloudbuild_account_url).json()
-    sa_email = response_json["serviceAccountEmail"]
+        service_account = types.ServiceAccount()
+        service_account.display_name = "Cortex Deployer"
+        create_request.service_account = service_account
 
-    return sa_email.split("/")[-1]
+        try:
+            account = iam_admin_client.create_service_account(
+                request=create_request)
+            time.sleep(10)
+            return account.email
+        except GoogleAPICallError as e:
+            logging.info(
+                "Error creating service account '%s' in project '%s': %s",
+                cloud_build_sa_id, project_id, e)
+            return None
+    except GoogleAPICallError as e:
+        logging.info(
+            "An API error occurred while checking for existing"+
+            " service account: %s", e)
+        return None
 
 
 def add_bq_roles(client: bigquery.Client, dataset: bigquery.Dataset,
@@ -93,9 +112,9 @@ def add_bq_roles(client: bigquery.Client, dataset: bigquery.Dataset,
         elif role == "roles/bigquery.dataOwner":
             all_role_names.append("OWNER")
         for entry in entries:
-            if (entry.entity_id in [
-                    service_account, f"serviceAccount:{service_account}"
-            ] and entry.role in all_role_names):
+            if (entry.entity_id
+                    in [service_account, f"serviceAccount:{service_account}"]
+                    and entry.role in all_role_names):
                 found = True
                 break
         if not found:
@@ -148,7 +167,10 @@ def add_project_roles(project_id: str, service_account: str,
                     role_binding = binding
                     break
             if not role_binding:
-                role_binding = {"role": role, "members": [service_account_name]}
+                role_binding = {
+                    "role": role,
+                    "members": [service_account_name]
+                }
                 modified = True
                 policy["bindings"].append(role_binding)
             else:
@@ -238,7 +260,10 @@ def add_bucket_roles(client: storage.Client, bucket: storage.Bucket,
                     role_binding = binding
                     break
             if not role_binding:
-                role_binding = {"role": role, "members": [service_account_name]}
+                role_binding = {
+                    "role": role,
+                    "members": [service_account_name]
+                }
                 modified = True
                 bindings.append(role_binding)
             else:
@@ -278,10 +303,12 @@ def enable_apis(project_id: str, apis: typing.List[str]):
             client.services().enable(
                 name=f"projects/{project_id}/services/{api_name}").execute()
 
-        logging.info("\t%s API is enabled in project %s.", api_name, project_id)
+        logging.info("\t%s API is enabled in project %s.", api_name,
+                     project_id)
 
 
-def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
+def apply_all(config: typing.Dict[str, typing.Any],
+              cloud_build_sa_id: str) -> bool:
     """Applies Cortex Data Foundation configuration changes:
         * enables APIs
         * adds necessary role bindings on projects for Cloud Build account
@@ -292,6 +319,7 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
 
     Args:
         config (typing.Dict[str, typing.Any]): Data Foundation config dictionary
+        cloud_build_sa_id (str): Cloud Build SA id
 
     Returns:
         bool: True if configuration was successful, False otherwise.
@@ -305,7 +333,8 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
         try:
             enable_apis(source_project, SOURCE_PROJECT_APIS)
         except HttpError as ex:
-            if ex.status_code == 400 and "billing account" in ex.reason.lower():
+            if ex.status_code == 400 and "billing account" in ex.reason.lower(
+            ):
                 logging.critical(("Project %s doesn't have "
                                   "a Billing Account linked to it."),
                                  source_project)
@@ -317,8 +346,8 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
                 logging.info("Enabling APIs in %s.", target_project)
                 enable_apis(target_project, TARGET_PROJECT_APIS)
             except HttpError as ex:
-                if (ex.status_code == 400 and
-                        "billing account" in ex.reason.lower()):
+                if (ex.status_code == 400
+                        and "billing account" in ex.reason.lower()):
                     logging.critical(("Project %s doesn't have "
                                       "a Billing Account linked to it."),
                                      source_project)
@@ -326,7 +355,9 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
                 else:
                     raise
 
-        cloud_build_account = get_cloud_build_account(source_project)
+        logging.info("Creating Cloud Build account %s.", cloud_build_sa_id)
+        cloud_build_account = create_cloud_build_account(
+            cloud_build_sa_id, source_project)
         logging.info("Using Cloud Build account %s.", cloud_build_account)
 
         # Add project-wide role binding for Cloud Build account
@@ -366,10 +397,9 @@ def apply_all(config: typing.Dict[str, typing.Any]) -> bool:
             if config["marketing"].get("deployGA4"):
                 dataset_dicts.append({
                     "cdc":
-                        config["marketing"]["GA4"]["datasets"]["cdc"][0]
-                        ["name"],
+                    config["marketing"]["GA4"]["datasets"]["cdc"][0]["name"],
                     "reporting":
-                        config["marketing"]["GA4"]["datasets"]["reporting"]
+                    config["marketing"]["GA4"]["datasets"]["reporting"]
                 })
         for dataset_dict in dataset_dicts:
             for ds in dataset_dict.items():

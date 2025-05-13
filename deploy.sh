@@ -17,32 +17,56 @@
 # Exit on error.
 set -e
 
-log_bucket=$1
+build_account=""
+log_bucket=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --build-account)
+        build_account="$2"
+        shift 2
+        ;;
+    --gcs-logs-bucket)
+        log_bucket="$2"
+        shift 2
+        ;;
+    *)
+        # Handle other arguments or flags if needed
+        echo "Unknown option: $1" >&2
+        shift
+        ;;
+    esac
+done
+
 echo "Deploying Cortex Data Foundation."
 
 cloud_build_project=$(cat "config/config.json" | python3 -c "import json,sys; print(str(json.load(sys.stdin)['projectIdSource']))" 2>/dev/null || echo "")
-if [[ "${cloud_build_project}" == "" ]]
-then
-    echo "ERROR: Cortex Data Foundation is not configured."
-    echo "Please read https://github.com/GoogleCloudPlatform/cortex-data-foundation/blob/main/README.md"
+if [[ "${cloud_build_project}" == "" ]]; then
+    echo "ERROR: Cortex Data Foundation source project is not configured."
+    echo "Please read https://cloud.google.com/cortex/docs/deployment-prerequisites"
     exit 1
 fi
+
 echo "Using Cloud Build in project '${cloud_build_project}'"
 
-if [[ "${log_bucket}" == "" ]]
-then
+if [[ "${log_bucket}" == "" ]]; then
     _GCS_BUCKET="${cloud_build_project}_cloudbuild"
 else
     _GCS_BUCKET="${log_bucket}"
 fi
+
 echo "Using logs bucket ${_GCS_BUCKET}"
+
+echo "Ensuring ${build_account} has access to bucket ${_GCS_BUCKET}"
+
+gcloud storage buckets add-iam-policy-binding gs://"${_GCS_BUCKET}" --member=serviceAccount:"${build_account}" --role=roles/storage.objectUser
 
 set +e
 echo -e "\n\033[0;32m\033[1mPlease wait while Data Foundation is being deployed...\033[0m\n"
 gcloud builds submit --config=cloudbuild.yaml --suppress-logs \
     --project "${cloud_build_project}" \
-    --substitutions=_GCS_BUCKET="${_GCS_BUCKET}" . \
-    && _SUCCESS="true"
+    --substitutions=_GCS_BUCKET="${_GCS_BUCKET}",_BUILD_ACCOUNT="projects/${cloud_build_project}/serviceAccounts/${build_account}" . &&
+    _SUCCESS="true"
 if [[ "${_SUCCESS}" != "true" ]]; then
     echo -e "\n🛑 Data Foundation deployment has failed. 🛑"
     exit 1

@@ -174,31 +174,61 @@ fi
 
 fancy_echo_done "Done creating Service Account"
 
+# Create Cloud Build SA
+
+fancy_echo_start "Creating Cortex Deployer Service Account for Cloud Build"
+
+# Define the service account ID
+CLOUD_BUILD_SERVICE_ACCOUNT_ID="cortex-deployer"
+
+# Define the full service account email
+CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL="${CLOUD_BUILD_SERVICE_ACCOUNT_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+# Check if the service account exists
+if gcloud iam service-accounts list \
+    --project="$PROJECT_ID" \
+    --filter="email:${CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL}" \
+    --format="value(email)" |
+grep -q "${CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL}"; then
+    fancy_sub_echo "Service account '${CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL}' already exists skipping create 🔐"
+else
+    fancy_sub_echo "Creating service account '${CLOUD_BUILD_SERVICE_ACCOUNT_ID}'..."
+    gcloud iam service-accounts create "${CLOUD_BUILD_SERVICE_ACCOUNT_ID}" --project="$PROJECT_ID" \
+        --description="Cortex Deployer Service Account" \
+        --display-name="Cortex Deployer"
+    if [ $? -eq 0 ]; then
+        fancy_sub_echo "Service account '${CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL}' created successfully 🔐"
+    else
+        fancy_error_echo "Error creating service account '${CLOUD_BUILD_SERVICE_ACCOUNT_ID}' 🔐"
+        exit 1
+    fi
+fi
+
+fancy_echo_done "Done creating Service Account"
+
 # IAM roles assignments
 
-fancy_echo_start "Assigning IAM roles to Cloud Build Default Service Account & Meridian Colab Runner Service Account"
+fancy_echo_start "Assigning IAM roles to Cloud Build Service Account & Meridian Colab Runner Service Account"
 
 CLOUD_BUILD_ROLES=('roles/aiplatform.colabEnterpriseAdmin'
     'roles/storage.objectUser' 'roles/workflows.editor' 'roles/bigquery.jobUser'
-    'roles/bigquery.dataEditor' 'roles/iam.serviceAccountUser')
-
-# Get cloud build service account email
-CLOUD_BUILD_SA=$(gcloud builds get-default-service-account --project="$PROJECT_ID" --format='value(serviceAccountEmail)' | sed 's|.*/||')
-
+    'roles/bigquery.dataEditor' 'roles/iam.serviceAccountUser' 'roles/logging.logWriter' 
+    'roles/cloudbuild.builds.builder')
+	
 for role in "${CLOUD_BUILD_ROLES[@]}"; do
-    fancy_sub_echo "Assigning role: $role to $CLOUD_BUILD_SA 🔑"
+    fancy_sub_echo "Assigning role: $role to $CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL 🔑"
     gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-        --member="serviceAccount:$CLOUD_BUILD_SA" \
+        --member="serviceAccount:$CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL" \
         --role="$role" \
         --condition=None \
         --no-user-output-enabled
     if [ $? -ne 0 ]; then
-        fancy_error_echo "Error assigning role '$role' to service account '$CLOUD_BUILD_SA'"
+        fancy_error_echo "Error assigning role '$role' to service account '$CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL'"
         exit 1
     fi
 done
 
-fancy_sub_echo "Done assigning roles to service account '$CLOUD_BUILD_SA'"
+fancy_sub_echo "Done assigning roles to service account '$CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL'"
 
 MERIDIAN_RUNNER_ROLES=('roles/bigquery.dataViewer' 'roles/bigquery.jobUser'
     'roles/bigquery.readSessionUser' 'roles/cloudbuild.builds.editor'
@@ -317,7 +347,7 @@ fancy_sub_echo "Deploying Cortex Data Foundation via Cloud Build👷"
 
 source_project=$(cat "config/config.json" | python3 -c "import json,sys; print(str(json.load(sys.stdin)['projectIdSource']))" 2>/dev/null || echo "")
 gcloud config set project "${source_project}"
-./deploy.sh
+./deploy.sh --build-account "$CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL"
 popd 1>/dev/null
 
 fancy_echo_done "Done Cortex Data Foundation was deployed via Cloud Build"
