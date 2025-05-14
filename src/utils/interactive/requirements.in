@@ -4,3 +4,4 @@ google-cloud-bigquery==3.11.*
 google-cloud-storage==2.9.*
 google-cloud-resource-manager==1.10.*
 google-api-python-client==2.89.*
+google-cloud-iam==2.19.*
