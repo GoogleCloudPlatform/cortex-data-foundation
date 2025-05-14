@@ -57,9 +57,14 @@ fi
 
 echo "Using logs bucket ${_GCS_BUCKET}"
 
-echo "Ensuring ${build_account} has access to bucket ${_GCS_BUCKET}"
-
-gcloud storage buckets add-iam-policy-binding gs://"${_GCS_BUCKET}" --member=serviceAccount:"${build_account}" --role=roles/storage.objectUser
+# Check if bucket already created and exist e.g. if Cloud Build has been used before in the project.
+# If it does not exist Cloud Build might not have been called before and the bucket will be created
+# with correct permissions
+if gcloud storage buckets describe "${_GCS_BUCKET}" --project="$cloud_build_project" >/dev/null 2>&1; then
+    # Bucket exists we can go ahead and set policy binding
+    echo "Ensuring ${build_account} has access to bucket ${_GCS_BUCKET}"
+    gcloud storage buckets add-iam-policy-binding gs://"${_GCS_BUCKET}" --member=serviceAccount:"${build_account}" --role=roles/storage.objectUser
+fi
 
 set +e
 echo -e "\n\033[0;32m\033[1mPlease wait while Data Foundation is being deployed...\033[0m\n"
