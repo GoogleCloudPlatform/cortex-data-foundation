@@ -34,7 +34,7 @@ SELECT
   SUM(vbap.CumulativeOrderQuantity_KWMENG) AS SalesQty,
   SUM(vbap.NetPrice_NETWR) AS NetPrice,
   (SUM(vbap.CumulativeOrderQuantity_KWMENG) - SO.DeliveredQty) AS PendingDelivery
-FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SalesOrders` AS vbap
+FROM `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.SalesOrders_V2` AS vbap
 LEFT OUTER JOIN
   SO
   ON

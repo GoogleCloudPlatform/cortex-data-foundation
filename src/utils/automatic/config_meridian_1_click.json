@@ -110,7 +110,7 @@
         }
     },
     "marketing": {
-        "deployGoogleAds": true,
+        "deployGoogleAds": false,
         "deployCM360": false,
         "deployTikTok": true,
         "deployLiveRamp": false,

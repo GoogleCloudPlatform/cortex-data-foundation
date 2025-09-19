@@ -1,4 +1,4 @@
-(WITH t6_out AS (
+(WITH t6_out AS ( --noqa: disable=all
     SELECT
       t6_out.mandt,
       t6_out.msehi,
@@ -8,8 +8,6 @@
       t6_out.addko,
       cast(t6_out.exp10 AS INT64) AS exp10
     FROM `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.t006` AS t6_out
-    LEFT OUTER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.t006` AS t6_in
-      ON T6_out.mandt = t6_in.mandt
     WHERE T6_out.MSEHI = unit_out
       AND t6_out.mandt = mandt_in
   ),

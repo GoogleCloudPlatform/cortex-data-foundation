@@ -42,5 +42,6 @@ INNER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.cepct` AS CEPCT
   ON CEPC.MANDT = CEPCT.MANDT
     AND CEPC.PRCTR = CEPCT.PRCTR
     AND CEPC.DATBI = CEPCT.DATBI AND CEPC.KOKRS = CEPCT.KOKRS -- noqa: disable=L030
-WHERE cast(CEPC.DATAB AS STRING) <= concat( cast(extract( YEAR FROM current_date())AS STRING), cast(extract( MONTH FROM current_date())AS STRING), cast(extract( DAY FROM current_date())AS STRING) )
-  AND cast(CEPC.DATBI AS STRING) >= concat( cast(extract( YEAR FROM current_date())AS STRING), cast(extract( MONTH FROM current_date())AS STRING), cast(extract( DAY FROM current_date())AS STRING) )
+WHERE
+  CEPC.DATBI >= CURRENT_DATE()
+  AND CEPC.DATAB <= CURRENT_DATE()

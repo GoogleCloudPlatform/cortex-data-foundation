@@ -1,41 +1,5 @@
 (
   WITH
-    TCURX AS (
-      SELECT DISTINCT
-        CURRKEY,
-        CAST(POWER(10, 2 - COALESCE(CURRDEC, 0)) AS NUMERIC) AS CURRENCY_FIX
-      FROM
-        `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.tcurx`
-    ),
-
-    CONV AS (
-      -- This table is used to convert rates from the transaction currency to USD.
-      SELECT DISTINCT
-        mandt,
-        fcurr,
-        tcurr,
-        ukurs,
-        PARSE_DATE('%Y%m%d', CAST(99999999 - CAST(gdatu AS INT64) AS STRING)) AS gdatu
-      FROM `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.tcurr`
-      WHERE
-        mandt = '{{ mandt_s4 }}'
-        AND kurst = 'M' -- Daily Corporate Rate
-        AND tcurr IN UNNEST({{ sap_currencies }}) -- Convert to USD
-
-      UNION ALL
-      ## CORTEX-CUSTOMER replace USD below or add currencies as UNION clauses
-      -- USD to USD rates do not exist in TCURR (or any other rates that are same-to-
-      -- same such as EUR to EUR / JPY to JPY etc.
-      SELECT
-        '{{ mandt_s4 }}' AS mandt,
-        'USD' AS fcurr,
-        'USD' AS tcurr,
-        1 AS ukurs,
-        date_array AS gdatu
-      FROM
-        UNNEST(GENERATE_DATE_ARRAY('1990-01-01', '2060-12-31')) AS date_array
-    ),
-
     EKKN AS (
       SELECT
         EKKN.* EXCEPT (netwr),
@@ -571,7 +535,6 @@
     EKKN.PAOBJNR AS ProfitabilitySegmentNumber_PAOBJNR,
     EKKN.PRCTR AS ProfitCenter_PRCTR,
     EKKN.PS_PSP_PNR AS WBS_PS_PSP_PNR,
-    --   SKAT.txt50 AS GlAccountDesc_TXT50,
     EKKN.NPLNR AS NetworkNumber_NPLNR,
     EKKN.AUFPL AS Routingnumber_AUFPL,
     EKKN.IMKEY AS InternalKey_IMKEY,
@@ -606,38 +569,53 @@
       WHEN EKKO.FRGZU = '14' THEN 'In Preparation'
       ELSE CAST(NULL AS STRING)
     END AS ReleaseStatusDesc_FRGZU,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. A similar
+    -- column called "TargetCurrency_TCURR" will be part of the optional code block further down.
+    CONV.TCURR AS TargetCurrency_Conv_TCURR,
+    COALESCE(EKPO.NETPR * currency_decimal.CURRFIX, EKPO.NETPR) AS NetPrice_NETPR,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN COALESCE(EKPO.NETPR * currency_decimal.CURRFIX, EKPO.NETPR) * CONV.UKURS
+      ELSE NULL
+    END AS NetPriceUSD_NETPR,
     COALESCE(
-      EKPO.NETPR * TCURX.currency_fix,
-      EKPO.NETPR
-    ) AS NetPrice_NETPR,
-    COALESCE(
-      EKPO.NETPR * TCURX.currency_fix,
-      EKPO.NETPR
-    ) * CONV.UKURS AS NetPriceUSD_NETPR,
-    COALESCE(
-      EKKN.NETWR * TCURX.currency_fix,
+      EKKN.NETWR * currency_decimal.CURRFIX,
       EKKN.NETWR,
-      EKPO.NETWR * TCURX.currency_fix,
+      EKPO.NETWR * currency_decimal.CURRFIX,
       EKPO.NETWR
     ) AS NetOrderValueinPOCurrency_NETWR,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN COALESCE(
+            EKKN.NETWR * currency_decimal.CURRFIX,
+            EKKN.NETWR,
+            EKPO.NETWR * currency_decimal.CURRFIX,
+            EKPO.NETWR
+          ) * CONV.UKURS
+      ELSE NULL
+    END AS NetOrderValueinPOCurrencyUSD_NETWR,
     COALESCE(
-      EKKN.NETWR * TCURX.currency_fix,
-      EKKN.NETWR,
-      EKPO.NETWR * TCURX.currency_fix,
-      EKPO.NETWR
-    ) * CONV.UKURS AS NetOrderValueinPOCurrencyUSD_NETWR,
-    COALESCE(
-      EKKN.BRTWR * TCURX.currency_fix,
+      EKKN.BRTWR * currency_decimal.CURRFIX,
       EKKN.BRTWR,
-      EKPO.BRTWR * TCURX.currency_fix,
+      EKPO.BRTWR * currency_decimal.CURRFIX,
       EKPO.BRTWR
     ) AS GrossordervalueinPOcurrency_BRTWR,
-    COALESCE(
-      EKKN.BRTWR * TCURX.currency_fix,
-      EKKN.BRTWR,
-      EKPO.BRTWR * TCURX.currency_fix,
-      EKPO.BRTWR
-    ) * CONV.UKURS AS GrossordervalueinPOcurrencyUSD_BRTWR,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN COALESCE(
+            EKKN.BRTWR * currency_decimal.CURRFIX,
+            EKKN.BRTWR,
+            EKPO.BRTWR * currency_decimal.CURRFIX,
+            EKPO.BRTWR
+          ) * CONV.UKURS
+      ELSE NULL
+    END AS GrossordervalueinPOcurrencyUSD_BRTWR,
     CASE
       WHEN EKPO.PSTYP = '0' THEN 'Standard'
       WHEN EKPO.PSTYP = '1' THEN 'Limit'
@@ -673,88 +651,153 @@
       ELSE CAST(NULL AS STRING)
     END AS PurchasingDocumentCategoryDesc_BSTYP,
     COALESCE(
-      EKKN.EFFWR * TCURX.currency_fix,
+      EKKN.EFFWR * currency_decimal.CURRFIX,
       EKKN.EFFWR,
-      EKPO.EFFWR * TCURX.currency_fix,
+      EKPO.EFFWR * currency_decimal.CURRFIX,
       EKPO.EFFWR
     ) AS Effectivevalueofitem_EFFWR,
-    --   GoodsReceipt.WRBTR AS GrAmount_WRBTR,
-    COALESCE(
-      EKKN.EFFWR * TCURX.currency_fix,
-      EKKN.EFFWR,
-      EKPO.EFFWR * TCURX.currency_fix,
-      EKPO.EFFWR
-    ) * CONV.UKURS AS EffectivevalueofitemUSD_EFFWR,
-    COALESCE(EKPO.BONBA * TCURX.currency_fix, EKPO.BONBA) AS Rebatebasis1_BONBA,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN COALESCE(
+            EKKN.EFFWR * currency_decimal.CURRFIX,
+            EKKN.EFFWR,
+            EKPO.EFFWR * currency_decimal.CURRFIX,
+            EKPO.EFFWR
+          ) * CONV.UKURS
+      ELSE NULL
+    END AS EffectivevalueofitemUSD_EFFWR,
     COALESCE(EKPO.MENGE, 0) - COALESCE(GoodsReceipt.MENGE, 0) AS GrBalanceQuantity_MENGE,
-    COALESCE(GoodsReceipt.WRBTR * TCURX.currency_fix, GoodsReceipt.WRBTR) AS GrAmount_WRBTR,
-    COALESCE(GoodsReceipt.WRBTR * TCURX.currency_fix, GoodsReceipt.WRBTR) * CONV.UKURS AS GrAmountUSD_WRBTR,
+    COALESCE(GoodsReceipt.WRBTR * currency_decimal.CURRFIX, GoodsReceipt.WRBTR) AS GrAmount_WRBTR,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN COALESCE(
+            GoodsReceipt.WRBTR * currency_decimal.CURRFIX, GoodsReceipt.WRBTR
+          ) * CONV.UKURS
+      ELSE NULL
+    END AS GrAmountUSD_WRBTR,
     COALESCE(
-      COALESCE(
-        EKKN.NETWR * TCURX.currency_fix,
-        EKKN.NETWR,
-        EKPO.NETWR * TCURX.currency_fix,
-        EKPO.NETWR
-      ), 0
-    )
-    -
-    COALESCE(
-      COALESCE(
-        GoodsReceipt.WRBTR * TCURX.currency_fix,
-        GoodsReceipt.WRBTR
-      ), 0
+      EKKN.NETWR * currency_decimal.CURRFIX,
+      EKKN.NETWR,
+      EKPO.NETWR * currency_decimal.CURRFIX,
+      EKPO.NETWR,
+      0
+    ) - COALESCE(
+      GoodsReceipt.WRBTR * currency_decimal.CURRFIX, GoodsReceipt.WRBTR, 0
     ) AS GrBalanceAmount_NETWR_WRBTR,
-    (
-      COALESCE(
-        COALESCE(
-          EKKN.NETWR * TCURX.currency_fix,
-          EKKN.NETWR,
-          EKPO.NETWR * TCURX.currency_fix,
-          EKPO.NETWR
-        ), 0
-      )
-      -
-      COALESCE(
-        COALESCE(
-          GoodsReceipt.WRBTR * TCURX.currency_fix,
-          GoodsReceipt.WRBTR
-        ), 0
-      )
-    ) * CONV.UKURS AS GrBalanceAmountUSD_NETWR_WRBTR,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN (
+          COALESCE(
+            EKKN.NETWR * currency_decimal.CURRFIX,
+            EKKN.NETWR,
+            EKPO.NETWR * currency_decimal.CURRFIX,
+            EKPO.NETWR,
+            0
+          ) - COALESCE(
+            GoodsReceipt.WRBTR * currency_decimal.CURRFIX, GoodsReceipt.WRBTR, 0
+          )
+        ) * CONV.UKURS
+      ELSE NULL
+    END AS GrBalanceAmountUSD_NETWR_WRBTR,
     COALESCE(EKPO.MENGE, 0) - COALESCE(InvoiceReceipt.MENGE, 0) AS IrBalanceQuantity_MENGE,
-    --   InvoiceReceipt.REFWR AS IrAmount_REFWR,
-    COALESCE(InvoiceReceipt.REFWR * TCURX.currency_fix, InvoiceReceipt.REFWR) AS IrAmount_REFWR,
-    COALESCE(InvoiceReceipt.REFWR * TCURX.currency_fix, InvoiceReceipt.REFWR) * CONV.UKURS AS IrAmountUSD_REFWR,
     COALESCE(
-      COALESCE(
-        EKKN.NETWR * TCURX.currency_fix,
-        EKKN.NETWR,
-        EKPO.NETWR * TCURX.currency_fix,
-        EKPO.NETWR
-      ), 0
-    )
-    -
+      InvoiceReceipt.REFWR * currency_decimal.CURRFIX,
+      InvoiceReceipt.REFWR
+    ) AS IrAmount_REFWR,
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN COALESCE(
+            InvoiceReceipt.REFWR * currency_decimal.CURRFIX, InvoiceReceipt.REFWR
+          ) * CONV.UKURS
+      ELSE NULL
+    END AS IrAmountUSD_REFWR,
     COALESCE(
-      COALESCE(
-        InvoiceReceipt.REFWR * TCURX.currency_fix,
-        InvoiceReceipt.REFWR
-      ), 0
+      EKKN.NETWR * currency_decimal.CURRFIX,
+      EKKN.NETWR,
+      EKPO.NETWR * currency_decimal.CURRFIX,
+      EKPO.NETWR,
+      0
+    ) - COALESCE(
+      InvoiceReceipt.REFWR * currency_decimal.CURRFIX, InvoiceReceipt.REFWR, 0
     ) AS IrBalanceAmount_NETWR_REFWR,
-    (COALESCE(
-      COALESCE(
-        EKKN.NETWR * TCURX.currency_fix,
-        EKKN.NETWR,
-        EKPO.NETWR * TCURX.currency_fix,
-        EKPO.NETWR
-      ), 0
-    )
-    -
-    COALESCE(
-      COALESCE(
-        InvoiceReceipt.REFWR * TCURX.currency_fix,
-        InvoiceReceipt.REFWR
-      ), 0
-    )) * CONV.UKURS AS IrBalanceAmountUSD_NETWR_REFWR
+    --##CORTEX-CUSTOMER This column will become obsolete and removed in a future release. It will be
+    -- replaced by a column with "InTargetCurrency" instead of "USD" (see code block further down).
+    CASE
+      WHEN CONV.TCURR = 'USD'
+        THEN (
+          COALESCE(
+            EKKN.NETWR * currency_decimal.CURRFIX,
+            EKKN.NETWR,
+            EKPO.NETWR * currency_decimal.CURRFIX,
+            EKPO.NETWR,
+            0
+          ) - COALESCE(
+            InvoiceReceipt.REFWR * currency_decimal.CURRFIX, InvoiceReceipt.REFWR, 0
+          )
+        ) * CONV.UKURS
+      ELSE NULL
+    END AS IrBalanceAmountUSD_NETWR_REFWR,
+    --##CORTEX-CUSTOMER If you prefer to use currency conversion, uncomment below
+    --currency_conversion.UKURS AS ExchangeRateTargetCurrency_UKURS,
+    --currency_conversion.conv_date AS Conversion_date,
+    --currency_conversion.TCURR AS TargetCurrency_TCURR,
+    -- COALESCE(
+    --   EKPO.NETPR * currency_decimal.CURRFIX,
+    --   EKPO.NETPR
+    -- ) * currency_conversion.UKURS AS NetPriceInTargetCurrency_NETPR,
+    -- COALESCE(
+    --   EKKN.NETWR * currency_decimal.CURRFIX,
+    --   EKKN.NETWR,
+    --   EKPO.NETWR * currency_decimal.CURRFIX,
+    --   EKPO.NETWR
+    -- ) * currency_conversion.UKURS AS NetOrderValueInTargetCurrency_NETWR,
+    -- COALESCE(
+    --   EKKN.BRTWR * currency_decimal.CURRFIX,
+    --   EKKN.BRTWR,
+    --   EKPO.BRTWR * currency_decimal.CURRFIX,
+    --   EKPO.BRTWR
+    -- ) * currency_conversion.UKURS AS GrossOrderValueInTargetCurrency_BRTWR,
+    -- COALESCE(
+    --   EKKN.EFFWR * currency_decimal.CURRFIX,
+    --   EKKN.EFFWR,
+    --   EKPO.EFFWR * currency_decimal.CURRFIX,
+    --   EKPO.EFFWR
+    -- ) * currency_conversion.UKURS AS EffectiveValueOfItemInTargetCurrency_EFFWR,
+    -- COALESCE(
+    --   GoodsReceipt.WRBTR * currency_decimal.CURRFIX,
+    --   GoodsReceipt.WRBTR
+    -- ) * currency_conversion.UKURS AS GrAmountInTargetCurrency_WRBTR,
+    -- (COALESCE(
+    --   EKKN.NETWR * currency_decimal.CURRFIX,
+    --   EKKN.NETWR,
+    --   EKPO.NETWR * currency_decimal.CURRFIX,
+    --   EKPO.NETWR,
+    --   0
+    -- ) - COALESCE(
+    --   GoodsReceipt.WRBTR * currency_decimal.CURRFIX, GoodsReceipt.WRBTR, 0
+    -- )) * currency_conversion.UKURS AS GrBalanceAmountInTargetCurrency_NETWR_WRBTR,
+    -- COALESCE(
+    --   InvoiceReceipt.REFWR * currency_decimal.CURRFIX,
+    --   InvoiceReceipt.REFWR
+    -- ) * currency_conversion.UKURS AS IrAmountInTargetCurrency_REFWR,
+    -- (COALESCE(
+    --   EKKN.NETWR * currency_decimal.CURRFIX,
+    --   EKKN.NETWR,
+    --   EKPO.NETWR * currency_decimal.CURRFIX,
+    --   EKPO.NETWR,
+    --   0
+    -- ) - COALESCE(
+    --   InvoiceReceipt.REFWR * currency_decimal.CURRFIX, InvoiceReceipt.REFWR, 0
+    -- )) * currency_conversion.UKURS AS IrBalanceAmountInTargetCurrency_NETWR_REFWR,
+    COALESCE(EKPO.BONBA * currency_decimal.CURRFIX, EKPO.BONBA) AS Rebatebasis1_BONBA
   FROM `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.ekko` AS EKKO
   LEFT JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.ekpo` AS EKPO
     ON
@@ -765,6 +808,18 @@
       EKPO.MANDT = EKKN.MANDT
       AND EKPO.EBELN = EKKN.EBELN
       AND EKPO.EBELP = EKKN.EBELP
+  -- Correction on decimal misplacement
+  LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS currency_decimal
+    ON EKKO.WAERS = currency_decimal.CURRKEY
+  --##CORTEX-CUSTOMER If you prefer to use currency conversion, uncomment below
+  -- LEFT JOIN
+  --   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_conversion` AS currency_conversion
+  --   ON EKKO.MANDT = currency_conversion.MANDT
+  --     AND EKKO.WAERS = currency_conversion.FCURR
+  --     AND CAST(EKKO.AEDAT AS DATE) = currency_conversion.conv_date
+  --     AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
+  -- ##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
+  --     AND currency_conversion.KURST = 'M'
 
   -- BI Enhancement to GR & IR Domains
   LEFT JOIN GoodsReceipt
@@ -772,18 +827,20 @@
       EKKO.MANDT = GoodsReceipt.MANDT
       AND EKKO.EBELN = GoodsReceipt.EBELN
       AND EKPO.EBELP = GoodsReceipt.EBELP
-      AND COALESCE(EKKN.ZEKKN, '00') = GoodsReceipt.ZEKKN
   LEFT JOIN InvoiceReceipt
     ON
       EKKO.MANDT = InvoiceReceipt.MANDT
       AND EKKO.EBELN = InvoiceReceipt.EBELN
       AND EKPO.EBELP = InvoiceReceipt.EBELP
       AND COALESCE(EKKN.ZEKKN, '00') = InvoiceReceipt.ZEKKN
-  -- Correction on decimal misplacement
-  LEFT JOIN TCURX
-    ON EKKO.WAERS = TCURX.CURRKEY
-  LEFT JOIN CONV
+  --##CORTEX-CUSTOMER This JOIN will become obsolete and removed in a future release. It will be
+  -- replaced by the optional JOIN with the alias "currency_conversion" (see code block above).
+  LEFT JOIN
+    `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_conversion` AS CONV
     ON EKKO.MANDT = CONV.MANDT
       AND EKKO.WAERS = CONV.FCURR
-      AND CAST(EKKO.aedat AS DATE) = CONV.GDATU
+      AND CAST(EKKO.aedat AS DATE) = CONV.conv_date
+      AND CONV.TCURR IN UNNEST({{ sap_currencies }})
+      -- ##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
+      AND CONV.KURST = 'M'
 )

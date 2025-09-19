@@ -1,355 +1,356 @@
-WITH BSEG AS (
-  -------------------------------------------------------------------------
-  -- Subquery to flip "debit/credit" transactions with "positive" for debit
-  -- and "negative" for credit
-  SELECT
-    * EXCEPT (
-      DMBTR,
-      WRBTR,
-      KZBTR,
-      PSWBT,
-      TXBHW,
-      TXBFW,
-      MWSTS,
-      WMWST,
-      HWBAS,
-      FWBAS,
-      HWZUZ,
-      FWZUZ,
-      QSSHB,
-      GBETR,
-      BDIF2,
-      FDWBT,
-      SKFBT,
-      SKNTO,
-      WSKTO,
-      NEBTR,
-      DMBT1,
-      WRBT1,
-      DMBT2,
-      WRBT2,
-      DMBT3,
-      WRBT3,
-      BLNBT,
-      KLIBT,
-      QBSHB,
-      QSFBT,
-      REWRT,
-      REWWR,
-      BONFB,
-      DMBE2,
-      DMBE3,
-      DMB21,
-      DMB22,
-      DMB23,
-      DMB31,
-      DMB32,
-      DMB33,
-      MWST2,
-      MWST3,
-      NAVH2,
-      NAVH3,
-      SKNT2,
-      SKNT3,
-      BDIF3,
-      RDIF3,
-      TXBH2,
-      TXBH3,
-      STTAX,
-      PYAMT,
-      PENLC1,
-      PENLC2,
-      PENLC3,
-      PENFC
-    ),
-    CASE
-      WHEN shkzg = 'S' THEN DMBTR -- When debit = keep it the way it is
-      WHEN shkzg = 'H' THEN DMBTR * -1 -- When credit = make it negative
-      ELSE DMBTR
-    END AS DMBTR,
-    CASE
-      WHEN shkzg = 'S' THEN WRBTR
-      WHEN shkzg = 'H' THEN WRBTR * -1
-      ELSE WRBTR
-    END AS WRBTR,
-    CASE
-      WHEN shkzg = 'S' THEN KZBTR
-      WHEN shkzg = 'H' THEN KZBTR * -1
-      ELSE KZBTR
-    END AS KZBTR,
-    CASE
-      WHEN shkzg = 'S' THEN PSWBT
-      WHEN shkzg = 'H' THEN PSWBT * -1
-      ELSE PSWBT
-    END AS PSWBT,
-    CASE
-      WHEN shkzg = 'S' THEN TXBHW
-      WHEN shkzg = 'H' THEN TXBHW * -1
-      ELSE TXBHW
-    END AS TXBHW,
-    CASE
-      WHEN shkzg = 'S' THEN TXBFW
-      WHEN shkzg = 'H' THEN TXBFW * -1
-      ELSE TXBFW
-    END AS TXBFW,
-    CASE
-      WHEN shkzg = 'S' THEN MWSTS
-      WHEN shkzg = 'H' THEN MWSTS * -1
-      ELSE MWSTS
-    END AS MWSTS,
-    CASE
-      WHEN shkzg = 'S' THEN WMWST
-      WHEN shkzg = 'H' THEN WMWST * -1
-      ELSE WMWST
-    END AS WMWST,
-    CASE
-      WHEN shkzg = 'S' THEN HWBAS
-      WHEN shkzg = 'H' THEN HWBAS * -1
-      ELSE HWBAS
-    END AS HWBAS,
-    CASE
-      WHEN shkzg = 'S' THEN FWBAS
-      WHEN shkzg = 'H' THEN FWBAS * -1
-      ELSE FWBAS
-    END AS FWBAS,
-    CASE
-      WHEN shkzg = 'S' THEN HWZUZ
-      WHEN shkzg = 'H' THEN HWZUZ * -1
-      ELSE HWZUZ
-    END AS HWZUZ,
-    CASE
-      WHEN shkzg = 'S' THEN FWZUZ
-      WHEN shkzg = 'H' THEN FWZUZ * -1
-      ELSE FWZUZ
-    END AS FWZUZ,
-    CASE
-      WHEN shkzg = 'S' THEN QSSHB
-      WHEN shkzg = 'H' THEN QSSHB * -1
-      ELSE QSSHB
-    END AS QSSHB,
-    CASE
-      WHEN shkzg = 'S' THEN GBETR
-      WHEN shkzg = 'H' THEN GBETR * -1
-      ELSE GBETR
-    END AS GBETR,
-    CASE
-      WHEN shkzg = 'S' THEN BDIF2
-      WHEN shkzg = 'H' THEN BDIF2 * -1
-      ELSE BDIF2
-    END AS BDIF2,
-    CASE
-      WHEN shkzg = 'S' THEN FDWBT
-      WHEN shkzg = 'H' THEN FDWBT * -1
-      ELSE FDWBT
-    END AS FDWBT,
-    CASE
-      WHEN shkzg = 'S' THEN SKFBT
-      WHEN shkzg = 'H' THEN SKFBT * -1
-      ELSE SKFBT
-    END AS SKFBT,
-    CASE
-      WHEN shkzg = 'S' THEN SKNTO
-      WHEN shkzg = 'H' THEN SKNTO * -1
-      ELSE SKNTO
-    END AS SKNTO,
-    CASE
-      WHEN shkzg = 'S' THEN WSKTO
-      WHEN shkzg = 'H' THEN WSKTO * -1
-      ELSE WSKTO
-    END AS WSKTO,
-    CASE
-      WHEN shkzg = 'S' THEN NEBTR
-      WHEN shkzg = 'H' THEN NEBTR * -1
-      ELSE NEBTR
-    END AS NEBTR,
-    CASE
-      WHEN shkzg = 'S' THEN DMBT1
-      WHEN shkzg = 'H' THEN DMBT1 * -1
-      ELSE DMBT1
-    END AS DMBT1,
-    CASE
-      WHEN shkzg = 'S' THEN WRBT1
-      WHEN shkzg = 'H' THEN WRBT1 * -1
-      ELSE WRBT1
-    END AS WRBT1,
-    CASE
-      WHEN shkzg = 'S' THEN DMBT2
-      WHEN shkzg = 'H' THEN DMBT2 * -1
-      ELSE DMBT2
-    END AS DMBT2,
-    CASE
-      WHEN shkzg = 'S' THEN WRBT2
-      WHEN shkzg = 'H' THEN WRBT2 * -1
-      ELSE WRBT2
-    END AS WRBT2,
-    CASE
-      WHEN shkzg = 'S' THEN DMBT3
-      WHEN shkzg = 'H' THEN DMBT3 * -1
-      ELSE DMBT3
-    END AS DMBT3,
-    CASE
-      WHEN shkzg = 'S' THEN WRBT3
-      WHEN shkzg = 'H' THEN WRBT3 * -1
-      ELSE WRBT3
-    END AS WRBT3,
-    CASE
-      WHEN shkzg = 'S' THEN BLNBT
-      WHEN shkzg = 'H' THEN BLNBT * -1
-      ELSE BLNBT
-    END AS BLNBT,
-    CASE
-      WHEN shkzg = 'S' THEN KLIBT
-      WHEN shkzg = 'H' THEN KLIBT * -1
-      ELSE KLIBT
-    END AS KLIBT,
-    CASE
-      WHEN shkzg = 'S' THEN QBSHB
-      WHEN shkzg = 'H' THEN QBSHB * -1
-      ELSE QBSHB
-    END AS QBSHB,
-    CASE
-      WHEN shkzg = 'S' THEN QSFBT
-      WHEN shkzg = 'H' THEN QSFBT * -1
-      ELSE QSFBT
-    END AS QSFBT,
-    CASE
-      WHEN shkzg = 'S' THEN REWRT
-      WHEN shkzg = 'H' THEN REWRT * -1
-      ELSE REWRT
-    END AS REWRT,
-    CASE
-      WHEN shkzg = 'S' THEN REWWR
-      WHEN shkzg = 'H' THEN REWWR * -1
-      ELSE REWWR
-    END AS REWWR,
-    CASE
-      WHEN shkzg = 'S' THEN BONFB
-      WHEN shkzg = 'H' THEN BONFB * -1
-      ELSE BONFB
-    END AS BONFB,
-    CASE
-      WHEN shkzg = 'S' THEN DMBE2
-      WHEN shkzg = 'H' THEN DMBE2 * -1
-      ELSE DMBE2
-    END AS DMBE2,
-    CASE
-      WHEN shkzg = 'S' THEN DMBE3
-      WHEN shkzg = 'H' THEN DMBE3 * -1
-      ELSE DMBE3
-    END AS DMBE3,
-    CASE
-      WHEN shkzg = 'S' THEN DMB21
-      WHEN shkzg = 'H' THEN DMB21 * -1
-      ELSE DMB21
-    END AS DMB21,
-    CASE
-      WHEN shkzg = 'S' THEN DMB22
-      WHEN shkzg = 'H' THEN DMB22 * -1
-      ELSE DMB22
-    END AS DMB22,
-    CASE
-      WHEN shkzg = 'S' THEN DMB23
-      WHEN shkzg = 'H' THEN DMB23 * -1
-      ELSE DMB23
-    END AS DMB23,
-    CASE
-      WHEN shkzg = 'S' THEN DMB31
-      WHEN shkzg = 'H' THEN DMB31 * -1
-      ELSE DMB31
-    END AS DMB31,
-    CASE
-      WHEN shkzg = 'S' THEN DMB32
-      WHEN shkzg = 'H' THEN DMB32 * -1
-      ELSE DMB32
-    END AS DMB32,
-    CASE
-      WHEN shkzg = 'S' THEN DMB33
-      WHEN shkzg = 'H' THEN DMB33 * -1
-      ELSE DMB33
-    END AS DMB33,
-    CASE
-      WHEN shkzg = 'S' THEN MWST2
-      WHEN shkzg = 'H' THEN MWST2 * -1
-      ELSE MWST2
-    END AS MWST2,
-    CASE
-      WHEN shkzg = 'S' THEN MWST3
-      WHEN shkzg = 'H' THEN MWST3 * -1
-      ELSE MWST3
-    END AS MWST3,
-    CASE
-      WHEN shkzg = 'S' THEN NAVH2
-      WHEN shkzg = 'H' THEN NAVH2 * -1
-      ELSE NAVH2
-    END AS NAVH2,
-    CASE
-      WHEN shkzg = 'S' THEN NAVH3
-      WHEN shkzg = 'H' THEN NAVH3 * -1
-      ELSE NAVH3
-    END AS NAVH3,
-    CASE
-      WHEN shkzg = 'S' THEN SKNT2
-      WHEN shkzg = 'H' THEN SKNT2 * -1
-      ELSE SKNT2
-    END AS SKNT2,
-    CASE
-      WHEN shkzg = 'S' THEN SKNT3
-      WHEN shkzg = 'H' THEN SKNT3 * -1
-      ELSE SKNT3
-    END AS SKNT3,
-    CASE
-      WHEN shkzg = 'S' THEN BDIF3
-      WHEN shkzg = 'H' THEN BDIF3 * -1
-      ELSE BDIF3
-    END AS BDIF3,
-    CASE
-      WHEN shkzg = 'S' THEN RDIF3
-      WHEN shkzg = 'H' THEN RDIF3 * -1
-      ELSE RDIF3
-    END AS RDIF3,
-    CASE
-      WHEN shkzg = 'S' THEN TXBH2
-      WHEN shkzg = 'H' THEN TXBH2 * -1
-      ELSE TXBH2
-    END AS TXBH2,
-    CASE
-      WHEN shkzg = 'S' THEN TXBH3
-      WHEN shkzg = 'H' THEN TXBH3 * -1
-      ELSE TXBH3
-    END AS TXBH3,
-    CASE
-      WHEN shkzg = 'S' THEN STTAX
-      WHEN shkzg = 'H' THEN STTAX * -1
-      ELSE STTAX
-    END AS STTAX,
-    CASE
-      WHEN shkzg = 'S' THEN PYAMT
-      WHEN shkzg = 'H' THEN PYAMT * -1
-      ELSE PYAMT
-    END AS PYAMT,
-    CASE
-      WHEN shkzg = 'S' THEN PENLC1
-      WHEN shkzg = 'H' THEN PENLC1 * -1
-      ELSE PENLC1
-    END AS PENLC1,
-    CASE
-      WHEN shkzg = 'S' THEN PENLC2
-      WHEN shkzg = 'H' THEN PENLC2 * -1
-      ELSE PENLC2
-    END AS PENLC2,
-    CASE
-      WHEN shkzg = 'S' THEN PENLC3
-      WHEN shkzg = 'H' THEN PENLC3 * -1
-      ELSE PENLC3
-    END AS PENLC3,
-    CASE
-      WHEN shkzg = 'S' THEN PENFC
-      WHEN shkzg = 'H' THEN PENFC * -1
-      ELSE PENFC
-    END AS PENFC
-  FROM
-    `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.bseg`
-)
+WITH
+  BSEG AS (
+    -------------------------------------------------------------------------
+    -- Subquery to flip "debit/credit" transactions with "positive" for debit
+    -- and "negative" for credit
+    SELECT
+      * EXCEPT (
+        DMBTR,
+        WRBTR,
+        KZBTR,
+        PSWBT,
+        TXBHW,
+        TXBFW,
+        MWSTS,
+        WMWST,
+        HWBAS,
+        FWBAS,
+        HWZUZ,
+        FWZUZ,
+        QSSHB,
+        GBETR,
+        BDIF2,
+        FDWBT,
+        SKFBT,
+        SKNTO,
+        WSKTO,
+        NEBTR,
+        DMBT1,
+        WRBT1,
+        DMBT2,
+        WRBT2,
+        DMBT3,
+        WRBT3,
+        BLNBT,
+        KLIBT,
+        QBSHB,
+        QSFBT,
+        REWRT,
+        REWWR,
+        BONFB,
+        DMBE2,
+        DMBE3,
+        DMB21,
+        DMB22,
+        DMB23,
+        DMB31,
+        DMB32,
+        DMB33,
+        MWST2,
+        MWST3,
+        NAVH2,
+        NAVH3,
+        SKNT2,
+        SKNT3,
+        BDIF3,
+        RDIF3,
+        TXBH2,
+        TXBH3,
+        STTAX,
+        PYAMT,
+        PENLC1,
+        PENLC2,
+        PENLC3,
+        PENFC
+      ),
+      CASE
+        WHEN shkzg = 'S' THEN DMBTR -- When debit = keep it the way it is
+        WHEN shkzg = 'H' THEN DMBTR * -1 -- When credit = make it negative
+        ELSE DMBTR
+      END AS DMBTR,
+      CASE
+        WHEN shkzg = 'S' THEN WRBTR
+        WHEN shkzg = 'H' THEN WRBTR * -1
+        ELSE WRBTR
+      END AS WRBTR,
+      CASE
+        WHEN shkzg = 'S' THEN KZBTR
+        WHEN shkzg = 'H' THEN KZBTR * -1
+        ELSE KZBTR
+      END AS KZBTR,
+      CASE
+        WHEN shkzg = 'S' THEN PSWBT
+        WHEN shkzg = 'H' THEN PSWBT * -1
+        ELSE PSWBT
+      END AS PSWBT,
+      CASE
+        WHEN shkzg = 'S' THEN TXBHW
+        WHEN shkzg = 'H' THEN TXBHW * -1
+        ELSE TXBHW
+      END AS TXBHW,
+      CASE
+        WHEN shkzg = 'S' THEN TXBFW
+        WHEN shkzg = 'H' THEN TXBFW * -1
+        ELSE TXBFW
+      END AS TXBFW,
+      CASE
+        WHEN shkzg = 'S' THEN MWSTS
+        WHEN shkzg = 'H' THEN MWSTS * -1
+        ELSE MWSTS
+      END AS MWSTS,
+      CASE
+        WHEN shkzg = 'S' THEN WMWST
+        WHEN shkzg = 'H' THEN WMWST * -1
+        ELSE WMWST
+      END AS WMWST,
+      CASE
+        WHEN shkzg = 'S' THEN HWBAS
+        WHEN shkzg = 'H' THEN HWBAS * -1
+        ELSE HWBAS
+      END AS HWBAS,
+      CASE
+        WHEN shkzg = 'S' THEN FWBAS
+        WHEN shkzg = 'H' THEN FWBAS * -1
+        ELSE FWBAS
+      END AS FWBAS,
+      CASE
+        WHEN shkzg = 'S' THEN HWZUZ
+        WHEN shkzg = 'H' THEN HWZUZ * -1
+        ELSE HWZUZ
+      END AS HWZUZ,
+      CASE
+        WHEN shkzg = 'S' THEN FWZUZ
+        WHEN shkzg = 'H' THEN FWZUZ * -1
+        ELSE FWZUZ
+      END AS FWZUZ,
+      CASE
+        WHEN shkzg = 'S' THEN QSSHB
+        WHEN shkzg = 'H' THEN QSSHB * -1
+        ELSE QSSHB
+      END AS QSSHB,
+      CASE
+        WHEN shkzg = 'S' THEN GBETR
+        WHEN shkzg = 'H' THEN GBETR * -1
+        ELSE GBETR
+      END AS GBETR,
+      CASE
+        WHEN shkzg = 'S' THEN BDIF2
+        WHEN shkzg = 'H' THEN BDIF2 * -1
+        ELSE BDIF2
+      END AS BDIF2,
+      CASE
+        WHEN shkzg = 'S' THEN FDWBT
+        WHEN shkzg = 'H' THEN FDWBT * -1
+        ELSE FDWBT
+      END AS FDWBT,
+      CASE
+        WHEN shkzg = 'S' THEN SKFBT
+        WHEN shkzg = 'H' THEN SKFBT * -1
+        ELSE SKFBT
+      END AS SKFBT,
+      CASE
+        WHEN shkzg = 'S' THEN SKNTO
+        WHEN shkzg = 'H' THEN SKNTO * -1
+        ELSE SKNTO
+      END AS SKNTO,
+      CASE
+        WHEN shkzg = 'S' THEN WSKTO
+        WHEN shkzg = 'H' THEN WSKTO * -1
+        ELSE WSKTO
+      END AS WSKTO,
+      CASE
+        WHEN shkzg = 'S' THEN NEBTR
+        WHEN shkzg = 'H' THEN NEBTR * -1
+        ELSE NEBTR
+      END AS NEBTR,
+      CASE
+        WHEN shkzg = 'S' THEN DMBT1
+        WHEN shkzg = 'H' THEN DMBT1 * -1
+        ELSE DMBT1
+      END AS DMBT1,
+      CASE
+        WHEN shkzg = 'S' THEN WRBT1
+        WHEN shkzg = 'H' THEN WRBT1 * -1
+        ELSE WRBT1
+      END AS WRBT1,
+      CASE
+        WHEN shkzg = 'S' THEN DMBT2
+        WHEN shkzg = 'H' THEN DMBT2 * -1
+        ELSE DMBT2
+      END AS DMBT2,
+      CASE
+        WHEN shkzg = 'S' THEN WRBT2
+        WHEN shkzg = 'H' THEN WRBT2 * -1
+        ELSE WRBT2
+      END AS WRBT2,
+      CASE
+        WHEN shkzg = 'S' THEN DMBT3
+        WHEN shkzg = 'H' THEN DMBT3 * -1
+        ELSE DMBT3
+      END AS DMBT3,
+      CASE
+        WHEN shkzg = 'S' THEN WRBT3
+        WHEN shkzg = 'H' THEN WRBT3 * -1
+        ELSE WRBT3
+      END AS WRBT3,
+      CASE
+        WHEN shkzg = 'S' THEN BLNBT
+        WHEN shkzg = 'H' THEN BLNBT * -1
+        ELSE BLNBT
+      END AS BLNBT,
+      CASE
+        WHEN shkzg = 'S' THEN KLIBT
+        WHEN shkzg = 'H' THEN KLIBT * -1
+        ELSE KLIBT
+      END AS KLIBT,
+      CASE
+        WHEN shkzg = 'S' THEN QBSHB
+        WHEN shkzg = 'H' THEN QBSHB * -1
+        ELSE QBSHB
+      END AS QBSHB,
+      CASE
+        WHEN shkzg = 'S' THEN QSFBT
+        WHEN shkzg = 'H' THEN QSFBT * -1
+        ELSE QSFBT
+      END AS QSFBT,
+      CASE
+        WHEN shkzg = 'S' THEN REWRT
+        WHEN shkzg = 'H' THEN REWRT * -1
+        ELSE REWRT
+      END AS REWRT,
+      CASE
+        WHEN shkzg = 'S' THEN REWWR
+        WHEN shkzg = 'H' THEN REWWR * -1
+        ELSE REWWR
+      END AS REWWR,
+      CASE
+        WHEN shkzg = 'S' THEN BONFB
+        WHEN shkzg = 'H' THEN BONFB * -1
+        ELSE BONFB
+      END AS BONFB,
+      CASE
+        WHEN shkzg = 'S' THEN DMBE2
+        WHEN shkzg = 'H' THEN DMBE2 * -1
+        ELSE DMBE2
+      END AS DMBE2,
+      CASE
+        WHEN shkzg = 'S' THEN DMBE3
+        WHEN shkzg = 'H' THEN DMBE3 * -1
+        ELSE DMBE3
+      END AS DMBE3,
+      CASE
+        WHEN shkzg = 'S' THEN DMB21
+        WHEN shkzg = 'H' THEN DMB21 * -1
+        ELSE DMB21
+      END AS DMB21,
+      CASE
+        WHEN shkzg = 'S' THEN DMB22
+        WHEN shkzg = 'H' THEN DMB22 * -1
+        ELSE DMB22
+      END AS DMB22,
+      CASE
+        WHEN shkzg = 'S' THEN DMB23
+        WHEN shkzg = 'H' THEN DMB23 * -1
+        ELSE DMB23
+      END AS DMB23,
+      CASE
+        WHEN shkzg = 'S' THEN DMB31
+        WHEN shkzg = 'H' THEN DMB31 * -1
+        ELSE DMB31
+      END AS DMB31,
+      CASE
+        WHEN shkzg = 'S' THEN DMB32
+        WHEN shkzg = 'H' THEN DMB32 * -1
+        ELSE DMB32
+      END AS DMB32,
+      CASE
+        WHEN shkzg = 'S' THEN DMB33
+        WHEN shkzg = 'H' THEN DMB33 * -1
+        ELSE DMB33
+      END AS DMB33,
+      CASE
+        WHEN shkzg = 'S' THEN MWST2
+        WHEN shkzg = 'H' THEN MWST2 * -1
+        ELSE MWST2
+      END AS MWST2,
+      CASE
+        WHEN shkzg = 'S' THEN MWST3
+        WHEN shkzg = 'H' THEN MWST3 * -1
+        ELSE MWST3
+      END AS MWST3,
+      CASE
+        WHEN shkzg = 'S' THEN NAVH2
+        WHEN shkzg = 'H' THEN NAVH2 * -1
+        ELSE NAVH2
+      END AS NAVH2,
+      CASE
+        WHEN shkzg = 'S' THEN NAVH3
+        WHEN shkzg = 'H' THEN NAVH3 * -1
+        ELSE NAVH3
+      END AS NAVH3,
+      CASE
+        WHEN shkzg = 'S' THEN SKNT2
+        WHEN shkzg = 'H' THEN SKNT2 * -1
+        ELSE SKNT2
+      END AS SKNT2,
+      CASE
+        WHEN shkzg = 'S' THEN SKNT3
+        WHEN shkzg = 'H' THEN SKNT3 * -1
+        ELSE SKNT3
+      END AS SKNT3,
+      CASE
+        WHEN shkzg = 'S' THEN BDIF3
+        WHEN shkzg = 'H' THEN BDIF3 * -1
+        ELSE BDIF3
+      END AS BDIF3,
+      CASE
+        WHEN shkzg = 'S' THEN RDIF3
+        WHEN shkzg = 'H' THEN RDIF3 * -1
+        ELSE RDIF3
+      END AS RDIF3,
+      CASE
+        WHEN shkzg = 'S' THEN TXBH2
+        WHEN shkzg = 'H' THEN TXBH2 * -1
+        ELSE TXBH2
+      END AS TXBH2,
+      CASE
+        WHEN shkzg = 'S' THEN TXBH3
+        WHEN shkzg = 'H' THEN TXBH3 * -1
+        ELSE TXBH3
+      END AS TXBH3,
+      CASE
+        WHEN shkzg = 'S' THEN STTAX
+        WHEN shkzg = 'H' THEN STTAX * -1
+        ELSE STTAX
+      END AS STTAX,
+      CASE
+        WHEN shkzg = 'S' THEN PYAMT
+        WHEN shkzg = 'H' THEN PYAMT * -1
+        ELSE PYAMT
+      END AS PYAMT,
+      CASE
+        WHEN shkzg = 'S' THEN PENLC1
+        WHEN shkzg = 'H' THEN PENLC1 * -1
+        ELSE PENLC1
+      END AS PENLC1,
+      CASE
+        WHEN shkzg = 'S' THEN PENLC2
+        WHEN shkzg = 'H' THEN PENLC2 * -1
+        ELSE PENLC2
+      END AS PENLC2,
+      CASE
+        WHEN shkzg = 'S' THEN PENLC3
+        WHEN shkzg = 'H' THEN PENLC3 * -1
+        ELSE PENLC3
+      END AS PENLC3,
+      CASE
+        WHEN shkzg = 'S' THEN PENFC
+        WHEN shkzg = 'H' THEN PENFC * -1
+        ELSE PENFC
+      END AS PENFC
+    FROM
+      `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.bseg`
+  )
 
 SELECT
   BKPF.MANDT AS Client_MANDT,
@@ -824,36 +825,42 @@ SELECT
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T) AS NetDueDateCalc,
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DueDateForCashDiscount1`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T) AS sk1dtCalc,
   `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.DueDateForCashDiscount2`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T) AS sk2dtCalc,
-  IF(BSEG.H_BUDAT < CURRENT_DATE() AND `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T) > CURRENT_DATE()
-    AND BSEG.AUGDT IS NULL, BSEG.DMBTR, 0) AS OpenAndNotDue,
-  IF(BSEG.H_BUDAT < CURRENT_DATE() AND BSEG.AUGDT > `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T)
-    AND BSEG.AUGDT IS NOT NULL, BSEG.DMBTR, 0) AS ClearedAfterDueDate,
-  IF(BSEG.H_BUDAT < CURRENT_DATE() AND BSEG.AUGDT <= `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T)
-    AND BSEG.AUGDT IS NOT NULL, BSEG.DMBTR, 0) AS ClearedOnOrBeforeDueDate,
+  IF(
+    BSEG.H_BUDAT < CURRENT_DATE() AND `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T) > CURRENT_DATE()
+    AND BSEG.AUGDT IS NULL, BSEG.DMBTR, 0
+  ) AS OpenAndNotDue,
+  IF(
+    BSEG.H_BUDAT < CURRENT_DATE() AND BSEG.AUGDT > `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T)
+    AND BSEG.AUGDT IS NOT NULL, BSEG.DMBTR, 0
+  ) AS ClearedAfterDueDate,
+  IF(
+    BSEG.H_BUDAT < CURRENT_DATE() AND BSEG.AUGDT <= `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T)
+    AND BSEG.AUGDT IS NOT NULL, BSEG.DMBTR, 0
+  ) AS ClearedOnOrBeforeDueDate,
 
-  IF(BSEG.H_BUDAT < CURRENT_DATE() AND `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T) < CURRENT_DATE()
-    AND BSEG.AUGDT IS NULL, BSEG.DMBTR, 0) AS OpenAndOverDue,
+  IF(
+    BSEG.H_BUDAT < CURRENT_DATE() AND `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T) < CURRENT_DATE()
+    AND BSEG.AUGDT IS NULL, BSEG.DMBTR, 0
+  ) AS OpenAndOverDue,
 
-  IF(BSEG.H_BUDAT < CURRENT_DATE() AND (DATE_DIFF(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T), CURRENT_DATE(), DAY) > 90 )
-    AND BSEG.AUGDT IS NULL, BSEG.DMBTR, 0) AS DoubtfulReceivables,
-  DATE_DIFF( `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T), CURRENT_DATE(), DAY)
-  AS DaysInArrear,
-  --## CORTEX-CUSTOMER The calculation will give positive DoubtfulReceivables(amount) for the items which are due more than 90 days from the key date.
-  -- IF(BKPF.BUDAT < CURRENT_DATE() AND (DATE_DIFF(CURRENT_DATE(), `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T), DAY) > 90 )
-  --   AND BSEG.AUGDT IS NULL, BSEG.DMBTR, 0) AS DoubtfulReceivables,
+  --The calculation will give positive DoubtfulReceivables(amount) for the items which are due more than 90 days from the key date.
+  IF(
+    BSEG.H_BUDAT < CURRENT_DATE() AND (DATE_DIFF(CURRENT_DATE(), `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T), DAY) > 90)
+    AND BSEG.AUGDT IS NULL, BSEG.DMBTR, 0
+  ) AS DoubtfulReceivables,
 
-  --## CORTEX-CUSTOMER The calculation will give positive DaysInArrear for the late payment and negative when expected on time.
-  -- DATE_DIFF(CURRENT_DATE(), `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T), DAY)
-  -- AS DaysInArrear,
+  --The calculation will give positive DaysInArrear for the late payment and negative when expected on time.
+  DATE_DIFF(CURRENT_DATE(), `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.NetDueDateCalc`(BSEG.KOART, BSEG.ZFBDT, BKPF.BLDAT, BSEG.SHKZG, BSEG.REBZG, BSEG.ZBD3T, BSEG.ZBD2T, BSEG.ZBD1T), DAY)
+    AS DaysInArrear,
 
   IF(bseg.koart = 'D' AND bseg.augdt IS NULL AND bseg.H_BUDAT < CURRENT_DATE(), bseg.dmbtr, 0) AS AccountsReceivable,
   IF(bseg.koart = 'D' AND bseg.H_BUDAT < CURRENT_DATE() AND bseg.xumsw = 'X', bseg.dmbtr, 0) AS Sales
 FROM BSEG AS BSEG
 INNER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.bkpf` AS BKPF
-  ON BKPF.MANDT = BSEG.MANDT
-    AND BKPF.BUKRS = BSEG.BUKRS
-    AND BKPF.GJAHR = BSEG.GJAHR
-    AND BKPF.BELNR = BSEG.BELNR
+  ON BSEG.MANDT = BKPF.MANDT
+    AND BSEG.BUKRS = BKPF.BUKRS
+    AND BSEG.GJAHR = BKPF.GJAHR
+    AND BSEG.BELNR = BKPF.BELNR
 -- Joining to this table(currency_decimal) is necesssary to fix the decimal place of
 -- amounts for non-decimal-based currencies. SAP stores these amounts
 -- offset by a factor  of 1/100 within the system (FYI this gets
@@ -873,6 +880,6 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS
 LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS TCURXPSWSL
   ON BSEG.PSWSL = TCURXPSWSL.CURRKEY
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_H_BUDAT
-  ON CalendarDateDimension_H_BUDAT.Date = BSEG.H_BUDAT
+  ON BSEG.H_BUDAT = CalendarDateDimension_H_BUDAT.Date
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_BLDAT
-  ON CalendarDateDimension_BLDAT.Date = BKPF.BLDAT
+  ON BKPF.BLDAT = CalendarDateDimension_BLDAT.Date

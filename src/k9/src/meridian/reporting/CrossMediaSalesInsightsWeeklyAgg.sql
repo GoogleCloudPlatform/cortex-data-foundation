@@ -28,13 +28,15 @@ WITH
         TotalCostInTargetCurrency,
         TargetCurrency
       FROM `{{ project_id_tgt }}.{{ k9_datasets_reporting }}.CrossMediaCampaignDailyAgg`
-      WHERE TargetCurrency = 'USD'
+      WHERE
+        TargetCurrency = 'USD'
+        AND SourceSystem IN ('DV360', 'Meta', 'TikTok')
     )
     PIVOT (
       SUM(TotalImpressions) AS impressions,
       SUM(TotalClicks) AS clicks,
       SUM(TotalCostInTargetCurrency) AS cost
-      FOR SourceSystem IN ('DV360' AS YouTube, 'Meta', 'TikTok', 'GoogleAds')
+      FOR SourceSystem IN ('DV360' AS YouTube, 'Meta', 'TikTok')
     )
   ),
   CENSUS_POPULATION AS (
@@ -64,8 +66,9 @@ WITH
         so.Client_MANDT = cc.Client_MANDT
         AND so.Currency_WAERK = cc.FromCurrency_FCURR
         AND so.DocumentDate_AUDAT = cc.ConvDate
-        AND cc.ExchangeRateType_KURST = 'M'
-    WHERE cc.ToCurrency_TCURR = 'USD'
+    WHERE
+      cc.ToCurrency_TCURR = 'USD'
+      AND cc.ExchangeRateType_KURST = 'M'
     GROUP BY 1, 2
   )
   {% endif -%}
@@ -100,11 +103,9 @@ SELECT
   SUM(COALESCE(xp.impressions_TikTok, 0)) AS Tiktok_impression,
   SUM(COALESCE(xp.impressions_Meta, 0)) AS Meta_impression,
   SUM(COALESCE(xp.impressions_YouTube, 0)) AS YouTube_impression,
-  SUM(COALESCE(xp.impressions_GoogleAds, 0)) AS GoogleAds_impression,
   ROUND(SUM(COALESCE(xp.cost_TikTok, 0)), 3) AS Tiktok_spend,
   ROUND(SUM(COALESCE(xp.cost_Meta, 0)), 3) AS Meta_spend,
   ROUND(SUM(COALESCE(xp.cost_YouTube, 0)), 3) AS YouTube_spend,
-  ROUND(SUM(COALESCE(xp.cost_GoogleAds, 0)), 3) AS GoogleAds_spend,
   -- ## CORTEX-CUSTOMER: Please add conversions data here if required for your specific meridian run use case.
   0 AS conversions,
   {%- if ( k9_meridian_sales_data_source_type == 'OracleEBS' or k9_meridian_sales_data_source_type == 'SAP' ) %}
@@ -148,5 +149,3 @@ LEFT JOIN
 {% endif -%}
 GROUP BY
   1, 2, 3
-ORDER BY
-  1, 2

@@ -1,148 +1,160 @@
----CORTEX-CUSTOMER: Stock In Hand is the aggregated unrestricted stock Qty
----from various sources like stock at Distribution centers, at Vendor location,
----at Customer Location and special stock at Vendor in Consignment.
+/*
+Aggregates unrestricted stock quantity from distribution centers, vendors, customers, and vendor
+consignment. We are transposing MARD to achieve different stock reasons in a single column.
+*/
 
-## CORTEX-CUSTOMER: We are transposing MARD to achieve different stock reasons in a single column
 SELECT
-  mard.MANDT AS Client_MANDT,
-  mard.MATNR AS ArticleNumber_MATNR,
-  mard.WERKS AS Site_WERKS,
-  mard.LGORT AS StorageLocation_LGORT,
+  MANDT AS Client_MANDT,
+  MATNR AS MaterialNumber_MATNR,
+  --##CORTEX-CUSTOMER ArticleNumber_MATNR is marked for removal. Change all references to MaterialNumber_MATNR.
+  MATNR AS ArticleNumber_MATNR,
+  WERKS AS Plant_WERKS,
+  --##CORTEX-CUSTOMER Site_WERKS is marked for removal. Change all references to Plant_WERKS.
+  WERKS AS Site_WERKS,
+  LGORT AS StorageLocation_LGORT,
   NULL AS BatchNumber_CHARG,
   NULL AS SpecialStockIndicator_SOBKZ,
   NULL AS SDDocumentNumber_VBELN,
   NULL AS SDDocumentItemNumber_POSNR,
   NULL AS VendorAccountNumber_LIFNR,
   NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
+  Qty,
+  CASE SourceStockColumn
+    WHEN 'LABST' THEN 'A-Unrestricted use'
+    WHEN 'UMLME' THEN 'F-Stock in transfer'
+    WHEN 'INSME' THEN 'B-Quality inspection'
+    WHEN 'EINME' THEN 'E-Stock of All Restricted Batches'
+    WHEN 'SPEME' THEN 'D-Blocked Stock'
+    WHEN 'RETME' THEN 'C-Blocked stock returns'
+  END AS StockType
 FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mard` AS mard,
-  UNNEST(
-    [
-      CAST(LABST AS STRING) || '@A-Unrestricted use',
-      CAST(UMLME AS STRING) || '@F-Stock in transfer',
-      CAST(INSME AS STRING) || '@B-Quality inspection',
-      CAST(EINME AS STRING) || '@E-Stock of All Restricted Batches',
-      CAST(SPEME AS STRING) || '@D-Blocked Stock',
-      CAST(RETME AS STRING) || '@C Blocked stock returns'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mard.MANDT = '{{ mandt }}'
+  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mard`
+UNPIVOT EXCLUDE NULLS (Qty FOR SourceStockColumn IN (LABST, UMLME, INSME, EINME, SPEME, RETME))
+WHERE MANDT = '{{ mandt }}'
 UNION ALL
 SELECT
-  mska.MANDT AS Client_MANDT,
-  mska.MATNR AS ArticleNumber_MATNR,
-  mska.WERKS AS Site_WERKS,
-  mska.LGORT AS StorageLocation_LGORT,
-  CAST(mska.CHARG AS STRING) AS BatchNumber_CHARG,
-  mska.SOBKZ AS SpecialStockIndicator_SOBKZ,
-  mska.VBELN AS SDDocumentNumber_VBELN,
-  mska.POSNR AS SDDocumentItemNumber_POSNR,
+  MANDT AS Client_MANDT,
+  MATNR AS MaterialNumber_MATNR,
+  --##CORTEX-CUSTOMER ArticleNumber_MATNR is marked for removal. Change all references to MaterialNumber_MATNR.
+  MATNR AS ArticleNumber_MATNR,
+  WERKS AS Plant_WERKS,
+  --##CORTEX-CUSTOMER Site_WERKS is marked for removal. Change all references to Plant_WERKS.
+  WERKS AS Site_WERKS,
+  LGORT AS StorageLocation_LGORT,
+  CAST(CHARG AS STRING) AS BatchNumber_CHARG,
+  SOBKZ AS SpecialStockIndicator_SOBKZ,
+  VBELN AS SDDocumentNumber_VBELN,
+  POSNR AS SDDocumentItemNumber_POSNR,
   NULL AS VendorAccountNumber_LIFNR,
   NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
+  Qty,
+  CASE SourceStockColumn
+    WHEN 'KALAB' THEN 'A-Unrestricted use'
+    WHEN 'KAINS' THEN 'B-Quality inspection'
+    WHEN 'KASPE' THEN 'D-Blocked Stock'
+  END AS StockType
 FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mska` AS mska,
-  UNNEST(
-    [
-      KALAB || '@A-Unrestricted use',
-      KAINS || '@B-Quality inspection',
-      KASPE || '@D-Blocked Stock'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mska.MANDT = '{{ mandt }}'
+  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mska`
+UNPIVOT EXCLUDE NULLS (Qty FOR SourceStockColumn IN (KALAB, KAINS, KASPE))
+WHERE MANDT = '{{ mandt }}'
 UNION ALL
 SELECT
-  msfd.MANDT AS Client_MANDT,
-  msfd.MATNR AS ArticleNumber_MATNR,
-  msfd.WERKS AS Site_WERKS,
+  MANDT AS Client_MANDT,
+  MATNR AS MaterialNumber_MATNR,
+  --##CORTEX-CUSTOMER ArticleNumber_MATNR is marked for removal. Change all references to MaterialNumber_MATNR.
+  MATNR AS ArticleNumber_MATNR,
+  WERKS AS Plant_WERKS,
+  --##CORTEX-CUSTOMER Site_WERKS is marked for removal. Change all references to Plant_WERKS.
+  WERKS AS Site_WERKS,
   NULL AS StorageLocation_LGORT,
-  CAST(msfd.CHARG AS STRING) AS BatchNumber_CHARG,
-  msfd.SOBKZ AS SpecialStockIndicator_SOBKZ,
-  msfd.VBELN AS SDDocumentNumber_VBELN,
-  msfd.POSNR AS SDDocumentItemNumber_POSNR,
-  msfd.LIFNR AS VendorAccountNumber_LIFNR,
+  CAST(CHARG AS STRING) AS BatchNumber_CHARG,
+  SOBKZ AS SpecialStockIndicator_SOBKZ,
+  VBELN AS SDDocumentNumber_VBELN,
+  POSNR AS SDDocumentItemNumber_POSNR,
+  LIFNR AS VendorAccountNumber_LIFNR,
   NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
+  Qty,
+  CASE SourceStockColumn
+    WHEN 'FDLAB' THEN 'A-Unrestricted use'
+    WHEN 'FDINS' THEN 'B-Quality inspection'
+    WHEN 'FDEIN' THEN 'E-Stock of All Restricted Batches'
+  END AS StockType
 FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.msfd` AS msfd,
-  UNNEST(
-    [
-      FDLAB || '@A-Unrestricted use',
-      FDINS || '@B-Quality inspection',
-      FDEIN || '@E-Stock of All Restricted Batches'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND msfd.MANDT = '{{ mandt }}'
+  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.msfd`
+UNPIVOT EXCLUDE NULLS (Qty FOR SourceStockColumn IN (FDLAB, FDINS, FDEIN))
+WHERE MANDT = '{{ mandt }}'
 UNION ALL
 SELECT
-  mslb.MANDT AS Client_MANDT,
-  mslb.MATNR AS ArticleNumber_MATNR,
-  mslb.WERKS AS Site_WERKS,
+  MANDT AS Client_MANDT,
+  MATNR AS MaterialNumber_MATNR,
+  --##CORTEX-CUSTOMER ArticleNumber_MATNR is marked for removal. Change all references to MaterialNumber_MATNR.
+  MATNR AS ArticleNumber_MATNR,
+  WERKS AS Plant_WERKS,
+  --##CORTEX-CUSTOMER Site_WERKS is marked for removal. Change all references to Plant_WERKS.
+  WERKS AS Site_WERKS,
   NULL AS StorageLocation_LGORT,
-  CAST(mslb.CHARG AS STRING) AS BatchNumber_CHARG,
-  mslb.SOBKZ AS SpecialStockIndicator_SOBKZ,
+  CAST(CHARG AS STRING) AS BatchNumber_CHARG,
+  SOBKZ AS SpecialStockIndicator_SOBKZ,
   NULL AS SDDocumentNumber_VBELN,
   NULL AS SDDocumentItemNumber_POSNR,
-  mslb.LIFNR AS VendorAccountNumber_LIFNR,
+  LIFNR AS VendorAccountNumber_LIFNR,
   NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
+  Qty,
+  CASE SourceStockColumn
+    WHEN 'LBLAB' THEN 'A-Unrestricted use'
+    WHEN 'LBINS' THEN 'B-Quality inspection'
+  END AS StockType
 FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mslb` AS mslb,
-  UNNEST(
-    [
-      LBLAB || '@A-Unrestricted use',
-      LBINS || '@B-Quality inspection'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mslb.MANDT = '{{ mandt }}'
+  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mslb`
+UNPIVOT EXCLUDE NULLS (Qty FOR SourceStockColumn IN (LBLAB, LBINS))
+WHERE MANDT = '{{ mandt }}'
 UNION ALL
 SELECT
-  msku.MANDT AS Client_MANDT,
-  msku.MATNR AS ArticleNumber_MATNR,
-  msku.WERKS AS Site_WERKS,
+  MANDT AS Client_MANDT,
+  MATNR AS MaterialNumber_MATNR,
+  --##CORTEX-CUSTOMER ArticleNumber_MATNR is marked for removal. Change all references to MaterialNumber_MATNR.
+  MATNR AS ArticleNumber_MATNR,
+  WERKS AS Plant_WERKS,
+  --##CORTEX-CUSTOMER Site_WERKS is marked for removal. Change all references to Plant_WERKS.
+  WERKS AS Site_WERKS,
   NULL AS StorageLocation_LGORT,
-  CAST(msku.CHARG AS STRING) AS BatchNumber_CHARG,
-  msku.SOBKZ AS SpecialStockIndicator_SOBKZ,
+  CAST(CHARG AS STRING) AS BatchNumber_CHARG,
+  SOBKZ AS SpecialStockIndicator_SOBKZ,
   NULL AS SDDocumentNumber_VBELN,
   NULL AS SDDocumentItemNumber_POSNR,
   NULL AS VendorAccountNumber_LIFNR,
-  msku.KUNNR AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
+  KUNNR AS CustomerNumber_KUNNR,
+  Qty,
+  CASE SourceStockColumn
+    WHEN 'KULAB' THEN 'A-Unrestricted use'
+  END AS StockType
 FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.msku` AS msku,
-  UNNEST(
-    [
-      KULAB || '@A-Unrestricted use'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND msku.MANDT = '{{ mandt }}'
+  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.msku`
+UNPIVOT EXCLUDE NULLS (Qty FOR SourceStockColumn IN (KULAB))
+WHERE MANDT = '{{ mandt }}'
 UNION ALL
 SELECT
-  mkol.MANDT AS Client_MANDT,
-  mkol.MATNR AS ArticleNumber_MATNR,
-  mkol.WERKS AS Site_WERKS,
-  mkol.LGORT AS StorageLocation_LGORT,
-  CAST(mkol.CHARG AS STRING) AS BatchNumber_CHARG,
-  mkol.SOBKZ AS SpecialStockIndicator_SOBKZ,
+  MANDT AS Client_MANDT,
+  MATNR AS MaterialNumber_MATNR,
+  --##CORTEX-CUSTOMER ArticleNumber_MATNR is marked for removal. Change all references to MaterialNumber_MATNR.
+  MATNR AS ArticleNumber_MATNR,
+  WERKS AS Plant_WERKS,
+  --##CORTEX-CUSTOMER Site_WERKS is marked for removal. Change all references to Plant_WERKS.
+  WERKS AS Site_WERKS,
+  LGORT AS StorageLocation_LGORT,
+  CAST(CHARG AS STRING) AS BatchNumber_CHARG,
+  SOBKZ AS SpecialStockIndicator_SOBKZ,
   NULL AS SDDocumentNumber_VBELN,
   NULL AS SDDocumentItemNumber_POSNR,
-  mkol.LIFNR AS VendorAccountNumber_LIFNR,
+  LIFNR AS VendorAccountNumber_LIFNR,
   NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
+  Qty,
+  CASE SourceStockColumn
+    WHEN 'SLABS' THEN 'A-Unrestricted use'
+    WHEN 'SINSM' THEN 'B-Quality inspection'
+    WHEN 'SSPEM' THEN 'D-Blocked Stock'
+  END AS StockType
 FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mkol` AS mkol,
-  UNNEST(
-    [
-      SLABS || '@A-Unrestricted use',
-      SINSM || '@B-Quality inspection',
-      SSPEM || '@D-Blocked Stock'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mkol.MANDT = '{{ mandt }}'
+  `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.mkol`
+UNPIVOT EXCLUDE NULLS (Qty FOR SourceStockColumn IN (SLABS, SINSM, SSPEM))
+WHERE MANDT = '{{ mandt }}'

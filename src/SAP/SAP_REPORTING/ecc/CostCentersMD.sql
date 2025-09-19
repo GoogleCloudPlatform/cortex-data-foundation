@@ -53,6 +53,7 @@ INNER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.cskt` AS CSKT
     AND CSKS.KOSTL = CSKT.KOSTL
     AND CSKS.DATBI = CSKT.DATBI
 --noqa: disable=all
-WHERE cast(CSKS.DATAB AS STRING) <= concat( cast(extract( YEAR FROM current_date())AS STRING), cast(extract( MONTH FROM current_date())AS STRING), cast(extract( DAY FROM current_date())AS STRING) )
-  AND cast(CSKS.DATBI AS STRING) >= concat( cast(extract( YEAR FROM current_date())AS STRING), cast(extract( MONTH FROM current_date())AS STRING), cast(extract( DAY FROM current_date())AS STRING) )
+WHERE
+  CSKS.DATBI >= CURRENT_DATE()
+  AND CSKS.DATAB <= CURRENT_DATE()
 --noqa: enable=all

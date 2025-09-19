@@ -85,10 +85,6 @@ bq_independent_objects:
     description: "Regions (T005S)"
     type: view
 
-  - sql_file: RegionsMD.sql
-    description: "RegionsMD Data"
-    type: view
-
   - sql_file: ProductHierarchiesMD.sql
     description: "Product Hierarchies Master Data"
     type: view

@@ -19,4 +19,3 @@ LEFT OUTER JOIN `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.vbfa` AS D
 WHERE SO.vbtyp_V = 'C'
   AND SO.vbtyp_n IN ('J', 'T')
   AND Deliveries.vbtyp_n IN ('M')
-ORDER BY SO.VBELV

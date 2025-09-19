@@ -9,14 +9,12 @@
         "media": [
             "Tiktok_impression",
             "Meta_impression",
-            "YouTube_impression",
-            "GoogleAds_impression"
+            "YouTube_impression"
         ],
         "media_spend": [
             "Tiktok_spend",
             "Meta_spend",
-            "YouTube_spend",
-            "GoogleAds_spend"
+            "YouTube_spend"
         ],
         "population": "population",
         "revenue_per_kpi": "{{REVENUE_PER_KPI}}",
@@ -25,8 +23,7 @@
     "channel_names": [
         "TikTok",
         "Meta",
-        "YouTube",
-        "Google Ads"
+        "YouTube"
     ],
     "data_processing": {
         "kpi_type": "{{KPI_TYPE}}",
