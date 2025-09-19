@@ -30,6 +30,8 @@ FiscalQuarter,FiscalQuarter,INT64
 FiscalYear,FiscalYear,INT64
 Fiscal,Fiscal,STRING
 ContactId,ContactId,STRING
+--## CORTEX-CUSTOMER: Remove the next line (CurrencyIsoCode) if multi-currency is not enabled.
+CurrencyIsoCode,CurrencyIsoCode,STRING
 LastViewedDate,LastViewedDatestamp,TIMESTAMP
 LastReferencedDate,LastReferencedDatestamp,TIMESTAMP
 HasOpenActivity,HasOpenActivity,BOOL

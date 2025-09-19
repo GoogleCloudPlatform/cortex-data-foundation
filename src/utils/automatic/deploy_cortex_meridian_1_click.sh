@@ -88,10 +88,10 @@ fancy_echo_done "Done enabling APIs"
 fancy_echo_start "Creating empty data sets"
 
 DATA_SET_NAMES=('K9_PROCESSING' 'K9_REPORTING' 'CORTEX_ORACLE_EBS_REPORTING' 
-    'CORTEX_ORACLE_EBS_REPORTING_DEMO' 'CORTEX_GADS_CDC' 'CORTEX_GADS_RAW' 'CORTEX_ORACLE_EBS_CDC'
-    'CORTEX_GADS_REPORTING' 'CORTEX_TIKTOK_CDC' 'CORTEX_TIKTOK_RAW' 'CORTEX_TIKTOK_REPORTING'
-    'CORTEX_META_CDC' 'CORTEX_META_RAW' 'CORTEX_META_REPORTING' 'CORTEX_DV360_RAW'
-    'CORTEX_DV360_CDC' 'CORTEX_DV360_REPORTING')
+    'CORTEX_ORACLE_EBS_REPORTING_DEMO' 'CORTEX_TIKTOK_CDC' 'CORTEX_TIKTOK_RAW' 
+    'CORTEX_TIKTOK_REPORTING' 'CORTEX_META_CDC' 'CORTEX_META_RAW' 
+    'CORTEX_META_REPORTING' 'CORTEX_DV360_RAW' 'CORTEX_DV360_CDC' 
+    'CORTEX_DV360_REPORTING')
 
 for dataset_name in "${DATA_SET_NAMES[@]}"; do
     # Construct the full dataset ID
@@ -121,7 +121,7 @@ for dataset_name in "${DATA_SET_NAMES_REGION_SPECIFIC[@]}"; do
     "${full_dataset_id}" >/dev/null
 done
 
-fancy_echo_done "Done creating data sets"
+fancy_echo_done "Done creating datasets"
 
 # Load sales data
 fancy_echo_start "Loading sample Oracle EBS sales reporting data for MMM"

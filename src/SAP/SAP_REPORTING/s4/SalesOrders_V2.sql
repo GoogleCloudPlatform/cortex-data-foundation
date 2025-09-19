@@ -5,7 +5,11 @@ SELECT
   vbap.POSNR AS Item_POSNR,
   vbap.MATNR AS MaterialNumber_MATNR,
   vbap.ERDAT AS CreationDate_ERDAT,
-  vbak.ERZET AS CreationTime_ERZET,
+  vbap.ERZET AS CreationTime_ERZET,
+  vbak.ERDAT AS SalesDocumentCreationDate_ERDAT,
+  vbap.ERDAT AS SalesDocumentItemCreationDate_ERDAT,
+  vbak.ERZET AS SalesDocumentCreationTime_ERZET,
+  vbap.ERZET AS SalesDocumentItemCreationTime_ERZET,
   vbak.ERNAM AS CreatedBy_ERNAM,
   vbak.ANGDT AS QuotationDateFrom_ANGDT,
   vbak.BNDDT AS QuotationDateTo_BNDDT,
@@ -304,11 +308,16 @@ SELECT
   vbap.FISTL AS FundsCenter_FISTL,
   vbap.FKBER AS FunctionalArea_FKBER,
   --##CORTEX-CUSTOMER Consider adding other dimensions from the calendar_date_dim table as per your requirement
-  CalendarDateDimension_ERDAT.CalYear AS YearOfSalesOrderCreationDate_ERDAT,
-  CalendarDateDimension_ERDAT.CalMonth AS MonthOfSalesOrderCreationDate_ERDAT,
-  CalendarDateDimension_ERDAT.CalWeek AS WeekOfSalesOrderCreationDate_ERDAT,
-  CalendarDateDimension_ERDAT.DayOfMonth AS DayOfSalesOrderCreationDate_ERDAT,
-  CalendarDateDimension_ERDAT.CalQuarter AS QuarterOfSalesOrderCreationDate_ERDAT,
+  CalendarDateDimension_VBAK_ERDAT.CalYear AS YearOfSalesOrderCreationDate_ERDAT,
+  CalendarDateDimension_VBAK_ERDAT.CalMonth AS MonthOfSalesOrderCreationDate_ERDAT,
+  CalendarDateDimension_VBAK_ERDAT.CalWeek AS WeekOfSalesOrderCreationDate_ERDAT,
+  CalendarDateDimension_VBAK_ERDAT.DayOfMonth AS DayOfSalesOrderCreationDate_ERDAT,
+  CalendarDateDimension_VBAK_ERDAT.CalQuarter AS QuarterOfSalesOrderCreationDate_ERDAT,
+  CalendarDateDimension_VBAP_ERDAT.CalYear AS YearOfSalesOrderItemCreationDate_ERDAT,
+  CalendarDateDimension_VBAP_ERDAT.CalMonth AS MonthOfSalesOrderItemCreationDate_ERDAT,
+  CalendarDateDimension_VBAP_ERDAT.CalWeek AS WeekOfSalesOrderItemCreationDate_ERDAT,
+  CalendarDateDimension_VBAP_ERDAT.DayOfMonth AS DayOfSalesOrderItemCreationDate_ERDAT,
+  CalendarDateDimension_VBAP_ERDAT.CalQuarter AS QuarterOfSalesOrderItemCreationDate_ERDAT,
   CalendarDateDimension_VDATU.CalYear AS YearOfRequestedDeliveryDate_VDATU,
   CalendarDateDimension_VDATU.CalMonth AS MonthOfRequestedDeliveryDate_VDATU,
   CalendarDateDimension_VDATU.CalWeek AS WeekOfRequestedDeliveryDate_VDATU,
@@ -346,7 +355,9 @@ LEFT JOIN `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.currency_decimal` AS
 --     AND currency_conversion.TCURR IN UNNEST({{ sap_currencies }})
 --##CORTEX-CUSTOMER Modify the exchange rate type based on your requirement
 --     AND currency_conversion.KURST = 'M'
-LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_ERDAT
-  ON CalendarDateDimension_ERDAT.Date = vbak.ERDAT
+LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_VBAK_ERDAT
+  ON CalendarDateDimension_VBAK_ERDAT.Date = vbak.ERDAT
+LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_VBAP_ERDAT
+  ON CalendarDateDimension_VBAP_ERDAT.Date = vbap.ERDAT
 LEFT JOIN `{{ project_id_src }}.{{ k9_datasets_processing }}.calendar_date_dim` AS CalendarDateDimension_VDATU
   ON CalendarDateDimension_VDATU.Date = vbak.VDATU

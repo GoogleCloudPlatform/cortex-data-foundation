@@ -1,4 +1,4 @@
-#-- Copyright 2023 Google LLC
+#-- Copyright 2025 Google LLC
 #--
 #-- Licensed under the Apache License, Version 2.0 (the "License");
 #-- you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ SELECT
   Opportunities.ContactId,
   Opportunities.CreatedById,
   Opportunities.CreatedDatestamp,
+  Opportunities.CurrencyIsoCode,
+  --## CORTEX-CUSTOMER: Replace previous line with the following if multi-currency is not enabled.
+  --CAST(NULL AS STRING) AS CurrencyIsoCode,
   Opportunities.Description,
   Opportunities.Fiscal,
   Opportunities.FiscalQuarter,

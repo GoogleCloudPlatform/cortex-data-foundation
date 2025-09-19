@@ -45,6 +45,7 @@ WHEN NOT MATCHED AND IFNULL(S.operation_flag, 'I') != 'D' THEN
   VALUES (${fields})
 WHEN MATCHED AND S.operation_flag = 'D' THEN
   DELETE
-WHEN MATCHED AND S.operation_flag IN ('I','U') THEN
+-- 'L' flag is also included to account for post possible pipeline reconfiguration.
+WHEN MATCHED AND S.operation_flag IN ('I','U','L') THEN
   UPDATE SET ${update_fields};
 

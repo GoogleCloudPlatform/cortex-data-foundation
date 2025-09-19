@@ -1,4 +1,4 @@
-#-- Copyright 2023 Google LLC
+#-- Copyright 2025 Google LLC
 #--
 #-- Licensed under the Apache License, Version 2.0 (the "License");
 #-- you may not use this file except in compliance with the License.
@@ -26,16 +26,6 @@ WITH
       GROUP BY 1
     )
     GROUP BY 1
-  ),
-  CurrencyConversion AS (
-    SELECT
-      TargetCurrency,
-      SourceCurrency,
-      ConversionRate AS CurrencyExchangeRate,
-      ConversionDate AS CurrencyConversionDate
-    FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion`
-    WHERE
-      TargetCurrency IN UNNEST({{ sfdc_currencies }})
   )
 SELECT
   Leads.LeadId AS LeadId,
@@ -57,12 +47,12 @@ SELECT
   Opportunities.CreatedDatestamp AS OpportunityCreatedDatestamp,
   Opportunities.Name AS OpportunityName,
   Leads.Status AS LeadStatus,
-  CurrencyConversion.TargetCurrency,
   CurrencyConversion.SourceCurrency,
-  CurrencyConversion.CurrencyExchangeRate,
-  CurrencyConversion.CurrencyConversionDate,
+  CurrencyConversion.TargetCurrency,
+  CurrencyConversion.ConversionRate AS CurrencyExchangeRate,
+  CurrencyConversion.ConversionDate AS CurrencyConversionDate,
   LeadsFirstResponseDates.LeadFirstResponseDatestamp AS LeadFirstResponseDatestamp,
-  (Opportunities.Amount * CurrencyConversion.CurrencyExchangeRate) AS TotalSaleAmountInTargetCurrency,
+  (Opportunities.Amount * CurrencyConversion.ConversionRate) AS TotalSaleAmountInTargetCurrency,
   --## CORTEX-CUSTOMER Consider adding other dimensions from the CalendarDateDimension table as per your requirement
   Leads.LeadCreatedDate AS LeadCreatedDate,
   Leads.LeadCreatedWeek AS LeadCreatedWeek,
@@ -81,6 +71,13 @@ LEFT JOIN
   LeadsFirstResponseDates
   ON Leads.LeadId = LeadsFirstResponseDates.LeadId
 LEFT JOIN
-  CurrencyConversion
+  `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion` AS CurrencyConversion
   ON
-    COALESCE(Opportunities.CloseDate, CURRENT_DATE()) = CurrencyConversion.CurrencyConversionDate
+    COALESCE(Opportunities.CloseDate, CURRENT_DATE()) = CurrencyConversion.ConversionDate
+    AND (
+      Opportunities.CurrencyIsoCode = CurrencyConversion.SourceCurrency
+      -- When Multi-Currency is not enabled, CurrencyIsoCode field will be NULL.
+      -- In this case, use corporate currency as source currency.
+      OR (Opportunities.CurrencyIsoCode IS NULL AND CurrencyConversion.SourceCurrencyIsCorporate)
+    )
+    AND CurrencyConversion.TargetCurrency IN UNNEST({{ sfdc_currencies }})

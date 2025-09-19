@@ -18,7 +18,7 @@ This tutorial will guide you through demo deployment of Cortex Framework for Mer
 
 This deployment includes:
 
-- Cortex Marketing with Cross Media with sample marketing data for Google Ads, YouTube, Meta and TikTik
+- Cortex Marketing with Cross Media with sample marketing data for YouTube, Meta and TikTok
 - Cortex for Meridian
 - Oracle EBS with sample sales data
 - Automated Cortex for Meridian notebook execution with sample reports saved to GCS

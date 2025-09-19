@@ -1,4 +1,4 @@
-#-- Copyright 2023 Google LLC
+#-- Copyright 2025 Google LLC
 #--
 #-- Licensed under the Apache License, Version 2.0 (the "License");
 #-- you may not use this file except in compliance with the License.
@@ -67,16 +67,6 @@ WITH
       Tasks.WhatId
     FROM
       `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.Tasks` AS Tasks
-  ),
-  CurrencyConversion AS (
-    SELECT
-      TargetCurrency,
-      SourceCurrency,
-      ConversionRate AS CurrencyExchangeRate,
-      ConversionDate AS CurrencyConversionDate
-    FROM `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion`
-    WHERE
-      TargetCurrency IN UNNEST({{ sfdc_currencies }})
   )
 SELECT
   Activities.*,
@@ -100,9 +90,9 @@ SELECT
   Opportunities.IsClosed AS IsOpportunityClosed,
   Opportunities.Amount AS TotalSaleAmount,
   CurrencyConversion.TargetCurrency,
-  CurrencyConversion.SourceCurrency,
-  CurrencyConversion.CurrencyExchangeRate,
-  CurrencyConversion.CurrencyConversionDate,
+  CurrencyConversion.SourceCurrency AS SourceCurrency,
+  CurrencyConversion.ConversionRate AS CurrencyExchangeRate,
+  CurrencyConversion.ConversionDate AS CurrencyConversionDate,
   AccountsMD.BillingCountry AS AccountBillingCountry,
   --## CORTEX-CUSTOMER Consider adding other dimensions from the CalendarDateDimension table as per your requirement
   Opportunities.OpportunityCreatedDate AS OpportunityCreatedDate,
@@ -126,8 +116,8 @@ SELECT
   OpportunityOwnerUser.Name AS OpportunityOwnerName,
   LeadOwnerUser.Name AS LeadOwnerName,
   Leads.Status AS LeadStatus,
-  (Opportunities.Amount * CurrencyConversion.CurrencyExchangeRate) AS TotalSaleAmountInTargetCurrency,
-  (Opportunities.Amount * (Opportunities.Probability / 100)) * CurrencyConversion.CurrencyExchangeRate AS OpportunityExpectedValueInTargetCurrency,
+  (Opportunities.Amount * CurrencyConversion.ConversionRate) AS TotalSaleAmountInTargetCurrency,
+  (Opportunities.Amount * (Opportunities.Probability / 100)) * CurrencyConversion.ConversionRate AS OpportunityExpectedValueInTargetCurrency,
   -- Expected Opportunity value by each Sales Representative in Sales Activities charts.
   Opportunities.Amount * (Opportunities.Probability / 100) AS OpportunityExpectedValue
 FROM Activities
@@ -150,6 +140,13 @@ LEFT JOIN
   `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.AccountsMD` AS AccountsMD
   ON Activities.AccountId = AccountsMD.AccountId
 LEFT JOIN
-  CurrencyConversion
+  `{{ project_id_tgt }}.{{ sfdc_datasets_reporting }}.CurrencyConversion` AS CurrencyConversion
   ON
-    COALESCE(Opportunities.CloseDate, CURRENT_DATE()) = CurrencyConversion.CurrencyConversionDate
+    COALESCE(Opportunities.CloseDate, CURRENT_DATE()) = CurrencyConversion.ConversionDate
+    AND (
+      Opportunities.CurrencyIsoCode = CurrencyConversion.SourceCurrency
+      -- When Multi-Currency is not enabled, CurrencyIsoCode field will be NULL.
+      -- In this case, use corporate currency as source currency.
+      OR (Opportunities.CurrencyIsoCode IS NULL AND CurrencyConversion.SourceCurrencyIsCorporate)
+    )
+    AND CurrencyConversion.TargetCurrency IN UNNEST({{ sfdc_currencies }})

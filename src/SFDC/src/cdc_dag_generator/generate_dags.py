@@ -81,6 +81,8 @@ def process_table(bq_client, table_setting, project_id, raw_dataset,
             newline="",
     ) as csv_file:
         for row in csv.DictReader(csv_file, delimiter=","):
+            if row["SourceField"].startswith("--"):
+                continue
             sfdc_to_bq_field_map[row["SourceField"]] = (row["TargetField"],
                                                         row["DataType"])
     source_fields_lower = [f.lower() for f in sfdc_to_bq_field_map]

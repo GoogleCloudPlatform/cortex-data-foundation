@@ -232,9 +232,7 @@ FROM
   `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.kna1` AS KNA1
 LEFT OUTER JOIN
   `{{ project_id_src }}.{{ dataset_cdc_processed_ecc }}.adrc` AS ADRC
-ON
-  KNA1.ADRNR = ADRC.ADDRNUMBER
-  AND KNA1.MANDT = ADRC.CLIENT
-  AND ADRC.date_to = cast('9999-12-31' as DATE)
-ORDER BY
-  Client_MANDT
+  ON
+    KNA1.ADRNR = ADRC.ADDRNUMBER
+    AND KNA1.MANDT = ADRC.CLIENT
+    AND ADRC.date_to = CAST('9999-12-31' AS DATE)

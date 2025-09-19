@@ -187,6 +187,10 @@ def configure(
         if config["deployOracleEBS"]:
             config["k9"]["deployCountryDim"] = True
 
+        # Sustainability will be deployed if and only if SAP is deployed
+        if config["deploySAP"]:
+            config["k9"]["deploySustainability"] = True
+
         # Common dimensions and Cross Media
         if config["deployMarketing"] and (config["marketing"]["deployGoogleAds"]
                                           or

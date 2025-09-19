@@ -1,154 +1,62 @@
----CORTEX-CUSTOMER: Stock In Hand is the aggregated unrestricted stock Qty
----from various sources like stock at Distribution centers, at Vendor location,
----at Customer Location and special stock at Vendor in Consignment.
+/*
+Aggregates unrestricted stock quantity from distribution centers, vendors, customers, and vendor
+consignment. MATDOC provides consolidated Stock Qty for various categories
+*/
 
-## CORTEX-CUSTOMER: We are transposing MARD to achieve different stock reasons
-## in a single column
 SELECT
-  mard.MANDT AS Client_MANDT,
-  mard.MATNR AS ArticleNumber_MATNR,
-  mard.WERKS AS Site_WERKS,
-  mard.LGORT AS StorageLocation_LGORT,
-  NULL AS BatchNumber_CHARG,
-  NULL AS SpecialStockIndicator_SOBKZ,
-  NULL AS SDDocumentNumber_VBELN,
-  NULL AS SDDocumentItemNumber_POSNR,
-  NULL AS VendorAccountNumber_LIFNR,
-  NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
+  MANDT AS Client_MANDT,
+  MATBF AS MaterialNumber_MATNR,
+  --##CORTEX-CUSTOMER ArticleNumber_MATNR is marked for removal. Change all references to MaterialNumber_MATNR.
+  MATBF AS ArticleNumber_MATNR,
+  WERKS AS Plant_WERKS,
+  --##CORTEX-CUSTOMER Site_WERKS is marked for removal. Change all references to Plant_WERKS.
+  WERKS AS Site_WERKS,
+  LGORT_SID AS StorageLocation_LGORT,
+  CAST(CHARG_SID AS STRING) AS BatchNumber_CHARG,
+  SOBKZ AS SpecialStockIndicator_SOBKZ,
+  MAT_KDAUF AS SDDocumentNumber_VBELN,
+  MAT_KDPOS AS SDDocumentItemNumber_POSNR,
+  LIFNR_SID AS VendorAccountNumber_LIFNR,
+  KUNNR_SID AS CustomerNumber_KUNNR,
+  SUM(
+    CASE SHKZG
+      WHEN 'S' THEN MENGE
+      WHEN 'H' THEN -MENGE
+      ELSE 0
+    END
+  ) AS Qty,
+  CASE BSTAUS_SG
+    -- Assigns type to various stock in-house.
+    WHEN 'A' THEN 'A-Unrestricted use'
+    WHEN 'B' THEN 'B-Quality inspection'
+    WHEN 'C' THEN 'C-Blocked stock returns'
+    WHEN 'D' THEN 'D-Blocked Stock'
+    WHEN 'E' THEN 'E-Stock of All Restricted Batches'
+    WHEN 'F' THEN 'F-Stock in transfer'
+    -- Assigns type to consignment stock at customer.
+    WHEN 'K' THEN 'A-Unrestricted use'
+    WHEN 'L' THEN 'B-Quality inspection'
+    WHEN 'M' THEN 'E-Stock of All Restricted Batches'
+    -- Assigns type to stock provided to vendor.
+    WHEN 'Q' THEN 'A-Unrestricted use'
+    WHEN 'R' THEN 'B-Quality inspection'
+    WHEN 'S' THEN 'E-Stock of All Restricted Batches'
+  END AS StockType
 FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.mard` AS mard,
-  UNNEST(
-    [
-      CAST(LABST AS STRING) || '@A-Unrestricted use',
-      CAST(UMLME AS STRING) || '@F-Stock in transfer',
-      CAST(INSME AS STRING) || '@B-Quality inspection',
-      CAST(EINME AS STRING) || '@E-Stock of All Restricted Batches',
-      CAST(SPEME AS STRING) || '@D-Blocked Stock',
-      CAST(RETME AS STRING) || '@C Blocked stock returns'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mard.MANDT = '{{ mandt }}'
-UNION ALL
-## CORTEX-CUSTOMER: MSKA provides Sales Order Stock Qty at plant
-SELECT
-  mska.MANDT AS Client_MANDT,
-  mska.MATNR AS ArticleNumber_MATNR,
-  mska.WERKS AS Site_WERKS,
-  mska.LGORT AS StorageLocation_LGORT,
-  CAST(mska.CHARG AS STRING) AS BatchNumber_CHARG,
-  mska.SOBKZ AS SpecialStockIndicator_SOBKZ,
-  mska.VBELN AS SDDocumentNumber_VBELN,
-  mska.POSNR AS SDDocumentItemNumber_POSNR,
-  NULL AS VendorAccountNumber_LIFNR,
-  NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
-FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.mska` AS mska,
-  UNNEST(
-    [
-      KALAB || '@A-Unrestricted use',
-      KAINS || '@B-Quality inspection',
-      KASPE || '@D-Blocked Stock'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mska.MANDT = '{{ mandt }}'
-UNION ALL
-## CORTEX-CUSTOMER: MATDOC provides Stock Qty at Vendor Location
-SELECT
-  msfd.MANDT AS Client_MANDT,
-  msfd.MATBF AS ArticleNumber_MATNR,
-  msfd.WERKS AS Site_WERKS,
-  NULL AS StorageLocation_LGORT,
-  CAST(msfd.CHARG_SID AS STRING) AS BatchNumber_CHARG,
-  msfd.SOBKZ AS SpecialStockIndicator_SOBKZ,
-  msfd.MAT_KDAUF AS SDDocumentNumber_VBELN,
-  msfd.MAT_KDPOS AS SDDocumentItemNumber_POSNR,
-  msfd.LIFNR_SID AS VendorAccountNumber_LIFNR,
-  NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
-FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.matdoc` AS msfd,
-  UNNEST(
-    [
-      LBBSA_SID || '@A-Unrestricted use', --to be updated
-      LBBSA_SID || '@B-Quality inspection',
-      LBBSA_SID || '@E-Stock of All Restricted Batches'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND msfd.MANDT = '{{ mandt }}'
-UNION ALL
-## CORTEX-CUSTOMER: MSLB provides Special Stock Qty at Vendor Location
-SELECT
-  mslb.MANDT AS Client_MANDT,
-  mslb.MATNR AS ArticleNumber_MATNR,
-  mslb.WERKS AS Site_WERKS,
-  NULL AS StorageLocation_LGORT,
-  CAST(mslb.CHARG AS STRING) AS BatchNumber_CHARG,
-  mslb.SOBKZ AS SpecialStockIndicator_SOBKZ,
-  NULL AS SDDocumentNumber_VBELN,
-  NULL AS SDDocumentItemNumber_POSNR,
-  mslb.LIFNR AS VendorAccountNumber_LIFNR,
-  NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
-FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.mslb` AS mslb,
-  UNNEST(
-    [
-      LBLAB || '@A-Unrestricted use',
-      LBINS || '@B-Quality inspection'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mslb.MANDT = '{{ mandt }}'
-UNION ALL
-## CORTEX-CUSTOMER: MSKU provides Special Stock Qty at Customer Location
-SELECT
-  msku.MANDT AS Client_MANDT,
-  msku.MATNR AS ArticleNumber_MATNR,
-  msku.WERKS AS Site_WERKS,
-  NULL AS StorageLocation_LGORT,
-  CAST(msku.CHARG AS STRING) AS BatchNumber_CHARG,
-  msku.SOBKZ AS SpecialStockIndicator_SOBKZ,
-  NULL AS SDDocumentNumber_VBELN,
-  NULL AS SDDocumentItemNumber_POSNR,
-  NULL AS VendorAccountNumber_LIFNR,
-  msku.KUNNR AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
-FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.msku` AS msku,
-  UNNEST(
-    [
-      KULAB || '@A-Unrestricted use'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND msku.MANDT = '{{ mandt }}'
-UNION ALL
-## CORTEX-CUSTOMER: MKOL provides Special Stock Qty in Vendor Consignment
-SELECT
-  mkol.MANDT AS Client_MANDT,
-  mkol.MATNR AS ArticleNumber_MATNR,
-  mkol.WERKS AS Site_WERKS,
-  mkol.LGORT AS StorageLocation_LGORT,
-  CAST(mkol.CHARG AS STRING) AS BatchNumber_CHARG,
-  mkol.SOBKZ AS SpecialStockIndicator_SOBKZ,
-  NULL AS SDDocumentNumber_VBELN,
-  NULL AS SDDocumentItemNumber_POSNR,
-  mkol.LIFNR AS VendorAccountNumber_LIFNR,
-  NULL AS CustomerNumber_KUNNR,
-  SPLIT(Qty, '@') [OFFSET(0)] AS Qty,
-  SPLIT(Qty, '@') [OFFSET(1)] AS StockType
-FROM
-  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.mkol` AS mkol,
-  UNNEST(
-    [
-      SLABS || '@A-Unrestricted use',
-      SINSM || '@B-Quality inspection',
-      SSPEM || '@D-Blocked Stock'
-    ]
-  ) AS Qty
-WHERE Qty IS NOT NULL AND mkol.MANDT = '{{ mandt }}'
+  `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.matdoc`
+WHERE
+  BSTAUS_SG IN ('A', 'B', 'C', 'D', 'E', 'F', 'K', 'L', 'M', 'Q', 'R', 'S')
+  AND MANDT = '{{ mandt }}'
+GROUP BY
+  Client_MANDT,
+  MaterialNumber_MATNR,
+  Plant_WERKS,
+  StorageLocation_LGORT,
+  BatchNumber_CHARG,
+  SpecialStockIndicator_SOBKZ,
+  SDDocumentNumber_VBELN,
+  SDDocumentItemNumber_POSNR,
+  VendorAccountNumber_LIFNR,
+  CustomerNumber_KUNNR,
+  StockType
+HAVING Qty != 0
