@@ -83,29 +83,6 @@ steps:
         echo "🔪No SQL files found under generated_sql folder or the folder does not exist. Skipping copy.🔪"
       fi
 
-  - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
-    id: 'datamesh'
-    waitFor: ['config_reader']
-    script: |
-      #!/bin/bash
-      set -e
-      _DEPLOY_DATA_MESH_=$(jq -r ."deployDataMesh" "${_CONFIG_FILE}")
-
-      if [[ ${_DEPLOY_DATA_MESH_} == "true" ]]; then
-        _SQL_FLAVOR_=$(jq -r ."SAP.SQLFlavor" "${_CONFIG_FILE}")
-
-        python3 common/data_mesh/deploy_data_mesh.py \
-            --config-file "${_CONFIG_FILE}" \
-            --tag-template-directories config/${_SQL_FLAVOR_}/tag_templates \
-            --policy-directories config/${_SQL_FLAVOR_}/policy_taxonomies \
-            --lake-directories config/${_SQL_FLAVOR_}/lakes \
-            --annotation-directories \
-                config/${_SQL_FLAVOR_}/annotations/raw \
-                config/${_SQL_FLAVOR_}/annotations/cdc
-      else
-        echo "==Skipping Data Mesh=="
-      fi
-
 logsBucket: "gs://${_GCS_BUCKET}"
 serviceAccount: "${_BUILD_ACCOUNT}"
 timeout: 7200s

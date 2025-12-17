@@ -57,7 +57,8 @@ def _get_bq_operator(dag_name: str) -> BigQueryInsertJobOperator:
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION)
 
 def _map_campaigns_to_products():
     run_cross_media_matching(True, _BQ_LABELS, _AIRFLOW_CONNECTION_ID)

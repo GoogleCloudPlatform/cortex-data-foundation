@@ -56,7 +56,9 @@ with DAG(dag_id="financial_statement_version",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     ## This task deletes the hierarchy from a specific node.
     delete_fsv_node = BigQueryInsertJobOperator(
@@ -69,7 +71,9 @@ with DAG(dag_id="financial_statement_version",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     ## This task creates the fsv & glaccounts mapping table.
     fsv_glaccounts_mapping = BigQueryInsertJobOperator(
@@ -82,7 +86,9 @@ with DAG(dag_id="financial_statement_version",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     stop_task = EmptyOperator(task_id="stop")
 

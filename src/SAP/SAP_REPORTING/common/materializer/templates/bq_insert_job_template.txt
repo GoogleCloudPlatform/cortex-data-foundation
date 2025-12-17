@@ -8,4 +8,5 @@ refresh_${table_name} = BigQueryInsertJobOperator(
         "labels": _BQ_LABELS,
         "location": _BQ_LOCATION
     },
+    location=_BQ_LOCATION,
     gcp_conn_id=_GCP_CONN_ID)

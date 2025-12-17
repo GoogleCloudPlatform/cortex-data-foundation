@@ -55,7 +55,9 @@ with DAG(dag_id="profit_center",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     # This task deletes the hierarchy from a specific node.
     delete_profitcenter_node = BigQueryInsertJobOperator(
@@ -68,7 +70,9 @@ with DAG(dag_id="profit_center",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     # This task creates the profit center mapping table.
     profitcenter_mapping = BigQueryInsertJobOperator(
@@ -81,7 +85,9 @@ with DAG(dag_id="profit_center",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     stop_task = EmptyOperator(task_id="stop")
 

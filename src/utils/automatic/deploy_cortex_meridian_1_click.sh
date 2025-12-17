@@ -87,10 +87,11 @@ fancy_echo_done "Done enabling APIs"
 # Create data sets
 fancy_echo_start "Creating empty data sets"
 
-DATA_SET_NAMES=('K9_PROCESSING' 'K9_REPORTING' 'CORTEX_ORACLE_EBS_REPORTING' 
-    'CORTEX_ORACLE_EBS_REPORTING_DEMO' 'CORTEX_TIKTOK_CDC' 'CORTEX_TIKTOK_RAW' 
-    'CORTEX_TIKTOK_REPORTING' 'CORTEX_META_CDC' 'CORTEX_META_RAW' 
-    'CORTEX_META_REPORTING' 'CORTEX_DV360_RAW' 'CORTEX_DV360_CDC' 
+DATA_SET_NAMES=('K9_PROCESSING' 'K9_REPORTING' 'CORTEX_ORACLE_EBS_REPORTING'
+    'CORTEX_ORACLE_EBS_REPORTING_DEMO' 'CORTEX_ORACLE_EBS_CDC'
+    'CORTEX_TIKTOK_CDC' 'CORTEX_TIKTOK_RAW'
+    'CORTEX_TIKTOK_REPORTING' 'CORTEX_META_CDC' 'CORTEX_META_RAW'
+    'CORTEX_META_REPORTING' 'CORTEX_DV360_RAW' 'CORTEX_DV360_CDC'
     'CORTEX_DV360_REPORTING')
 
 for dataset_name in "${DATA_SET_NAMES[@]}"; do
@@ -212,9 +213,9 @@ fancy_echo_start "Assigning IAM roles to Cloud Build Service Account & Meridian 
 
 CLOUD_BUILD_ROLES=('roles/aiplatform.colabEnterpriseAdmin'
     'roles/storage.objectUser' 'roles/workflows.editor' 'roles/bigquery.jobUser'
-    'roles/bigquery.dataEditor' 'roles/iam.serviceAccountUser' 'roles/logging.logWriter' 
+    'roles/bigquery.dataEditor' 'roles/iam.serviceAccountUser' 'roles/logging.logWriter'
     'roles/cloudbuild.builds.builder')
-	
+
 for role in "${CLOUD_BUILD_ROLES[@]}"; do
     fancy_sub_echo "Assigning role: $role to $CLOUD_BUILD_SERVICE_ACCOUNT_EMAIL 🔑"
     gcloud projects add-iam-policy-binding "$PROJECT_ID" \

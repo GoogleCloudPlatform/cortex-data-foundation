@@ -1,7 +1,6 @@
 {
     "testData": true,
     "deployOracleEBS": true,
-    "deployDataMesh": true,
     "turboMode": true,
     "projectIdSource": "",
     "projectIdTarget": "",
@@ -13,12 +12,6 @@
             "processing": "K9_PROCESSING",
             "reporting": "K9_REPORTING"
         }
-    },
-    "DataMesh": {
-        "deployDescriptions": true,
-        "deployLakes": false,
-        "deployCatalog": false,
-        "deployACLs": false
     },
     "OracleEBS": {
         "itemCategorySetIds": [],

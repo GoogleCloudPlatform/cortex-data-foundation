@@ -54,7 +54,9 @@ with DAG(dag_id="cost_center",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
     # This task deletes the hierarchy from a specific node.
     delete_costcenter_node = BigQueryInsertJobOperator(
         task_id="delete_costcenter_node",
@@ -66,7 +68,9 @@ with DAG(dag_id="cost_center",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
     # This task creates the cost center mapping table.
     costcenter_mapping = BigQueryInsertJobOperator(
         task_id="costcenter_mapping",
@@ -78,7 +82,9 @@ with DAG(dag_id="cost_center",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     stop_task = EmptyOperator(task_id="stop")
 

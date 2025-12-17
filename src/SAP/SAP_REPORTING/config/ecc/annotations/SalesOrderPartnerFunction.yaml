@@ -58,5 +58,3 @@ fields:
     description: "Maintain appointments in Calendar"
   - name: "DataFilterValueForDataAging_DATAAGING"
     description: "Data Filter Value For Data Aging"
-  - name: "DummyFunctionInLength1_DUMMY_SDDOCPARTNER_INCL_EEW_PS"
-    description: "Dummy Function In Length 1"

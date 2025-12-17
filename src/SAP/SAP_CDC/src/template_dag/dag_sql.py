@@ -51,7 +51,8 @@ with airflow.DAG(dag_id="CDC_BigQuery_${base_table}",
             },
             "labels": _BQ_LABELS,
             "location": "${bq_location}"
-        }
+        },
+       location="${bq_location}"
     )
     stop_task = EmptyOperator(task_id="stop")
     start_task >> copy_records >> stop_task # type: ignore

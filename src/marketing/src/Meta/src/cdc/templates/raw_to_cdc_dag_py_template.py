@@ -77,7 +77,8 @@ _BQ_OPTIONS = {
     },
     "retries": execution_retry_count,
     "retry_delay": retry_delay_sec,
-    "gcp_conn_id": "meta_cdc_bq"
+    "gcp_conn_id": "meta_cdc_bq",
+    "location": _BQ_LOCATION
 }
 
 with DAG(**_DAG_OPTIONS, schedule="${load_frequency}") as dag:

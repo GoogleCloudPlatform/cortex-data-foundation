@@ -13,9 +13,9 @@
 # limitations under the License.
 
 # This build file create all the necessary infrastructure (BigQuery views,
-# GCS bucket, config files, report templates, notebook file, Workflow, 
-# Cloud Build and Colab Enterprise) for running Cortex for Merdian. 
-# Dependent on Cortex for Marketing with at least one marketing workload 
+# GCS bucket, config files, report templates, notebook file, Workflow,
+# Cloud Build and Colab Enterprise) for running Cortex for Merdian.
+# Dependent on Cortex for Marketing with at least one marketing workload
 # and CrossMedia having been deployed.
 
 ---
@@ -86,6 +86,8 @@ steps:
     args: ['/workspace/deployment/create_workflow.sh']
     env:
       - _CONFIG_FILE=${_CONFIG_FILE}
+      - _BUILD_ACCOUNT=${_BUILD_ACCOUNT}
+      - _LOGS_BUCKET=${_GCS_BUCKET}
 
   - name: gcr.io/kittycorn-public/deploy-kittycorn:v2.0
     id: "upload_deployment_info_to_gcs"

@@ -58,7 +58,9 @@ with DAG(
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     update_daily_weather_table = BigQueryInsertJobOperator(
         task_id="update_daily_weather_table",
@@ -68,8 +70,11 @@ with DAG(
                 "query": "weather_daily.sql",
                 "useLegacySql": False
             },
-            "labels": _BQ_LABELS
-        })
+            "labels": _BQ_LABELS,
+            "location": _BQ_LOCATION
+        },
+        location=_BQ_LOCATION
+    )
 
     refresh_weekly_weather_table = BigQueryInsertJobOperator(
         task_id="refresh_weekly_weather_table",
@@ -79,8 +84,11 @@ with DAG(
                 "query": "weather_weekly.sql",
                 "useLegacySql": False
             },
-            "labels": _BQ_LABELS
-        })
+            "labels": _BQ_LABELS,
+            "location": _BQ_LOCATION
+        },
+        location=_BQ_LOCATION
+    )
 
     stop_task = EmptyOperator(task_id="stop")
 

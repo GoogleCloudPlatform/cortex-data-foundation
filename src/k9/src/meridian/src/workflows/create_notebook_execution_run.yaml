@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This workflow will start a new Colab Enterprise notebook execution (via Cloud Build) 
+# This workflow will start a new Colab Enterprise notebook execution (via Cloud Build)
 # with Cortex for Meridian. Additional steps can be added.
-# For example add loading/updating data from sources outside Cortex in the 
-# pre_notebook_execution step. 
+# For example add loading/updating data from sources outside Cortex in the
+# pre_notebook_execution step.
 # For more information see: https://cloud.google.com/workflows/docs/reference/googleapis.
 
 main:
-  params: 
+  params:
   - input
   steps:
   - init:
@@ -43,12 +43,12 @@ main:
                     call: sys.log
                     args:
                         text: ${"Will create backup of config file as " + back_up_config_file_gcs_path}
-                        severity: INFO 
+                        severity: INFO
               - backupConfigFile:
                   call: googleapis.storage.v1.objects.copy
                   args:
                        sourceBucket: '${meridian_bucket_name}'
-                       sourceObject: ${text.url_encode(meridian_config_file_gcs_path)} 
+                       sourceObject: ${text.url_encode(meridian_config_file_gcs_path)}
                        destinationBucket: '${meridian_bucket_name}'
                        destinationObject: ${text.url_encode(back_up_config_file_gcs_path)}
                   result: backup_result
@@ -65,7 +65,7 @@ main:
                     name: '${meridian_config_file_gcs_path}'
                     body: '${input}'
   - pre_notebook_execution:
-      assign: 
+      assign:
           - not_implemented: "Not implemented add custom data loading here if needed."
   - create_notebook_execution_run:
       call: googleapis.cloudbuild.v1.projects.builds.create
@@ -84,7 +84,7 @@ main:
                   echo "Looking up runtime template name..."
                   template_name=$(gcloud colab runtime-templates list --region="$_REGION" --project="$_PROJECT_ID" --filter="displayName:$_COLAB_RUNTIME_TEMPLATE_NAME" --format=json --format="value(name)")
 
-                  echo "Full template name: ${template_name}." 
+                  echo "Full template name: ${template_name}."
 
                   gcloud colab executions create \
                     --display-name=$_COLAB_EXECUTION_JOB_NAME \
@@ -108,6 +108,8 @@ main:
 
                   echo -e "\nExecution run created - you can find it in the GCP portal Colab Enterprise Executions https://console.cloud.google.com/vertex-ai/colab/execution-jobs"
                   echo -e "\n--------------------------------"
+          serviceAccount: "{{CLOUD_BUILD_SERVICE_ACCOUNT}}"
+          logsBucket: "gs://{{LOGS_BUCKET}}"
           substitutions:
               _REGION: "{{REGION}}"
               _PROJECT_ID: "{{PROJECT_ID}}"

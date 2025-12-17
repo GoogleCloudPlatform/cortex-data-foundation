@@ -85,8 +85,8 @@ with DAG(dag_id=_IDENTIFIER,
         # Compatible with Airflow v1 and v2.
         # In case of Airflow 2 it is upgradeable.
         py_requirements=[
-            "apache-beam[gcp]==2.53.0",
-            "google-cloud-secret-manager==2.17.0"
+            "apache-beam[gcp]==2.68.0",
+            "google-cloud-secret-manager==2.25.0"
         ],
         py_system_site_packages=False,
         gcp_conn_id=_GCP_CONN_ID,
