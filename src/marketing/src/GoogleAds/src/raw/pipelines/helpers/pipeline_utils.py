@@ -98,7 +98,7 @@ def _list_accessible_client_ids(credentials: Dict,
     Args:
         credentials (Dict): Contains client_token, client_secret, refresh_token,
                       client_id.
-        api_version (str): Google Ads API version (for example: 'v15').
+        api_version (str): Google Ads API version (for example: 'v22').
     Yield:
         List of accessible customer_ids.
     """
@@ -360,7 +360,8 @@ def get_max_recordstamp(client: Client, project: str, dataset: str,
 
 def get_credentials_from_secret_manager(
         project_id: str,
-        secret_name: str = "cortex-framework-google-ads-yaml") -> Dict:
+        secret_name:
+            str = "cortex-framework-google-ads-yaml") -> Dict:
     """Getting credentials from Google Secret Manager."""
     name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     secret_client = secretmanager.SecretManagerServiceClient()

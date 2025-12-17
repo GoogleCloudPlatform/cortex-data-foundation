@@ -56,7 +56,9 @@ with DAG(dag_id="currency_conversion",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     # This task loads currency decimal table to fix the decimal
     # place of amounts for non-decimal-based currencies.
@@ -70,7 +72,9 @@ with DAG(dag_id="currency_conversion",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     stop_task = EmptyOperator(task_id="stop")
 

@@ -9,6 +9,8 @@ CREATE OR REPLACE TABLE `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.curren
   end_date DATE,
   conv_date DATE
 )
+-- ## CORTEX-CUSTOMER Consider using monthly partitioning instead if partitioning by day exceeds BigQuery's partition limit.
+--   PARTITION BY DATE_TRUNC(conv_date, MONTH);
 PARTITION BY conv_date;
 
 CREATE OR REPLACE FUNCTION `{{ project_id_tgt }}.{{ dataset_reporting_tgt }}.gdatu_to_date`(gdatu STRING) AS
@@ -34,7 +36,7 @@ WITH
         LEAD(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}`.gdatu_to_date(tcurr.gdatu)) OVER (
           PARTITION BY tcurr.mandt, tcurr.kurst, tcurr.fcurr, tcurr.tcurr
           ORDER BY tcurr.gdatu DESC) IS NULL,
-        CURRENT_DATE(),
+        DATE('9999-12-31'),
         DATE_SUB(
           LEAD(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}`.gdatu_to_date(tcurr.gdatu)) OVER (
             PARTITION BY tcurr.mandt, tcurr.kurst, tcurr.fcurr, tcurr.tcurr
@@ -57,7 +59,7 @@ WITH
         LEAD(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}`.gdatu_to_date(tcurf.gdatu)) OVER (
           PARTITION BY tcurf.mandt, tcurf.kurst, tcurf.fcurr, tcurf.tcurr
           ORDER BY tcurf.gdatu DESC) IS NULL,
-        CURRENT_DATE(),
+        DATE('9999-12-31'),
         DATE_SUB(
           LEAD(`{{ project_id_tgt }}.{{ dataset_reporting_tgt }}`.gdatu_to_date(tcurf.gdatu)) OVER (
             PARTITION BY tcurf.mandt, tcurf.kurst, tcurf.fcurr, tcurf.tcurr
@@ -97,7 +99,7 @@ WITH
       tcurr.fcurr AS tcurr,
       1 AS ukurs,
       DATE_SUB(CURRENT_DATE(), INTERVAL 10 YEAR) AS start_date,
-      CURRENT_DATE() AS end_date
+      DATE('9999-12-31') AS end_date
     FROM
       `{{ project_id_src }}.{{ dataset_cdc_processed }}.tcurr` AS tcurr
   )
@@ -105,5 +107,14 @@ SELECT
   *
 FROM
   CurrencyConversion,
-  UNNEST(GENERATE_DATE_ARRAY(start_date, end_date)) AS conv_date
-WHERE conv_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 10 YEAR) AND CURRENT_DATE();
+  UNNEST(
+    GENERATE_DATE_ARRAY(
+      start_date,
+      -- Look at most 6 months into the future to include future conversion rates if needed.
+      -- Make sure total number of dates do not exceed 4,000 as per BigQuery partition limit per job.
+      -- ## CORTEX-CUSTOMER Adjust this date and the WHERE clause below based on your SAP configuration.
+      LEAST(end_date, DATE_ADD(CURRENT_DATE(), INTERVAL 6 MONTH))
+  )) AS conv_date
+-- The WHERE clause below must be kept in sync with the future date cap above.
+WHERE conv_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 10 YEAR) AND DATE_ADD(CURRENT_DATE(), INTERVAL 6 MONTH)
+;

@@ -28,7 +28,7 @@ metrics.average_cost,metrics,metrics.average_cost,FLOAT64
 metrics.average_cpc,metrics,metrics.average_cpc,FLOAT64
 metrics.average_cpe,metrics,metrics.average_cpe,FLOAT64
 metrics.average_cpm,metrics,metrics.average_cpm,FLOAT64
-metrics.average_cpv,metrics,metrics.average_cpv,FLOAT64
+metrics.trueview_average_cpv,metrics,metrics.trueview_average_cpv,FLOAT64
 metrics.average_impression_frequency_per_user,metrics,metrics.average_impression_frequency_per_user,FLOAT64
 metrics.average_order_value_micros,metrics,metrics.average_order_value_micros,INT64
 metrics.average_page_views,metrics,metrics.average_page_views,FLOAT64
@@ -114,6 +114,6 @@ metrics.video_quartile_p100_rate,metrics,metrics.video_quartile_p100_rate,FLOAT6
 metrics.video_quartile_p25_rate,metrics,metrics.video_quartile_p25_rate,FLOAT64
 metrics.video_quartile_p50_rate,metrics,metrics.video_quartile_p50_rate,FLOAT64
 metrics.video_quartile_p75_rate,metrics,metrics.video_quartile_p75_rate,FLOAT64
-metrics.video_view_rate,metrics,metrics.video_view_rate,FLOAT64
-metrics.video_views,metrics,metrics.video_views,INT64
+metrics.video_trueview_view_rate,metrics,metrics.video_trueview_view_rate,FLOAT64
+metrics.video_trueview_views,metrics,metrics.video_trueview_views,INT64
 metrics.view_through_conversions,metrics,metrics.view_through_conversions,INT64

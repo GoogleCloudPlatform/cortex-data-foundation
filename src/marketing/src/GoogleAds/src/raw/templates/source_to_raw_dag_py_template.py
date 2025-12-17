@@ -23,7 +23,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
 
-_API_VERSION = "v17"
+_API_VERSION = "v22"
 _TABLE_NAME = "${table_name}"
 _DATASET_ID = "${raw_dataset}"
 _PROJECT_ID = "${project_id}"
@@ -101,8 +101,8 @@ _BEAM_OPERATOR_CONFIG = {
     "py_system_site_packages": False,
     "dataflow_config": DataflowConfiguration(**_DATAFLOW_CONFIG),
     "py_requirements": [
-        "apache-beam[gcp]==2.53.0", "google-cloud-secret-manager==2.16.3",
-        "google-ads==25.0.0"
+        "apache-beam[gcp]==2.68.0", "google-cloud-secret-manager==2.25.0",
+        "google-ads==28.4.0"
     ],
     "gcp_conn_id": _GCP_CONN_ID,
     "retry_exponential_backoff": True

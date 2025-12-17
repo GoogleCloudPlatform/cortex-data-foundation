@@ -57,6 +57,7 @@ with airflow.DAG("${dag_full_name}",
                 "labels": _BQ_LABELS,
                 "location": "${bq_location}"
             },
+            location="${bq_location}",
             gcp_conn_id="${lower_module_name}_${lower_tgt_dataset_type}_bq")
     stop_task = EmptyOperator(task_id="stop")
 

@@ -20,7 +20,7 @@ setup(name="MetaBeamDependencies",
       description="Python Apache Beam pipeline dependencies",
       install_requires=[
           "requests==2.32.3",
-          "google-cloud-secret-manager==2.17.0",
+          "google-cloud-secret-manager==2.25.0",
           "pyyaml~=6.0"],
       author="Google Cloud Cortex",
       author_email="cortex-support@google.com",

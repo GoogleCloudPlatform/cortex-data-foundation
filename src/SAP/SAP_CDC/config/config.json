@@ -1,18 +1,11 @@
 {
     "testData": true,
     "deploySAP": true,
-    "deployDataMesh": true,
     "turboMode": true,
     "projectIdSource": "",
     "projectIdTarget": "",
     "location": "US",
     "targetBucket": "",
-    "DataMesh": {
-        "deployDescriptions": true,
-        "deployLakes": false,
-        "deployCatalog": false,
-        "deployACLs": false
-    },
     "SAP": {
         "deployCDC": true,
         "SQLFlavor": "ecc",

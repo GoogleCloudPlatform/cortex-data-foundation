@@ -1,7 +1,6 @@
 {
     "testData": true,
     "deploySFDC": true,
-    "deployDataMesh": true,
     "turboMode": true,
     "projectIdSource": "",
     "projectIdTarget": "",
@@ -11,12 +10,6 @@
         "datasets": {
             "processing": "K9_PROCESSING"
         }
-    },
-    "DataMesh": {
-        "deployDescriptions": true,
-        "deployLakes": false,
-        "deployCatalog": false,
-        "deployACLs": false
     },
     "SFDC": {
         "deployCDC": true,

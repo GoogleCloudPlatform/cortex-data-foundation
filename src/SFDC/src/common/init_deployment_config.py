@@ -207,6 +207,9 @@ def validate_config(
     """
 
     failed = False
+    if not config.get("deployDataMesh"):
+        logging.warning("⚠️  DataMesh functionality has been deprecated.")
+
     if not config.get("projectIdSource"):
         logging.error("🛑 Missing 'projectIdSource' configuration value. 🛑")
         failed = True
@@ -226,7 +229,7 @@ def validate_config(
     config["deploySFDC"] = config.get("deploySFDC", False)
     config["deployMarketing"] = config.get("deployMarketing", False)
     config["deployOracleEBS"] = config.get("deployOracleEBS", False)
-    config["deployDataMesh"] = config.get("deployDataMesh", False)
+    config["deployDataMesh"] = False
     config["testData"] = config.get("testData", False)
     config["enableTaskDependencies"] = config.get("enableTaskDependencies",
                                                   False)
@@ -294,10 +297,6 @@ def validate_config(
         logging.warning("⚠️ No Vertex AI dataset specified. Using `%s`. ⚠️",
                         vertex_pd_default)
         config["VertexAI"]["processingDataset"] = vertex_pd_default
-
-    if config["deployDataMesh"] and "DataMesh" not in config:
-        logging.error("🛑 Data Mesh is enabled but no options are specified. 🛑")
-        failed = True
 
     logging.info("Fetching test harness version.")
     config["testHarnessVersion"] = config.get("testHarnessVersion",

@@ -63,7 +63,9 @@ with DAG(dag_id="Stock_Weekly_Snapshots_Update_Daily",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     stop_task = EmptyOperator(task_id="stop")
 

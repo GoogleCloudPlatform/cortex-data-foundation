@@ -23,7 +23,6 @@ SELECT
   vbpa.PARVW_FF AS IndicatorFurtherPartners_PARVW_FF,
   vbpa.ADRNP AS PersonNumber_ADRNP,
   vbpa.KALE AS MaintainAppointmentsInCalendar_KALE,
-  vbpa.DATAAGING AS DataFilterValueForDataAging_DATAAGING,
-  vbpa.DUMMY_SDDOCPARTNER_INCL_EEW_PS AS DummyFunctionInLength1_DUMMY_SDDOCPARTNER_INCL_EEW_PS
+  vbpa.DATAAGING AS DataFilterValueForDataAging_DATAAGING
 FROM
   `{{ project_id_src }}.{{ dataset_cdc_processed_s4 }}.vbpa` AS vbpa

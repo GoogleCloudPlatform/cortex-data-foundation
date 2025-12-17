@@ -4,7 +4,6 @@
     "deploySFDC": true,
     "deployMarketing": true,
     "deployOracleEBS": true,
-    "deployDataMesh": true,
     "enableTaskDependencies": false,
     "turboMode": true,
     "projectIdSource": "",
@@ -71,12 +70,6 @@
     "VertexAI": {
         "region": "us-central1",
         "processingDataset": "CORTEX_VERTEX_AI_PROCESSING"
-    },
-    "DataMesh": {
-        "deployDescriptions": true,
-        "deployLakes": false,
-        "deployCatalog": false,
-        "deployACLs": false
     },
     "SAP": {
         "deployCDC": true,

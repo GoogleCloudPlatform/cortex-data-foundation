@@ -197,8 +197,6 @@ fields:
     description: "Suffix used to append query parameters to landing pages that are served with parallel tracking"
   - name: "optimization_score"
     description: "Optimization score of the campaign"
-  - name: "url_expansion_opt_out"
-    description: "Represents opting out of URL expansion to more targeted URLs"
   - name: "hotel_property_asset_set"
     description: "The set of hotel properties for Performance Max for travel goals campaigns."
   - name: "bidding_strategy"

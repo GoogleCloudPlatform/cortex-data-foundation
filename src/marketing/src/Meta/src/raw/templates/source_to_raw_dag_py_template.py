@@ -145,7 +145,7 @@ _BEAM_OPERATOR_CONFIG = {
     "gcp_conn_id":
         _GCP_CONN_ID,
     "py_requirements": [
-        "apache-beam[gcp]==2.53.0", "google-cloud-secret-manager", "requests",
+        "apache-beam[gcp]==2.68.0", "google-cloud-secret-manager==2.25.0", "requests",
         "pyyaml"
     ],
     "retry_exponential_backoff":

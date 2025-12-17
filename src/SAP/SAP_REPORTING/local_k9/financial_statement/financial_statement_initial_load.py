@@ -50,7 +50,9 @@ with DAG(dag_id="financial_statement_initial_load",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
 
     stop_task = EmptyOperator(task_id="stop")
 

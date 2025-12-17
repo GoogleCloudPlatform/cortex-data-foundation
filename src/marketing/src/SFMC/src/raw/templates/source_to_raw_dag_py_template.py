@@ -104,7 +104,7 @@ _BEAM_OPERATOR_CONFIG = {
     "py_system_site_packages": False,
     "dataflow_config": DataflowConfiguration(**_DATAFLOW_CONFIG),
     "gcp_conn_id": _GCP_CONN_ID,
-    "py_requirements": ["apache-beam[gcp]==2.53.0"],
+    "py_requirements": ["apache-beam[gcp]==2.68.0"],
     "retry_delay": timedelta(seconds=retry_delay_sec),
     "max_retry_delay": timedelta(seconds=max_retry_delay_sec),
     "retries": execution_retry_count

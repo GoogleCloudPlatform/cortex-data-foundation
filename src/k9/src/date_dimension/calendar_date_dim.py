@@ -48,7 +48,9 @@ with DAG("calendar_date_dim",
             },
             "labels": _BQ_LABELS,
             "location": _BQ_LOCATION
-        })
+        },
+        location=_BQ_LOCATION
+    )
     stop_task = EmptyOperator(task_id="stop")
 
     # pylint:disable=pointless-statement

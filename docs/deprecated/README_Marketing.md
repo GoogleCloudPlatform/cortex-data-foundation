@@ -100,9 +100,9 @@ The following configurations are required to be in place to successfully bring d
 
     > **NOTE**: Cortex Data Foundations will automatically detect and ingest data from all customers (accounts) that are accessible to the credentials used to generate the token.
 
-4.  Now create a secret using Google Cloud Secret Manager (Security -> Secret Manager) with name “`cortex-framework-google-ads-yaml`” using the following format:
+4.  Now create a secret using Google Cloud Secret Manager (Security -> Secret Manager) with name “airflow-connections-googleads_raw_dataflow`” using the following format:
     ```
-    {"developer_token": "developer_token_value", "refresh_token": "refresh_token_value", "client_id": "client_id_value", "client_secret": "client_secret_value", "use_proto_plus": False}
+    {"conn_type":"google_ads","extra": {"developer_token": "developer_token_value", "refresh_token": "refresh_token_value", "client_id": "client_id_value", "client_secret": "client_secret_value", "use_proto_plus": false}}
     ```
     For the values:
     * `developer_token` value : Available in Google Ads account
