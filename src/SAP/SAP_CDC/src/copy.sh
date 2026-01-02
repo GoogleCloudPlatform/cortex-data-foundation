@@ -14,4 +14,4 @@
 # limitations under the License.
 
 bucket=$1
-gsutil cp -r ../generated_dag/ $bucket
+gcloud storage cp --recursive ../generated_dag/ $bucket

@@ -57,7 +57,7 @@ steps:
       generated_files=$(shopt -s nullglob dotglob; echo ./generated_dag/*.py)
       if (( ${#generated_files} ))
       then
-        gsutil -m cp -r './generated_dag/*.py' gs://${_TGT_BUCKET_}/dags/
+        gcloud storage cp --recursive './generated_dag/*.py' gs://${_TGT_BUCKET_}/dags/
       else
         echo "🔪🔪🔪No Python files found under generated_dag folder or the folder does not exist. Skipping copy.🔪🔪🔪"
       fi
@@ -78,7 +78,7 @@ steps:
       generated_files=$(shopt -s nullglob dotglob; echo ./generated_sql/*.sql)
       if (( ${#generated_files} ))
       then
-        gsutil -m cp -r './generated_sql/*.sql' gs://${_TGT_BUCKET_}/data/bq_data_replication/
+        gcloud storage cp --recursive './generated_sql/*.sql' gs://${_TGT_BUCKET_}/data/bq_data_replication/
       else
         echo "🔪No SQL files found under generated_sql folder or the folder does not exist. Skipping copy.🔪"
       fi
