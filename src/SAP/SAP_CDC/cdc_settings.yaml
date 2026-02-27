@@ -312,3 +312,7 @@ data_to_replicate:
     load_frequency: "@weekly"
   - base_table: mkol
     load_frequency: "@weekly"
+## CORTEX-CUSTOMER: Uncomment if you need optional address notes/remarks in AddressMD view.
+#  - base_table: adrt
+#    load_frequency: "@daily"
+

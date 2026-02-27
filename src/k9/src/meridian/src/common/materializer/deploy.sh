@@ -220,8 +220,8 @@ echo "generate_dependent_dags.py completed successfully."
 if [[ $(find generated_materializer_dag_files/*/*/task_dep_dags -type f 2> /dev/null | wc -l) -gt 0 ]]
 then
   echo "Copying DAG files to GCS bucket..."
-  echo "gsutil -m cp -r 'generated_materializer_dag_files/*' gs://${GCS_TGT_BUCKET}/dags/"
-  gsutil -m cp -r 'generated_materializer_dag_files/*' "gs://${GCS_TGT_BUCKET}/dags/"
+  echo "gcloud storage cp --recursive 'generated_materializer_dag_files/*' gs://${GCS_TGT_BUCKET}/dags/"
+  gcloud storage cp --recursive 'generated_materializer_dag_files/*' "gs://${GCS_TGT_BUCKET}/dags/"
 else
   echo "No task dependent DAG files to copy to GCS bucket!"
 fi

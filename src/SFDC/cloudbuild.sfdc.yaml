@@ -94,8 +94,8 @@ steps:
         # Copy generated SFDC DAG sql files to Target GCS bucket
         if [[ $(find generated_sql -type f 2> /dev/null | wc -l) -gt 0 ]]
         then
-          echo "Copying SFDC SQL files to gs://${_TGT_BUCKET_}/dags/sfdc."
-          gsutil -m cp -r './generated_sql/*' gs://${_TGT_BUCKET_}/dags/
+          echo "Copying SFDC SQL files to gs://${_TGT_BUCKET_}/dags/ (sfdc)."
+          gcloud storage cp --recursive './generated_sql/*' gs://${_TGT_BUCKET_}/dags/
           echo "✅ SFDC SQL files have been copied."
         else
           echo "🔪No SQL files found under generated_sql/sfdc directory or the directory does not exist. Skipping copy.🔪"
@@ -103,8 +103,8 @@ steps:
         # Copy generated SFDC DAG python and related files to Target GCS bucket
         if [[ $(find generated_dag -type f 2> /dev/null | wc -l) -gt 0 ]]
         then
-          echo "Copying SFDC DAG files to gs://${_TGT_BUCKET_}/dags/sfdc."
-          gsutil -m cp -r './generated_dag/*' gs://${_TGT_BUCKET_}/dags/
+          echo "Copying SFDC DAG files to gs://${_TGT_BUCKET_}/dags/ (sfdc)."
+          gcloud storage cp --recursive './generated_dag/*' gs://${_TGT_BUCKET_}/dags/
           echo "✅ SFDC DAG files have been copied."
         else
           echo "🔪No Python files found under generated_dag/sfdc directory or the directory does not exist. Skipping copy.🔪"

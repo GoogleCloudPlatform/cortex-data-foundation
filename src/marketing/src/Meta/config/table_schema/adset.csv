@@ -28,7 +28,6 @@ dsa_payor,dsa_payor,STRING
 effective_status,effective_status,STRING
 end_time,end_time,TIMESTAMP
 frequency_control_specs,frequency_control_specs,JSON
-instagram_actor_id,instagram_actor_id,INT64
 is_dynamic_creative,is_dynamic_creative,BOOL
 issues_info,issues_info,JSON
 learning_stage_info,learning_stage_info,JSON

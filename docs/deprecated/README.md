@@ -321,7 +321,7 @@ Navigate to [Cloud Storage](https://console.cloud.google.com/storage/create-buck
 **Alternatively**, you can use the following command to create a bucket from the Cloud Shell:
 
 ```bash
-gsutil mb -l <REGION/MULTI-REGION> gs://<BUCKET NAME>
+gcloud storage buckets create --location <REGION/MULTI-REGION> gs://<BUCKET NAME>
 ```
 
 Navigate to the _Permissions_ tab. Grant `Storage Object Creator` to the user executing the Build command or to the Service account you created for impersonation.
@@ -333,7 +333,7 @@ You can create a specific bucket for the Cloud Build process to store the logs. 
 **Alternatively**, here is the command line to create this bucket:
 
 ```bash
-gsutil mb -l <REGION/MULTI-REGION> gs://<BUCKET NAME>
+gcloud storage buckets create -l <REGION/MULTI-REGION> gs://<BUCKET NAME>
 ```
 
 You will need to grant `Object Admin` permissions to the Cloud Build service account.
@@ -560,8 +560,8 @@ We recommend pasting the generated SQL into BigQuery to identify and correct the
 If you opted to generate integration or CDC files and have an instance of Cloud Composer (Airflow), you can move them into their final bucket with the following command:
 
 ```bash
-gsutil -m cp -r  gs://<output bucket>/dags/ gs://<composer DAG bucket>/
-gsutil -m cp -r  gs://<output bucket>/data/ gs://<composer DAG bucket>/
+gcloud storage cp --recursive  gs://<output bucket>/dags/ gs://<composer DAG bucket>/
+gcloud storage cp --recursive  gs://<output bucket>/data/ gs://<composer DAG bucket>/
 ```
 
 ## Test, customize and prepare for upgrade

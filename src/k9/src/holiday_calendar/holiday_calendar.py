@@ -23,10 +23,12 @@ from datetime import datetime
 from datetime import timedelta
 
 from airflow import DAG
+from airflow import __version__ as airflow_version
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 import holidays
 import pandas as pd
+from packaging.version import Version
 
 default_args = {"retries": 1, "retry_delay": timedelta(minutes=5)}
 
@@ -98,15 +100,21 @@ def load_holidays():
               progress_bar=False,
               if_exists=write_mode)  # type: ignore
 
+load_frequency="@yearly"
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": load_frequency}
+else:
+    schedule_kwarg = {"schedule_interval": load_frequency}
 
 with DAG("Holiday_Calendar",
          default_args=default_args,
          description="Holiday Calendar For Multiple Years",
-         schedule_interval="@yearly",
          start_date=datetime(2021, 1, 1),
          catchup=False,
          max_active_runs=1,
-         tags=["API"]) as dag:
+         tags=["API"],
+         **schedule_kwarg) as dag:
 
     start_task = EmptyOperator(task_id="start")
     t1 = PythonOperator(task_id="calendar",

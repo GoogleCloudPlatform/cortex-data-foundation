@@ -18,8 +18,10 @@ import ast
 from airflow import DAG
 from datetime import datetime, timedelta
 
+from airflow import __version__ as airflow_version
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.operators.empty import EmptyOperator
+from packaging.version import Version
 
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
@@ -30,6 +32,12 @@ default_args = {
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
+load_frequency = "@monthly"
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": load_frequency}
+else:
+    schedule_kwarg = {"schedule_interval": load_frequency}
 
 # This DAG creates following two tables
 # and deletes hierarchy from a specific node(if needed).
@@ -37,10 +45,10 @@ default_args = {
 # 2-profit center and node mapping.
 with DAG(dag_id="profit_center",
          default_args=default_args,
-         schedule_interval="@monthly",
          start_date=datetime(2023, 11, 27),
          catchup=False,
-         max_active_runs=1) as dag:
+         max_active_runs=1,
+         **schedule_kwarg) as dag:
 
     start_task = EmptyOperator(task_id="start")
 

@@ -21,8 +21,10 @@ import importlib
 import os
 
 from airflow import DAG
+from airflow import __version__ as airflow_version
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
+from packaging.version import Version
 
 # Use dynamic import to account for Airflow directory structure limitations.
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -44,15 +46,20 @@ default_args = {
    "retry_delay": timedelta(minutes=10),
 }
 
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": "${load_frequency}"}
+else:
+    schedule_kwarg = {"schedule_interval": "${load_frequency}"}
+
 with DAG(dag_id=_IDENTIFIER,
          description=(
             "Data extraction from Salesforce system to BQ RAW dataset "
             "for '${base_table}' object"),
          default_args=default_args,
-         schedule_interval="${load_frequency}",
          tags=["sfdc", "raw"],
          catchup = False,
-         max_active_runs=1) as dag:
+         max_active_runs=1,
+         **schedule_kwarg) as dag:
     start_task = EmptyOperator(task_id="start")
 
     extract_data = PythonOperator(

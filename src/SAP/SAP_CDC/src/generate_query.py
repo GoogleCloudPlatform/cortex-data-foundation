@@ -150,11 +150,11 @@ def generate_cdc_dag_files(raw_table_name, cdc_table_name, load_frequency,
         'day': today.day,
         'query_file': dag_sql_file_name,
         'load_frequency': load_frequency,
-        'runtime_labels_dict': '', # A place holder for label key
+        'runtime_labels_dict': '',  # A place holder for label key
         'bq_location': bq_location
     }
-     # Add bq_labels to substitutes dict if Telemetry allowed
-     # Converts dict to string for substitution purposes
+    # Add bq_labels to substitutes dict if Telemetry allowed
+    # Converts dict to string for substitution purposes
     if allow_telemetry:
         substitutes['runtime_labels_dict'] = str(constants.CORTEX_JOB_LABEL)
 
@@ -274,10 +274,11 @@ def validate_partition_details(partition_details, load_frequency):
         bucket_end = integer_range_bucket.get('end')
         bucket_interval = integer_range_bucket.get('interval')
 
-        if (bucket_start is None or bucket_end is None or
-                bucket_interval is None):
-            e_msg = ('Error: `start`, `end` or `interval` property missing for '
-                     'the `integer_range_bucket` property.')
+        if (bucket_start is None or bucket_end is None
+                or bucket_interval is None):
+            e_msg = (
+                'Error: `start`, `end` or `interval` property missing for '
+                'the `integer_range_bucket` property.')
             return e_msg
 
     return None
@@ -301,8 +302,9 @@ def validate_cluster_details(cluster_details, load_frequency):
         return e_msg
 
     if len(cluster_columns) > 4:
-        e_msg = ('More than 4 columns specified in `cluster_details` property. '
-                 'BigQuery supports maximum of 4 columns for table cluster.')
+        e_msg = (
+            'More than 4 columns specified in `cluster_details` property. '
+            'BigQuery supports maximum of 4 columns for table cluster.')
         return e_msg
 
     return None
@@ -399,16 +401,17 @@ def validate_partition_columns(partition_details, target_schema):
 
     partition_type = partition_details['partition_type']
 
-    if (partition_type == 'time' and
-            partition_column_type not in _TIME_PARTITION_DATA_TYPES):
-        e_msg = ('For `partition_type` = "time", partitioning column has to be '
-                 'one of the following data types:'
-                 f'{_TIME_PARTITION_DATA_TYPES}.\n'
-                 f'But column "{column}" is of "{partition_column_type}" type.')
+    if (partition_type == 'time'
+            and partition_column_type not in _TIME_PARTITION_DATA_TYPES):
+        e_msg = (
+            'For `partition_type` = "time", partitioning column has to be '
+            'one of the following data types:'
+            f'{_TIME_PARTITION_DATA_TYPES}.\n'
+            f'But column "{column}" is of "{partition_column_type}" type.')
         raise cortex_exc.TypeCError(e_msg) from None
 
-    if (partition_type == 'integer_range' and
-            partition_column_type != 'INTEGER'):
+    if (partition_type == 'integer_range'
+            and partition_column_type != 'INTEGER'):
         e_msg = ('Error: For `partition_type` = "integer_range", '
                  'partitioning column has to be of INTEGER data type.\n'
                  f'But column "{column}" is of {partition_column_type}.')
@@ -457,7 +460,8 @@ def create_cdc_table(raw_table_name, cdc_table_name, partition_details,
                     field=partition_details['column'],
                     type_=_TIME_PARTITION_GRAIN_DICT[time_partition_grain])
             else:
-                integer_range_bucket = partition_details['integer_range_bucket']
+                integer_range_bucket = partition_details[
+                    'integer_range_bucket']
                 bucket_start = integer_range_bucket['start']
                 bucket_end = integer_range_bucket['end']
                 bucket_interval = integer_range_bucket['interval']
@@ -484,10 +488,31 @@ def get_primary_keys(full_table_name):
     """
 
     _, dataset, table_name = full_table_name.split('.')
-    query = (f'SELECT fieldname '
+
+    # Custom tables and fields in SAP have the prefix "/NAMESPACE/",
+    # which are renamed to "NAMESPACE_" (or other character, per SLT settings)
+    # when replicated to BigQuery, but retain their original naming in DD03L
+    # table. So we need to mirror the replacement logic in the query to
+    # get records for such tables.
+    #
+    # For example, "/OPT/Z_TABLE" is replicated to "OPT_Z_TABLE" in BigQuery.
+
+    ## CORTEX-CUSTOMER: Replace per BQ SLT settings.
+    replace_char = '_'
+
+    # Remove starting "/" and then replace the second "/" with replace_char.
+    sap_naming_replace_logic = (
+        'REPLACE('
+        '  IF(SUBSTR({FIELD}, 1, 1) = "/", SUBSTR({FIELD}, 2), {FIELD}),'
+        '  "/",'
+        f'  "{replace_char}"'
+        ')')
+    bq_field_name = sap_naming_replace_logic.format(FIELD='fieldname')
+    bq_table_name = sap_naming_replace_logic.format(FIELD='tabname')
+    query = (f'SELECT {bq_field_name} as fieldname '
              f'FROM `{dataset}.dd03l` '
              f'WHERE KEYFLAG = "X" AND fieldname != ".INCLUDE" '
-             f'AND tabname = "{table_name.upper()}"')
+             f'AND {bq_table_name} = "{table_name.upper()}"')
     query_job = client.query(query)
 
     fields = []

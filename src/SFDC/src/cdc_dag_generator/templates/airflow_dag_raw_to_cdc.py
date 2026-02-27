@@ -27,20 +27,20 @@ except ImportError:
 from pendulum import UTC
 
 from airflow import DAG
-from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
-from airflow.exceptions import AirflowRescheduleException
-from airflow.models.dagrun import DagRun
-from airflow.models.dagbag import DagBag
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import PythonOperator
-from airflow.utils.state import State
-from airflow.utils.db import provide_session
-from airflow.utils import timezone
-
+from airflow import __version__ as airflow_version
 try:
     from airflow.api.common.trigger_dag import trigger_dag
 except ImportError:
     from airflow.api.common.experimental.trigger_dag import trigger_dag
+from airflow.exceptions import AirflowRescheduleException
+from airflow.models.dagbag import DagBag
+from airflow.models.dagrun import DagRun
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.utils import timezone
+from airflow.utils.db import provide_session
+from packaging.version import Version
 
 
 _RAW_WAITING_TIMEOUT_MINUTES = 10
@@ -69,18 +69,19 @@ def check_raw_if_deployed(session=None, **kwargs):
     del kwargs
     now = Pendulum.now(UTC)
 
-    active_runs = DagRun.find(dag_id=_RAW_DAG_ID, state=State.RUNNING)
+    active_runs = DagRun.find(dag_id=_RAW_DAG_ID, state="running")
     if active_runs and len(active_runs) > 0:
         logging.info("Rescheduling to wait for an active run of the Raw DAG.")
         raise AirflowRescheduleException(now + timedelta(
             minutes=_RAW_WAITING_TIMEOUT_MINUTES))
 
     complete_runs: list[DagRun] = DagRun.find(dag_id=_RAW_DAG_ID,
-                                              state=State.SUCCESS)
+                                              state="success")
     run_raw_now = True
     if complete_runs and len(complete_runs) > 0:
-        if (now - complete_runs[-1].execution_date
-           ).total_hours() < _RAW_AGE_HOURS_MAX:
+        run_date = getattr(complete_runs[-1], "logical_date",
+                           getattr(complete_runs[-1], "execution_date", None))
+        if (now - run_date).total_hours() < _RAW_AGE_HOURS_MAX:
             run_raw_now = False
             logging.info("Found a recent run of the Raw DAG.")
 
@@ -91,26 +92,36 @@ def check_raw_if_deployed(session=None, **kwargs):
             logging.info("No Raw DAG %s found.", _RAW_DAG_ID)
             return
         logging.info("Starting a new run of the Raw DAG")
-        trigger_dag(
-                dag_id=_RAW_DAG_ID,
-                run_id=f"forced__{now.isoformat()}",
-                conf=None,
-                execution_date=timezone.utcnow(),
-                replace_microseconds=False,
-            )
+        trigger_kwargs = {
+            "dag_id": _RAW_DAG_ID,
+            "run_id": f"forced__{now.isoformat()}",
+            "conf": None,
+        }
+        if Version(airflow_version) >= Version("3.0.0"):
+            logical_date = timezone.utcnow().replace(microsecond=0)
+            trigger_kwargs["logical_date"] = logical_date
+        else:
+            trigger_kwargs["execution_date"] = timezone.utcnow()
+            trigger_kwargs["replace_microseconds"] = False
+        trigger_dag(**trigger_kwargs)
         logging.info("Rescheduling to wait for a new run of the Raw DAG.")
         raise AirflowRescheduleException(now + timedelta(
             minutes=_RAW_WAITING_TIMEOUT_MINUTES))
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": "${load_frequency}"}
+else:
+    schedule_kwarg = {"schedule_interval": "${load_frequency}"}
 
 with DAG(dag_id=_IDENTIFIER,
          description=(
              "Merge from Salesforce RAW BQ dataset to CDC BQ dataset for "
              "'${project_id}.${cdc_dataset}.${base_table}' table"),
          default_args=default_args,
-         schedule_interval="${load_frequency}",
          catchup=False,
          tags=["sfdc","cdc"],
-         max_active_runs=1) as dag:
+         max_active_runs=1,
+         **schedule_kwarg) as dag:
     check_raw = PythonOperator(task_id="check_" + _RAW_DAG_ID,
                                python_callable=check_raw_if_deployed,
                                dag=dag)

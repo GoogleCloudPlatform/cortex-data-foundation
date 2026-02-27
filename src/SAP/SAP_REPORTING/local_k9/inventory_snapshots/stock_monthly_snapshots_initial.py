@@ -24,8 +24,10 @@ import ast
 from airflow import DAG
 from datetime import datetime, timedelta
 
+from airflow import __version__ as airflow_version
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.operators.empty import EmptyOperator
+from packaging.version import Version
 
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
@@ -41,14 +43,20 @@ default_args = {
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
+load_frequency = "@once"
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": load_frequency}
+else:
+    schedule_kwarg = {"schedule_interval": load_frequency}
 
 with DAG(dag_id="Stock_Monthly_Snapshots_Initial",
          default_args=default_args,
          description="Initial creation of monthly inventory snapshot.",
-         schedule_interval="@once",
          start_date=datetime(2023, 2, 13),
          catchup=False,
-         max_active_runs=1) as dag:
+         max_active_runs=1,
+         **schedule_kwarg) as dag:
 
     start_task = EmptyOperator(task_id="start")
 

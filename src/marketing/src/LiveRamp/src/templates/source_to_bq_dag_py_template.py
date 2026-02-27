@@ -19,8 +19,10 @@ import importlib
 import os
 
 from airflow import DAG
+from airflow import __version__ as airflow_version
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
+from packaging.version import Version
 
 # Use dynamic import to account for Airflow directory structure limitations.
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -63,13 +65,19 @@ liveramp_base_url = config.get("liveramp",
 liveramp_lookup_api_url = f"{liveramp_base_url}/v1/batch/lookup"
 liveramp_auth_url = f"{liveramp_base_url}/token"
 
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": _SCHEDULE_INTERVAL}
+else:
+    schedule_kwarg = {"schedule_interval": _SCHEDULE_INTERVAL}
+
 with DAG(dag_id=_IDENTIFIER,
          description="Extract RampIds from LiveRamp Lookup to BQ",
-         schedule=_SCHEDULE_INTERVAL,
          start_date=_START_DATE,
          tags=["liveramp", "cdc"],
          catchup=False,
-         max_active_runs=1) as dag:
+         max_active_runs=1,
+         **schedule_kwarg) as dag:
 
     start_task = EmptyOperator(task_id="start",
                                depends_on_past=True,

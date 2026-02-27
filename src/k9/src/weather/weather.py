@@ -23,8 +23,10 @@ from datetime import datetime
 from datetime import timedelta
 
 from airflow import DAG
+from airflow import __version__ as airflow_version
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.operators.empty import EmptyOperator
+from packaging.version import Version
 
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
@@ -36,15 +38,21 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+load_frequency="@daily"
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": load_frequency}
+else:
+    schedule_kwarg = {"schedule_interval": load_frequency}
+
 with DAG(
         "Weather",
         default_args=default_args,
         description="Generate weather related data",
-        schedule_interval="@daily",
         start_date=datetime(2021, 1, 1),
         catchup=False,
         max_active_runs=1,
-) as dag:
+        **schedule_kwarg) as dag:
 
     start_task = EmptyOperator(task_id="start")
 

@@ -19,8 +19,10 @@ from __future__ import print_function
 import ast
 from datetime import timedelta, datetime
 import airflow
+from airflow import __version__ as airflow_version
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.operators.empty import EmptyOperator
+from packaging.version import Version
 
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
@@ -28,18 +30,23 @@ _BQ_LABELS = ast.literal_eval("${runtime_labels_dict}" or "{}")
 
 default_dag_args = {
     "depends_on_past": False,
-    "start_date": datetime(${year}, ${month}, ${day}),
+    "start_date": datetime(int("${year}"), int("${month}"), int("${day}")),
     "catchup": False,
     "retries": 1,
     "retry_delay": timedelta(minutes=30),
 }
+
+if Version(airflow_version) >= Version("2.4.0"):
+   schedule_kwarg = {"schedule": "${load_frequency}"}
+else:
+   schedule_kwarg = {"schedule_interval": "${load_frequency}"}
 
 with airflow.DAG(dag_id="CDC_BigQuery_${base_table}",
                  template_searchpath=["/home/airflow/gcs/data/bq_data_replication/"],
                  default_args=default_dag_args,
                  catchup=False,
                  max_active_runs=1,
-                 schedule_interval="${load_frequency}") as dag:
+                 **schedule_kwarg) as dag:
     start_task = EmptyOperator(task_id="start")
     copy_records = BigQueryInsertJobOperator(
         task_id="merge_query_records",

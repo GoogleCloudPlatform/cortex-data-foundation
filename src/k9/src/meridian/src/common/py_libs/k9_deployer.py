@@ -82,10 +82,10 @@ def _simple_process_and_upload(k9_id: str, k9_dir: str, jinja_dict: dict,
         if "__init__.py" not in [str(p.relative_to(k9_dir)) for p in k9_files]:
             with open(f"{tmp_dir}/__init__.py", "w", encoding="utf-8") as f:
                 f.writelines([
-                    "import os",
-                    "import sys",
+                    "import os\n",
+                    "import sys\n",
                     ("sys.path.append("
-                     "os.path.dirname(os.path.realpath(__file__)))")
+                     "os.path.dirname(os.path.realpath(__file__)))\n")
                 ])
 
         if data_source == "k9":

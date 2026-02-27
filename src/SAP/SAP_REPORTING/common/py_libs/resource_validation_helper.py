@@ -128,7 +128,7 @@ def validate_resources(
             if isinstance(ex, NotFound):
                 logging.error("🛑 Storage bucket `%s` doesn't exist. 🛑",
                               bucket.name)
-            elif isinstance(ex, Unauthorized, Forbidden):
+            elif isinstance(ex, (Unauthorized, Forbidden)):
                 if checking_on_writing:
                     logging.error("🛑 Storage bucket `%s` "
                                 "is not writable. 🛑", bucket.name)

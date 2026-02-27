@@ -24,6 +24,8 @@ from datetime import datetime
 from datetime import timedelta
 
 import airflow
+from airflow import __version__ as airflow_version
+from packaging.version import Version
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.google.cloud.operators.bigquery import \
     BigQueryInsertJobOperator
@@ -36,18 +38,23 @@ _GCP_CONN_ID = "${module_name}_${tgt_dataset_type}_bq"
 
 default_dag_args = {
    "depends_on_past": False,
-   "start_date": datetime(${year}, ${month}, ${day}),
+   "start_date": datetime(int("${year}"), int("${month}"), int("${day}")),
    "catchup": False,
    "retries": 1,
    "retry_delay": timedelta(minutes=30),
 }
 
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": "${load_frequency}"}
+else:
+    schedule_kwarg = {"schedule_interval": "${load_frequency}"}
+
 with airflow.DAG("${dag_full_name}",
                  default_args=default_dag_args,
                  catchup=False,
                  max_active_runs=1,
-                 schedule_interval="${load_frequency}",
-                 tags=${tags}) as dag:
+                 tags=ast.literal_eval("${tags}"),
+                 **schedule_kwarg) as dag:
 
     start_task = EmptyOperator(task_id="start")
 

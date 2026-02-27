@@ -87,8 +87,6 @@ fields:
     description: "Interval period in days, between 1 and 90 (inclusive)."
   - name: "frequency_control_specs.max_frequency"
     description: "The maximum frequency, between 1 and 90 (inclusive)."
-  - name: "instagram_actor_id"
-    description: "Represents your Instagram account id, used for ads, including dynamic creative ads on Instagram."
   - name: "is_dynamic_creative"
     description: "Whether this ad set is a dynamic creative ad set."
   - name: "issues_info"

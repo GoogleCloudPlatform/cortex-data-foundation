@@ -25,10 +25,11 @@ import sys
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow import __version__ as airflow_version
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
-
+from packaging.version import Version
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 # pylint: disable=wrong-import-position
@@ -63,14 +64,21 @@ def _get_bq_operator(dag_name: str) -> BigQueryInsertJobOperator:
 def _map_campaigns_to_products():
     run_cross_media_matching(True, _BQ_LABELS, _AIRFLOW_CONNECTION_ID)
 
+load_frequency=None
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": load_frequency}
+else:
+    schedule_kwarg = {"schedule_interval": load_frequency}
+
 with DAG("cross_media_full_load",
          description="Cross-Media Full/Initial Matching DAG",
          default_args=default_args,
-         schedule_interval=None,
          start_date=datetime(2022, 11, 2),
          catchup=False,
          max_active_runs=1,
-         user_defined_macros={"initial_load": True}) as dag:
+         user_defined_macros={"initial_load": True},
+         **schedule_kwarg) as dag:
     start_task = EmptyOperator(task_id="start")
     generate_campaign_texts = _get_bq_operator("generate_campaign_texts")
     create_mapping_table = _get_bq_operator("create_mapping_table")

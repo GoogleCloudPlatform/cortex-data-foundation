@@ -20,8 +20,10 @@ import ast
 from airflow import DAG
 from datetime import datetime, timedelta
 
+from airflow import __version__ as airflow_version
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.operators.empty import EmptyOperator
+from packaging.version import Version
 
 # BigQuery Job Labels - converts generated string to dict
 # If string is empty, assigns empty dict
@@ -33,16 +35,23 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+load_frequency = "@daily"
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": load_frequency}
+else:
+    schedule_kwarg = {"schedule_interval": load_frequency}
+
 # This DAG creates two table:
 # 1-currency_conversion for storing the exchange rate and other columns.
 # 2-currency_decimal to fix the decimal place of amounts
 # for non-decimal-based currencies.
 with DAG(dag_id="currency_conversion",
          default_args=default_args,
-         schedule_interval="@daily",
          start_date=datetime(2022, 8, 11),
          catchup=False,
-         max_active_runs=1) as dag:
+         max_active_runs=1,
+         **schedule_kwarg) as dag:
 
     start_task = EmptyOperator(task_id="start")
 

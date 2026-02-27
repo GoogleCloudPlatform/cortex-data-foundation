@@ -20,11 +20,13 @@ from datetime import datetime
 from datetime import timedelta
 
 from airflow import DAG
+from airflow import __version__ as airflow_version
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 import pandas as pd
 import pandas_gbq
 from pytrends.request import TrendReq
+from packaging.version import Version
 
 default_args = {
     "owner": "airflow",
@@ -127,14 +129,21 @@ def get_trends():
                         project_id=project_id_src,
                         if_exists=write_mode)
 
+load_frequency="@weekly"
+
+if Version(airflow_version) >= Version("2.4.0"):
+    schedule_kwarg = {"schedule": load_frequency}
+else:
+    schedule_kwarg = {"schedule_interval": load_frequency}
+
 with DAG("Trends_Interest_Time",
          default_args=default_args,
          description="Trends - Interest Over Time",
-         schedule_interval="@weekly",
          start_date=datetime(2021, 1, 1),
          catchup=False,
          max_active_runs=1,
-         tags=["API"]) as dag:
+         tags=["API"],
+         **schedule_kwarg) as dag:
     start_task = EmptyOperator(task_id="start")
     t1 = PythonOperator(task_id="interest_over_time",
                         python_callable=get_trends,
