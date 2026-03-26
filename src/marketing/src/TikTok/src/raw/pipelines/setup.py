@@ -18,7 +18,7 @@ from setuptools import setup
 setup(name="TikTokBeamDependencies",
       version="0.1",
       description="Python Apache Beam pipeline dependencies",
-      install_requires=["requests==2.32.3",
+      install_requires=["requests==2.33.0",
                         "google-cloud-secret-manager==2.25.0"],
       author="Google Cloud Cortex",
       author_email="cortex-support@google.com",
