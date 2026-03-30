@@ -1,5 +1,5 @@
 prompt-toolkit==3.*
-pygments==2.15.*
+pygments==2.20.*
 google-cloud-bigquery==3.11.*
 google-cloud-storage==2.9.*
 google-cloud-resource-manager==1.10.*
